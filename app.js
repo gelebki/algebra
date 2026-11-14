@@ -406,7 +406,7 @@
   }
 
   /* ---------------- routing ---------------- */
-  function setHash(x) { try { if (location.hash !== '#' + x) history.replaceState(null, '', '#' + x); } catch (e) { /* ignoruj */ } }
+  function setHash(x) { S.last = x; save(); try { if (location.hash !== '#' + x) history.replaceState(null, '', '#' + x); } catch (e) { /* ignoruj */ } }
   function fromHash() {
     const hs = (location.hash || '').slice(1);
     if (/^l[123]$/.test(hs)) { V = { view: 'list', list: +hs[1] - 1 }; return; }
@@ -414,7 +414,7 @@
     if (hs === 'ranking') { V = { view: 'rank', list: V.list }; return; }
     const m = hs.match(/^t(\d+)-(\d+)$/);
     if (m) { const li = +m[1] - 1, task = LISTS[li] && LISTS[li].tasks.findIndex(t => t.id === m[1] + '.' + m[2]); if (task >= 0) { startTask(li, task); return 'started'; } }
-    const t = S.tab; if (t === 'stats') V = { view: 'stats', list: 0 }; else if (/^l[123]$/.test(t)) V = { view: 'list', list: +t[1] - 1 };
+    V = { view: 'list', list: 0 };
   }
 
   /* ---------------- renderowanie ---------------- */
@@ -902,9 +902,11 @@
   function boot() {
     if (booted) return; booted = true;
     if (window.MathJax && MathJax.svgStylesheet) { try { document.head.appendChild(MathJax.svgStylesheet()); } catch (e) { /* ignoruj */ } }
-    // zawsze start od Listy 1
-    V = { view: 'list', list: 0 }; S.tab = 'l1'; setHash('l1');
-    render();
+    // ostatnio otwarty widok; przy pierwszym uruchomieniu — Lista 1
+    const want = (location.hash || '').slice(1) || S.last || 'l1';
+    try { history.replaceState(null, '', '#' + want); } catch (e) { /* ignoruj */ }
+    V = { view: 'list', list: 0 };
+    const r = fromHash(); if (r !== 'started') render();
   }
   function waitMJ() {
     const t0 = Date.now();
