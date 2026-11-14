@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Ranking: każdy może czytać, każdy zapisuje tylko swój wpis.
+    match /board/{uid} {
+      allow read: if true;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['no', 'name', 'xp', 'solved', 'total', 'week', 'weekKey', 'updatedAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 24
+        && request.resource.data.no is int
+        && request.resource.data.xp is int && request.resource.data.xp >= 0 && request.resource.data.xp <= 100000
+        && request.resource.data.solved is int && request.resource.data.solved >= 0 && request.resource.data.solved <= 250
+        && request.resource.data.week is int && request.resource.data.week >= 0 && request.resource.data.week <= 100000;
+    }
+
+    // Licznik do nazw „Anon N” — tylko +1.
+    match /meta/counter {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.n == 1;
+      allow update: if request.auth != null && request.resource.data.n == resource.data.n + 1;
+    }
+  }
+}
