@@ -151,7 +151,7 @@
   const itemKey = (t, i) => t.id + '#' + i;
   function taskProgress(t) {
     let solved = 0, practiced = 0, practicable = 0;
-    t.items.forEach((it, i) => { const k = itemKey(t, i); if (S.items[k]) solved++; if ((it.type || 'fields') !== 'order') { practicable++; if ((S.practice || {})[k] >= 1) practiced++; } });
+    t.items.forEach((it, i) => { const k = itemKey(t, i); if (S.items[k]) solved++; if (!['order', 'guided'].includes(it.type || 'fields')) { practicable++; if ((S.practice || {})[k] >= 1) practiced++; } });
     const total = t.items.length;
     let stars = 0;
     if (solved >= Math.ceil(total / 2)) stars = 1;
@@ -223,7 +223,7 @@
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  function resetAttempt() { if (T.mode === 'orig' && T._lastKey !== T.origKey) { T.tried = false; T._lastKey = T.origKey; } T.sel = []; T.vals = []; T.choice = new Set(); T.order = []; T.pool = null; T.status = 'answering'; T.usedW = false; T.usedP = false; T.marks = null; T.msgs = []; T.focus = 0; }
+  function resetAttempt() { if (T) T.gs = null; if (T.mode === 'orig' && T._lastKey !== T.origKey) { T.tried = false; T._lastKey = T.origKey; } T.sel = []; T.vals = []; T.choice = new Set(); T.order = []; T.pool = null; T.status = 'answering'; T.usedW = false; T.usedP = false; T.marks = null; T.msgs = []; T.focus = 0; }
   function startVariant() {
     const gk = T.task.items[T.idx].gk || T.item.gk;
     let it; for (let k = 0; k < 6; k++) { it = T.task.gen(gk); if (!T.item || it.q !== T.item.q) break; }
@@ -273,6 +273,8 @@
       if (!T.choice.size) { toast('Wybierz odpowiedź', 'Zaznacz co najmniej jedną opcję', 'flag'); return; }
       const want = new Set(it.choice.correct);
       ok = want.size === T.choice.size && [...want].every(x => T.choice.has(x));
+    } else if (type === 'guided') {
+      ok = T.gs.misses === 0;
     } else if (type === 'order') {
       if (!T.order.length) { toast('Ułóż dowód', 'Klikaj kroki w kolejności', 'flag'); return; }
       const n = it.order.steps.length;
@@ -283,7 +285,7 @@
     const isOrig = T.mode === 'orig';
     if (ok) {
       S.correct++;
-      if (type === 'order') S.proofs++;
+      if (type === 'order' || type === 'guided') S.proofs++;
       // XP: oryginał za pierwszym razem 10; pierwsze 3 podobne do podpunktu po 6, każdy kolejny 1
       let xp;
       S.tried = S.tried || {}; S.pc = S.pc || {};
@@ -390,6 +392,7 @@
     let shown = 0;
     const answerEl = () => {
       if (type === 'order') return h('div', { class: 'exq' }, h('b', {}, 'Dowód w kolejności:'), h('ol', {}, ex.order.steps.map(s => mdEl('li', s))));
+      if (type === 'guided') return h('div', { class: 'exq' }, h('b', {}, 'Dowód:'), h('ol', {}, ex.steps.map(s => mdEl('li', s.a))));
       if (type === 'choice') return h('div', { class: 'exq' }, h('b', {}, 'Odpowiedź: '), ...ex.choice.correct.map(i => mdEl('div', ex.choice.opts[i])));
       if (ex.check) return mdEl('div', '<b>Odpowiedź:</b> ' + ex.showAns, { class: 'exq' });
       ex.gk = ex.gk || gk; const mc = A.buildMC(ex);
@@ -529,11 +532,12 @@
     const kick = h('div', { class: 'kicker' });
     if (quick) kick.append(h('span', { class: 'badge q' }, 'Zad. ' + task.id), mdEl('span', task.name));
     else if (T.mode === 'var') kick.append(h('span', { class: 'badge var' }, 'Podobny przykład'), h('span', {}, 'do ' + (task.items[T.idx].label || task.id)), pdots());
-    else kick.append(h('span', { class: 'badge' }, task.id + (it.label ? ' · ' : '')), it.label ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', (it.type || 'fields') !== 'order' && T.task.gen ? pdots() : '');
+    else kick.append(h('span', { class: 'badge' }, task.id + (it.label ? ' · ' : '')), it.label ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', !['order', 'guided'].includes(it.type || 'fields') && T.task.gen ? pdots() : '');
     card.append(kick, mdEl('div', it.q, { class: 'question' }));
     const type = it.type || 'fields';
     if (type === 'fields') card.append(mcUI(it));
     else if (type === 'choice') card.append(choiceUI(it));
+    else if (type === 'guided') card.append(guidedUI(it));
     else card.append(orderUI(it));
     card.append(actionsBar());
     if (T.status !== 'answering') card.append(feedbackUI(it));
@@ -712,13 +716,41 @@
     if (T.status === 'answering') box.append(h('div', {}, h('h4', {}, 'Dostępne kroki' + ((it.order.extra || []).length ? ' (uwaga: część jest fałszywa)' : '')), pool));
     return box;
   }
+  function guidedUI(it) {
+    if (!T.gs) T.gs = { i: 0, misses: 0, missed: [], pick: null, opts: it.steps.map(st => A.R.shuffle([{ t: st.a, ok: true }, ...st.w.map(([t, why]) => ({ t, why }))])) };
+    const g = T.gs, n = it.steps.length;
+    const box = h('div', { class: 'guided' });
+    const chain = h('ol', { class: 'gchain' });
+    for (let k = 0; k < Math.min(g.i, n); k++) chain.append(h('li', { class: g.missed[k] ? 'miss' : '' }, mdEl('span', it.steps[k].a)));
+    if (g.i) box.append(h('div', { class: 'glabel' }, 'Dowód'), chain);
+    if (g.i < n && T.status === 'answering') {
+      const st = it.steps[g.i], cur = h('div', { class: 'gstep' });
+      cur.append(h('div', { class: 'glabel' }, 'Krok ' + (g.i + 1) + ' z ' + n), mdEl('div', st.q, { class: 'gq' }));
+      const answered = g.pick != null;
+      g.opts[g.i].forEach((o, oi) => {
+        let cls = 'opt mcopt';
+        if (answered) cls += o.ok ? ' ok' : oi === g.pick ? ' chosen' : ' dim';
+        cur.append(h('button', { class: cls, disabled: answered, onclick: () => {
+          g.pick = oi; SFX.key();
+          if (o.ok) { SFX.click(); g.i++; g.pick = null; if (g.i === n) { submit(); return; } }
+          else { g.misses++; g.missed[g.i] = true; SFX.wrong(); }
+          box.replaceWith(guidedUI(it));
+        } }, h('span', { class: 'letter' }, 'ABC'[oi]), mdEl('span', o.t, { class: 'txt' })));
+        if (answered && oi === g.pick && o.why) cur.append(mdEl('div', '<b>Dlaczego nie:</b> ' + o.why, { class: 'why hit' }));
+      });
+      if (answered) cur.append(h('div', { class: 'row', style: 'margin-top:10px' }, h('button', { class: 'btn primary', onclick: () => { g.i++; g.pick = null; if (g.i === n) { submit(); return; } box.replaceWith(guidedUI(it)); } }, 'Dalej', h('span', { html: IC.next }))));
+      box.append(cur);
+    }
+    return box;
+  }
   function shuffleNotSorted(arr) { let a; let k = 0; do { a = A.R.shuffle(arr); k++; } while (k < 10 && a.every((x, i) => x.i === i)); return a; }
 
   function actionsBar() {
     const it = T.item;
     const bar = h('div', { class: 'actions', id: 'actions' });
     if (T.status === 'answering') {
-      const needBtn = (it.type || 'fields') !== 'fields' || A.buildMC(it).groups.length > 1;
+      const ty = it.type || 'fields';
+      const needBtn = ty === 'guided' ? false : ty !== 'fields' || A.buildMC(it).groups.length > 1;
       if (needBtn) bar.append(h('button', { class: 'btn primary', id: 'submitBtn', onclick: submit }, h('span', { html: IC.check }), 'Sprawdź'));
       bar.append(h('div', { class: 'spacer' }));
       bar.append(h('div', { class: 'life' },
@@ -732,19 +764,20 @@
     const fb = h('div', { class: 'feedback ' + (ok ? 'ok' : 'learn'), id: 'feedback', role: 'status' });
     const msgsOk = ['Świetnie!', 'Dokładnie tak!', 'Pięknie policzone!', 'Bezbłędnie!', 'Tak jest!', 'Znakomicie!'];
     if (ok) fb.append(h('h3', {}, h('span', { html: IC.check, style: 'width:22px;height:22px;display:grid' }), msgsOk[Math.floor(Math.random() * msgsOk.length)]));
-    else fb.append(h('h3', {}, h('span', { html: IC.bulb, style: 'width:22px;height:22px;display:grid' }), 'Zobacz, jak to policzyć'));
+    else fb.append(h('h3', {}, h('span', { html: IC.bulb, style: 'width:22px;height:22px;display:grid' }), type === 'guided' ? 'Dowód kompletny' : 'Zobacz, jak to policzyć'));
     if (ok && T.redeemed) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' zaliczony.'));
     if (!ok) {
-      if (T.mode === 'orig' && T.task.gen) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Rozwiąż podobny przykład — wtedy ten podpunkt się zaliczy.'));
+      if (T.mode === 'orig' && T.task.gen && type !== 'guided') fb.append(h('p', { style: 'margin:6px 0 0' }, 'Rozwiąż podobny przykład — wtedy ten podpunkt się zaliczy.'));
       const ans = h('div', { class: 'ans' }, h('b', {}, 'Poprawna odpowiedź:'));
       if (type === 'fields') { /* zaznaczona na zielono */ } else if (false) {
         if (it.check) ans.append(mdEl('div', it.showAns));
         else it.fields.forEach(f => ans.append(mdEl('div', '$' + (f.label ? f.label + ' = ' : '') + A.ansTex(f) + '$')));
       } else if (type === 'choice') it.choice.correct.forEach(i => ans.append(mdEl('div', it.choice.opts[i])));
-      else ans.append(h('ol', {}, it.order.steps.map(s => mdEl('li', s))));
-      if (type !== 'fields') fb.append(ans);
+      else if (type === 'order') ans.append(h('ol', {}, it.order.steps.map(s => mdEl('li', s))));
+      if (type !== 'fields' && type !== 'guided') fb.append(ans);
     }
-    const sol = it.sol || it.steps;
+    const sol = type === 'guided' ? null : (it.sol || it.steps);
+    if (type === 'guided' && !ok) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Cały dowód masz powyżej. Przejdź go jeszcze raz bez pomyłki, żeby zaliczyć podpunkt.'));
     if (sol && sol.length && (!ok || type !== 'order')) {
       const det = h('details', { open: !ok ? '' : null }, h('summary', { style: 'cursor:pointer;font-weight:600' }, ok ? 'Rozwiązanie' : 'Rozwiązanie krok po kroku'), h('ol', {}, sol.map(s => mdEl('li', s))));
       fb.append(det);
@@ -756,6 +789,7 @@
       const pBtn = cls => h('button', { class: 'btn ' + cls, onclick: startVariant }, h('span', { html: IC.dice }), 'Podobny przykład' + (canP ? ' (' + (n + 1) + '/3)' : ''));
       const nextBtn = cls => h('button', { class: 'btn ' + cls, onclick: goNext }, 'Dalej', h('span', { html: IC.next }));
       if (ok) { row.append(nextBtn('primary')); if (T.task.gen) row.append(pBtn('')); }
+      else if (type === 'guided') { row.append(h('button', { class: 'btn primary', onclick: () => { resetAttempt(); render(); } }, 'Spróbuj jeszcze raz')); row.append(nextBtn('')); }
       else { if (T.task.gen) row.append(pBtn('primary')); row.append(nextBtn(T.task.gen ? '' : 'primary')); }
     }
     fb.append(row);
