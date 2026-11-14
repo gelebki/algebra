@@ -564,17 +564,22 @@
   };
   AQ.niceAngle = function (t) { // t w radianach -> tex (mod 2pi, w [0,2pi))
     let u = t / Math.PI; u = ((u % 2) + 2) % 2;
+    if (u < 1e-9 || 2 - u < 1e-9) return '0';
     const r = ratApprox(u, 168);
     if (r) return AQ.angleTex(r[0], r[1]);
     return (Math.round(t * 1e4) / 1e4).toString();
   };
-  AQ.polarTex = function (z) {
-    const r = abs(z); let t = AQ.niceAngle(arg(z));
-    if (/\d\.\d/.test(t)) { // kąt „nieładny” — zapis przez arcus tangens
+  AQ.argTex = function (z) { // argument liczby z: dokładnie (kπ/n) albo przez arcus tangens
+    let t = AQ.niceAngle(arg(z));
+    if (/\d\.\d/.test(t)) {
       const q = niceReal(Math.abs(z.im / z.re));
       const at = '\\operatorname{arctg}' + (/^\d+$/.test(q) ? q : '\\left(' + q + '\\right)');
       t = z.re > 0 ? (z.im >= 0 ? at : '\\left(-' + at + '\\right)') : (z.im >= 0 ? '\\left(\\pi-' + at + '\\right)' : '\\left(\\pi+' + at + '\\right)');
     }
+    return t;
+  };
+  AQ.polarTex = function (z) {
+    const r = abs(z); const t = AQ.argTex(z);
     const rt = niceReal(r);
     return (rt === '1' ? '' : rt) + '\\left(\\cos ' + t + ' + i\\sin ' + t + '\\right)';
   };
