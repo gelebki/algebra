@@ -321,6 +321,10 @@ table.rank { width: 100%; border-collapse: collapse; font-size: 14px; min-width:
 .mc { display: grid; gap: 18px; margin-top: 18px; }
 .mcg { display: grid; gap: 8px; }
 .mcl { font-weight: 700; font-size: 15px; }
+.tab .short { display: none; }
+.mcopt .txt { display: flex; flex-wrap: wrap; align-items: baseline; row-gap: 4px; overflow: visible; }
+.mcopt .txt .part { white-space: nowrap; }
+.mcopt .txt .sep { margin-right: 12px; }
 .mcopt { gap: 14px; padding: 12px 14px; font-size: 16px; transition: border-color .12s, background .12s, transform .12s; }
 .mcopt:hover:not([disabled]) { border-color: #4f4f5a; background: #26262c; }
 .mcopt .letter { flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font: 700 13px var(--f-mono); background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
@@ -353,9 +357,69 @@ table.rank { width: 100%; border-collapse: collapse; font-size: 14px; min-width:
   .field { grid-template-columns: 1fr; gap: 4px; }
   .field > label { text-align: left; padding-top: 0; }
   .tab .lbl small { display: none; }
+  .tab .full { display: none; } .tab .short { display: inline; }
   .tab { padding: 8px 10px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+/* ---------- telefon: kompaktowe zakładki i nagłówek ---------- */
+@media (max-width: 640px) {
+  body { font-size: 14.5px; }
+  .top .wrap { gap: 8px; padding-block: 8px; }
+  .logo svg { width: 28px; height: 28px; }
+  .player { flex: 1; min-width: 0; gap: 8px; }
+  .lvl { width: 36px; height: 36px; font-size: 13px; }
+  .lvl svg { width: 36px; height: 36px; }
+  .xpbox { flex: 1; width: auto; min-width: 0; max-width: none; }
+  .xpbox .t { font-size: 11.5px; }
+  .chip { padding: 5px 8px; font-size: 12px; }
+  .iconbtn { width: 34px; height: 34px; border-radius: 10px; }
+  .spacer { display: none; }
+  .tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding-block: 10px 4px; overflow: visible; }
+  .tab { flex-direction: column; justify-content: center; gap: 4px; padding: 8px 2px 7px; min-width: 0; border-radius: 12px; text-align: center; }
+  .tab .ring, .tab .ring svg { width: 22px; height: 22px; }
+  .tab .lbl { min-width: 0; width: 100%; }
+  .tab .lbl b { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tab .lbl small { display: none; }
+  .hero { padding: 14px 0 4px; gap: 12px; }
+  .hero h1 { font-size: 24px; line-height: 1.15; }
+  .hero p { font-size: 13.5px; margin-top: 6px; }
+  .hero .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hero .acts .btn { padding: 10px 8px; font-size: 14px; }
+  .listbar { font-size: 12px; gap: 10px; }
+  .path { gap: 8px; padding: 16px 0 40px; }
+  .path svg.trail { display: none; }
+  .node { padding: 8px 12px 8px 8px; gap: 12px; border-radius: 12px; }
+  .node .disc { width: 50px; height: 50px; }
+  .node .disc svg { width: 50px; height: 50px; }
+  .node .disc b { font-size: 14px; }
+  .node .meta h3 { font-size: 14.5px; }
+  .node .meta small { font-size: 12px; }
+  .taskhead { padding: 10px 0 6px; gap: 10px; }
+  .taskhead h2 { font-size: 19px; }
+  .card { padding: 14px; border-radius: 14px; }
+  .question { font-size: 15.5px; }
+  .mcopt { padding: 10px 12px; font-size: 15px; gap: 10px; }
+  .mcopt .letter { width: 26px; height: 26px; }
+  .dots { gap: 5px; margin: 10px 0; }
+  .dot { min-width: 30px; height: 28px; }
+  .pdot { width: 28px; height: 28px; }
+  .feedback { padding: 14px; }
+  .feedback .row .btn { flex: 1; }
+  .kpi b { font-size: 24px; }
+  .mecard { padding: 12px 14px; }
+  .taskhead { flex-wrap: nowrap; }
+  .taskhead h2 { flex: 1; min-width: 0; font-size: 17px; line-height: 1.2; }
+  .taskhead .stars svg { width: 13px; height: 13px; }
+  .taskhead .iconbtn { flex: none; }
+  .dots { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; margin-inline: -2px; padding-inline: 2px; }
+  .dots::-webkit-scrollbar { display: none; }
+  .dot { flex: none; }
+  .statement { padding: 8px 12px; font-size: 13px; }
+}
+@media (max-width: 360px) {
+  .tab .lbl b { font-size: 10.5px; letter-spacing: -.01em; }
+  .tabs { gap: 4px; }
+}
 </style>
 </head>
 <body>
