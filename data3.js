@@ -69,7 +69,7 @@
     let W = [1, 0]; for (let k = 0; k < n; k++) W = Z.mul(W, w0);
     const Ws = Z.str(...W); const it = rootItem('', n, Ws);
     const wv = ev(Ws); const r = Cx.abs(wv), t = Cx.arg(wv);
-    it.steps = [T`Postać trygonometryczna: $${Z.tex(...W)}=${A.polarTex(wv)}$.`, T`Moduł pierwiastków: $\sqrt[${n}]{${A.niceReal(r)}}=${A.niceReal(Math.pow(r, 1 / n))}$; argumenty: $\frac{${A.niceAngle(t)}+2k\pi}{${n}}$, $k=0,\ldots,${n - 1}$.`, T`Wartości: $${showSet(Cx.allRoots(wv, n))}$.`, T`Kontrola: jedną wartością jest $${Z.tex(...w0)}$, bo $(${Z.tex(...w0)})^{${n}}=${Z.tex(...W)}$; pozostałe to jej obroty o $\frac{2\pi}{${n}}$.`];
+    it.steps = [T`Postać trygonometryczna: $${Z.tex(...W)}=${A.polarTex(wv)}$.`, T`Moduł pierwiastków: $\sqrt[${n}]{${A.niceReal(r)}}=${A.niceReal(Math.pow(r, 1 / n))}$; argumenty: $\frac{\varphi+2k\pi}{${n}}$, gdzie $\varphi=${A.argTex(wv)}$, $k=0,\ldots,${n - 1}$.`, T`Wartości: $${showSet(Cx.allRoots(wv, n))}$.`, T`Kontrola: jedną wartością jest $${Z.tex(...w0)}$, bo $(${Z.tex(...w0)})^{${n}}=${Z.tex(...W)}$; pozostałe to jej obroty o $\frac{2\pi}{${n}}$.`];
     return it;
   }
 
