@@ -778,7 +778,7 @@
     for (let k = 0; k < 7; k++) { const d = new Date(st); d.setDate(st.getDate() + k); w += (S.xpDays || {})[dkey(d)] || 0; }
     return w;
   }
-  const myName = () => S.name || ('Anon ' + ((window.AQRank && window.AQRank.meNo) || DEMO.meNo));
+  const myName = () => S.name || (window.AQRank ? (window.AQRank.meNo ? 'Anon ' + window.AQRank.meNo : 'Anon') : 'Anon ' + DEMO.meNo);
   function rankRows() {
     const P = window.AQRank;
     const wk = weekKey();
@@ -807,7 +807,16 @@
     const sec = h('section', { class: 'h-st' });
     const P = window.AQRank;
     if (P && P.status !== 'ready') {
-      sec.append(h('div', { class: 'hero' }, h('div', {}, h('h1', {}, 'Ranking'))), h('p', { class: 'muted' }, P.status === 'error' ? 'Ranking jest chwilowo niedostępny. Twoje wyniki zapisują się dalej na tym urządzeniu.' : 'Wczytywanie rankingu…'));
+      const sm = summary(), lv = levelInfo(S.xp), nm = myName();
+      sec.append(h('div', { class: 'hero' }, h('div', {}, h('h1', {}, 'Ranking'))));
+      sec.append(h('div', { class: 'mecard' }, avatar(nm), h('div', { class: 'mewho' }, h('b', {}, nm), h('small', {}, lv.title)),
+        h('button', { class: 'btn small', onclick: renameDialog }, 'Zmień nazwę'),
+        h('div', { class: 'mepos' }, h('small', {}, 'XP'), h('b', {}, String(S.xp)))));
+      const list = h('ol', { class: 'rlist' });
+      list.append(h('li', { class: 'rrow me' }, h('span', { class: 'rpos' }, '–'), avatar(nm),
+        h('div', { class: 'rwho' }, h('b', {}, nm, h('span', { class: 'you' }, 'Ty')), h('small', {}, lv.title + ' · ' + sm.solved + '/' + sm.total), h('div', { class: 'bar' }, h('i', { style: `width:${100 * sm.solved / sm.total}%` }))),
+        h('div', { class: 'rxp' }, h('b', {}, String(S.xp)), h('small', {}, 'XP'))));
+      sec.append(list, h('p', { class: 'demo-note' }, P.status === 'error' ? 'Wyniki innych graczy są chwilowo niedostępne.' : 'Wczytywanie wyników innych graczy…'));
       return sec;
     }
     const rows = rankRows();
