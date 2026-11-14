@@ -321,6 +321,15 @@ table.rank { width: 100%; border-collapse: collapse; font-size: 14px; min-width:
 .mc { display: grid; gap: 18px; margin-top: 18px; }
 .mcg { display: grid; gap: 8px; }
 .mcl { font-weight: 700; font-size: 15px; }
+.guided { display: grid; gap: 14px; margin-top: 16px; }
+.glabel { font: 600 11.5px var(--f-body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.gchain { margin: 0; padding: 12px 14px 12px 34px; display: grid; gap: 8px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.gchain li { padding-left: 2px; animation: pop .3s; }
+.gchain li::marker { color: var(--ok); font-weight: 700; }
+.gchain li.miss::marker { color: var(--accent); }
+.gstep { display: grid; gap: 8px; }
+.gq { font-weight: 600; font-size: 15.5px; margin-bottom: 2px; }
+.guided .mcopt .txt { display: block; }
 .tab .short { display: none; }
 .mcopt .txt { display: flex; flex-wrap: wrap; align-items: baseline; row-gap: 4px; overflow: visible; }
 .mcopt .txt .part { white-space: nowrap; }
@@ -439,6 +448,7 @@ window.MathJax = { tex: { packages: { '[+]': ['ams'] } }, svg: { fontCache: 'loc
 <script src="data1.js"></script>
 <script src="data2.js"></script>
 <script src="data3.js"></script>
+<script src="proofs.js"></script>
 <script src="wzory.js"></script>
 <script src="mc.js"></script>
 <script src="cloud.js"></script>
