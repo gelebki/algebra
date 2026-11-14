@@ -457,7 +457,7 @@
         h('span', { class: 'lbl' }, h('b', {}, L.title), h('small', {}, p.solved + '/' + p.total + ' podpunktów'))));
     });
     bar.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'stats' ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'stats', list: V.list }; S.tab = 'stats'; save(); setHash('stats'); render(); } },
-      h('span', { class: 'ring', html: IC.chart, style: 'color:var(--xp);display:grid;place-items:center' }), h('span', { class: 'lbl' }, h('b', {}, 'Statystyki'), h('small', {}, 'postępy i odznaki'))));
+      h('span', { class: 'ring', html: IC.chart, style: 'color:var(--xp);display:grid;place-items:center' }), h('span', { class: 'lbl' }, h('b', {}, h('span', { class: 'full' }, 'Statystyki'), h('span', { class: 'short' }, 'Postęp')), h('small', {}, 'postępy i odznaki'))));
     bar.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'rank' ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'rank', list: V.list }; setHash('ranking'); render(); } },
       h('span', { class: 'ring', html: IC.trophy, style: 'color:var(--xp);display:grid;place-items:center' }), h('span', { class: 'lbl' }, h('b', {}, 'Ranking'), h('small', {}, 'ze znajomymi'))));
     return bar;
@@ -599,7 +599,7 @@
         const b = h('button', { class: cls, role: 'radio', 'aria-checked': sel ? 'true' : 'false', disabled: done, onclick: () => {
           T.sel[gi] = oi; SFX.key();
           if (single) submit(); else box.replaceWith(mcUI(it));
-        } }, h('span', { class: 'letter' }, 'ABCD'[oi]), mdEl('span', '$' + o.tex + '$', { class: 'txt' }));
+        } }, h('span', { class: 'letter' }, 'ABCD'[oi]), mdEl('span', o.tex.split(',\\quad ').map(x => '<span class="part">$' + x + '$</span>').join('<span class="sep">, </span>'), { class: 'txt' }));
         if (done && sel) b.classList.add('picked');
         grp.append(b);
         if (done && sel && !o.ok && o.why) grp.append(mdEl('div', '<b>Skąd ten wynik:</b> ' + o.why, { class: 'why hit' }));
