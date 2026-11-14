@@ -597,7 +597,7 @@
         } }, h('span', { class: 'letter' }, 'ABCD'[oi]), mdEl('span', '$' + o.tex + '$', { class: 'txt' }));
         if (done && sel) b.classList.add('picked');
         grp.append(b);
-        if (done && !o.ok && o.why && !(g.opts[T.sel[gi]] || {}).ok) grp.append(mdEl('div', (sel ? '<b>Skąd ten wynik:</b> ' : '<b>' + 'ABCD'[oi] + ':</b> ') + o.why, { class: 'why' + (sel ? ' hit' : '') }));
+        if (done && sel && !o.ok && o.why) grp.append(mdEl('div', '<b>Skąd ten wynik:</b> ' + o.why, { class: 'why hit' }));
       });
       box.append(grp);
     });
