@@ -749,9 +749,9 @@
     else {
       const n = practiceN(), canP = !!T.task.gen && n < 3;
       const pBtn = cls => h('button', { class: 'btn ' + cls, onclick: startVariant }, h('span', { html: IC.dice }), 'Podobny przykład' + (canP ? ' (' + (n + 1) + '/3)' : ''));
-      if (!ok && T.mode === 'orig') { row.append(pBtn('primary')); row.append(h('button', { class: 'btn', onclick: goNext }, 'Dalej', h('span', { html: IC.next }))); }
-      else if (T.mode === 'var' && canP) { row.append(pBtn('primary')); row.append(h('button', { class: 'btn', onclick: goNext }, 'Dalej', h('span', { html: IC.next }))); }
-      else { row.append(h('button', { class: 'btn primary', onclick: goNext }, 'Dalej', h('span', { html: IC.next }))); if (T.task.gen) row.append(pBtn('')); }
+      const nextBtn = cls => h('button', { class: 'btn ' + cls, onclick: goNext }, 'Dalej', h('span', { html: IC.next }));
+      if (ok) { row.append(nextBtn('primary')); if (T.task.gen) row.append(pBtn('')); }
+      else { if (T.task.gen) row.append(pBtn('primary')); row.append(nextBtn(T.task.gen ? '' : 'primary')); }
     }
     fb.append(row);
     setTimeout(() => { const b = row.querySelector('button'); if (b) b.focus({ preventScroll: true }); }, 50);
