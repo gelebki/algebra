@@ -46,16 +46,17 @@
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
   /* ---------------- poziomy ---------------- */
-  // 15 poziomów; próg n-tego kroku = 160 + 25·(n−1) XP. Arcymistrz przy 4515 XP ≈ 91% podstawowego zestawu (4964 XP).
+  // Progi dopasowane do list: Lista 1 = 520 XP, Listy 1–2 = 1650 XP, wszystko = 2500 XP (250 podpunktów × 10).
+  // Arcymistrz przy 2300 XP ≈ 92% podstawowego zestawu; podobne przykłady przyspieszają drogę.
+  const LEVELS = [0, 80, 170, 270, 390, 510, 680, 860, 1050, 1250, 1460, 1700, 1900, 2100, 2300];
   const TITLES = ['Nowicjusz', 'Strażnik wymiernych', 'Pogromca niewymierności', 'Rachmistrz ℤₚ', 'Badacz działań', 'Budowniczy ciał',
     'Odkrywca liczby i', 'Mistrz sprzężenia', 'Treser trójmianów', 'Znawca trygonometrii', 'Nawigator płaszczyzny zespolonej',
     'Uczeń de Moivre’a', 'Władca potęg', 'Łowca pierwiastków', 'Arcymistrz algebry'];
   const MAXL = TITLES.length;
   function levelInfo(xp) {
-    let L = 1, acc = 0, need = 160;
-    while (L < MAXL && xp >= acc + need) { acc += need; L++; need = 160 + 25 * (L - 1); }
-    const max = L === MAXL;
-    return { L, max, into: max ? 1 : xp - acc, need: max ? 1 : need, title: TITLES[L - 1] };
+    let L = 1; while (L < MAXL && xp >= LEVELS[L]) L++;
+    const max = L === MAXL, acc = LEVELS[L - 1];
+    return { L, max, into: max ? 1 : xp - acc, need: max ? 1 : LEVELS[L] - acc, title: TITLES[L - 1] };
   }
   const xpText = lv => (lv.max ? 'poziom maksymalny' : lv.into + '/' + lv.need + ' XP');
 
@@ -283,28 +284,32 @@
     if (ok) {
       S.correct++;
       if (type === 'order') S.proofs++;
+      // XP: oryginał za pierwszym razem 10; pierwsze 3 podobne do podpunktu po 6, każdy kolejny 1
       let xp;
+      S.tried = S.tried || {}; S.pc = S.pc || {};
       if (isOrig) {
         const prev = S.items[T.origKey];
-        const clean = !T.usedW && !T.usedP && !T.tried;
+        const first = !prev && !S.tried[T.origKey];
         if (!prev) S.items[T.origKey] = 'done';
-        if (clean && !prev) S.clean++;
-        xp = type === 'choice' ? 14 : 20;
-        if (T.usedW) xp -= 5; if (T.usedP) xp -= 7; xp = Math.max(4, xp);
-        if (prev) xp = Math.max(3, Math.round(xp / 3));
+        if (first && !T.usedW && !T.usedP) S.clean++;
+        xp = prev ? 1 : first ? 10 : 6;
       } else {
         S.variants++;
-        xp = 10 - (T.usedW ? 3 : 0) - (T.usedP ? 4 : 0);
-        if (T.mode === 'var') { S.practice = S.practice || {}; S.practice[T.origKey] = Math.min(3, (S.practice[T.origKey] || 0) + 1); if (S.practice[T.origKey] === 3) setTimeout(() => { toast('Seria podobnych ukończona', 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' opanowany', 'star'); SFX.star(); }, 900); }
-        if (T.mode === 'var' && !S.items[T.origKey]) { S.items[T.origKey] = 'done'; T.redeemed = true; }
-        if (T.mode === 'quick') T.quick.score++;
+        if (T.mode === 'var') {
+          const k = S.pc[T.origKey] || 0;
+          xp = k < 3 ? 6 : 1;
+          S.pc[T.origKey] = k + 1;
+          S.practice = S.practice || {}; S.practice[T.origKey] = Math.min(3, k + 1);
+          if (k + 1 === 3) setTimeout(() => { toast('Seria podobnych ukończona', 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' opanowany', 'star'); SFX.star(); }, 900);
+          if (!S.items[T.origKey]) { S.items[T.origKey] = 'done'; T.redeemed = true; }
+        } else { xp = 3; T.quick.score++; }
       }
-      gainXP(Math.max(3, xp), $('#card .opt.picked') || $('#submitBtn') || $('#card'));
+      gainXP(xp, $('#card .opt.picked') || $('#submitBtn') || $('#card'));
       SFX.correct();
       const r = $('#card') ? $('#card').getBoundingClientRect() : null;
       confetti(T.mode === 'quick' ? 30 : 55, r ? r.left + r.width / 2 : undefined, r ? r.top + 80 : undefined, 0.9);
     } else {
-      if (isOrig) T.tried = true;
+      if (isOrig) { T.tried = true; S.tried = S.tried || {}; if (!S.items[T.origKey]) S.tried[T.origKey] = true; }
       SFX.wrong();
     }
     checkBadges(); save();
