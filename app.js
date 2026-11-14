@@ -782,7 +782,7 @@
   function rankRows() {
     const P = window.AQRank;
     const wk = weekKey();
-    const others = P ? P.rows().filter(r => r.id !== P.uid).map(r => Object.assign({}, r, { week: r.weekKey === wk ? (r.week || 0) : 0 })) : DEMO.others;
+    const others = P ? P.rows().filter(r => r.id !== P.uid && r.xp > 0).map(r => Object.assign({}, r, { week: r.weekKey === wk ? (r.week || 0) : 0 })) : DEMO.others;
     const sm = summary();
     const me = { id: 'me', me: true, name: myName(), xp: S.xp, solved: sm.solved, week: myWeekXP() };
     return [...others, me];
