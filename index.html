@@ -1,17 +1,5 @@
-<!doctype html>
-<html lang="pl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#121214">
-<meta name="description" content="Trening z Algebry Liniowej I — listy 1–3, poziomy, odznaki i ranking ze znajomymi.">
-<meta property="og:title" content="Algebrownia">
-<meta property="og:description" content="Trening z Algebry Liniowej I — listy 1–3, poziomy, odznaki i ranking ze znajomymi.">
-<meta property="og:type" content="website">
-<meta property="og:image" content="https://gelebki.github.io/algebra/og.png">
-<meta property="og:url" content="https://gelebki.github.io/algebra/">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f0b65a'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%231a1408' stroke-width='2.5'/%3E%3Cpath d='M16 16l5.5-5.5' stroke='%231a1408' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <title>Algebrownia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -429,9 +417,73 @@ table.rank { width: 100%; border-collapse: collapse; font-size: 14px; min-width:
   .tab .lbl b { font-size: 10.5px; letter-spacing: -.01em; }
   .tabs { gap: 4px; }
 }
+
+/* ---------- szlif 3: tło, treść zadania, wzory z wyprowadzeniami, dowody ---------- */
+body { background-image: radial-gradient(900px 420px at 50% -160px, rgba(240, 182, 90, .07), transparent 70%); background-repeat: no-repeat; }
+.card { border-radius: 18px; background: linear-gradient(180deg, #1c1c21, var(--surface) 140px); box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, var(--shadow); }
+.btn.primary { box-shadow: 0 1px 0 rgba(255, 255, 255, .25) inset, 0 8px 20px -12px rgba(240, 182, 90, .7); }
+.question { font-size: 17px; }
+
+.statement { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 12px; padding: 12px 16px; background: var(--surface); color: var(--ink); font-size: 14.5px; line-height: 1.6; margin: 4px 0 2px; }
+.statement .slabel { font: 600 11.5px var(--f-body); text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 4px; }
+.statement .stx { overflow-x: auto; color: #d6d6dc; }
+
+.dnote { margin: 0; font-size: 13.5px; color: var(--muted); }
+.drawer .body { grid-auto-rows: max-content; grid-template-columns: minmax(0, 1fr); }
+.formula, .frow, .fwhy { min-width: 0; }
+.ftx mjx-container:not([display="true"]), .fwhy mjx-container:not([display="true"]), .gl mjx-container:not([display="true"]), .solsteps mjx-container:not([display="true"]), .exstep mjx-container:not([display="true"]) { margin-block: 5px; }
+.formula { padding: 0; overflow: visible; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; }
+.frow { display: flex; align-items: flex-start; gap: 10px; padding: 12px 12px 12px 14px; }
+.ftx { flex: 1; min-width: 0; overflow-x: auto; line-height: 1.75; }
+.qbtn { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); font: 700 14px var(--f-display); display: inline-grid; place-items: center; padding: 0; transition: background .15s, color .15s, transform .12s; }
+.qbtn:hover { background: var(--accent-soft); transform: scale(1.08); }
+.qbtn[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); }
+.qbtn.mini { width: 18px; height: 18px; font-size: 11px; vertical-align: -3px; border-width: 1.2px; }
+.fwhy { border-radius: 0 0 14px 14px; border-top: 1px dashed var(--line); padding: 12px 14px 14px; background: rgba(240, 182, 90, .045); animation: pop .25s; }
+.fwhy ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 8px; font-size: 14px; line-height: 1.65; }
+.fwhy li::marker { color: var(--accent); font-weight: 700; font-size: 12px; }
+.fwhy li { overflow-x: auto; padding-left: 2px; }
+
+.gidea { border-radius: 14px; padding: 12px 16px; background: var(--accent-soft); border: 1px solid rgba(240, 182, 90, .28); font-size: 14.5px; line-height: 1.65; }
+.gidea .glabel { color: var(--accent); display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.gidea .glabel svg { width: 15px; height: 15px; }
+.gprog { display: flex; gap: 5px; }
+.gprog i { flex: 1; height: 5px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); transition: background .3s; }
+.gprog i.on { background: var(--ok); border-color: transparent; }
+.gprog i.cur { background: var(--accent); border-color: transparent; }
+.gchain { padding: 6px 0; margin: 0; display: grid; gap: 0; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }
+.gline { display: flex; gap: 12px; padding: 10px 14px; min-width: 0; }
+.gline + .gline { border-top: 1px solid var(--line); }
+.gline.new { animation: pop .35s; background: var(--ok-bg); }
+.gline .n { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--f-mono); background: var(--ok); color: #0d2217; margin-top: 2px; }
+.gbody { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.gg { font: 600 11.5px var(--f-body); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.gl { overflow-x: auto; line-height: 1.7; }
+.gwhy { font-size: 13.5px; color: var(--muted); line-height: 1.55; overflow-x: auto; }
+.gwhy::before { content: "Dlaczego: "; color: var(--accent); font-weight: 600; }
+.gchain.clean .gwhy, .gchain.clean .gg { display: none; }
+.gchain.clean .gline .n { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.glabel.hl { color: var(--accent); }
+.gstep { padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, .015); }
+.gq { font-size: 16px; line-height: 1.6; }
+.question, .gq, .gidea > div { overflow-x: auto; overflow-y: hidden; }
+
+.solsteps { list-style: none; counter-reset: s; padding: 0 !important; margin: 10px 0 !important; gap: 0 !important; }
+.solsteps li { counter-increment: s; position: relative; padding: 8px 0 8px 38px; overflow-x: auto; line-height: 1.7; }
+.solsteps li + li { border-top: 1px solid var(--line); }
+.solsteps li::before { content: counter(s); position: absolute; left: 0; top: 10px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--f-mono); background: var(--surface); border: 1px solid var(--line); color: var(--accent); }
+.feedback details > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--accent); }
+.feedback details > summary::-webkit-details-marker { display: none; }
+.feedback details > summary::after { content: "▾"; font-size: 12px; }
+.feedback details[open] > summary::after { content: "▴"; }
+.exstep { border-left: 0; border: 1px solid var(--line); }
+.exstep .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); padding: 0; }
+@media (max-width: 640px) {
+  .statement { padding: 10px 12px; font-size: 14px; }
+  .gline { padding: 10px; gap: 9px; } .gstep { padding: 10px; }
+  .solsteps li { padding-left: 32px; }
+}
 </style>
-</head>
-<body>
 
 <div id="app"><div class="loading">Ładowanie Algebrowni…</div></div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -440,18 +492,12 @@ table.rank { width: 100%; border-collapse: collapse; font-size: 14px; min-width:
 window.MathJax = { tex: { packages: { '[+]': ['ams'] } }, svg: { fontCache: 'local' }, startup: { typeset: false } };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async id="mjx"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js"></script>
 <script src="engine.js"></script>
+<script src="explain.js"></script>
 <script src="data1.js"></script>
 <script src="data2.js"></script>
 <script src="data3.js"></script>
 <script src="proofs.js"></script>
 <script src="wzory.js"></script>
 <script src="mc.js"></script>
-<script src="cloud.js"></script>
 <script src="app.js"></script>
-</body>
-</html>
