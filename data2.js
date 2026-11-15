@@ -9,6 +9,7 @@
   const exprItem = (label, expr, gk, extra = {}) => Object.assign({
     label, gk, q: T`Przedstaw w postaci algebraicznej $a+bi$: $$${qtex(expr)}$$`,
     fields: [{ label: 'z', ans: expr, restrict: ['alg'] }],
+    sol: A.autoSol(expr),
   }, extra);
 
   /* ---------- 2.1 generatory ---------- */
@@ -92,7 +93,11 @@
   const pairItem = (label, Ps, Qs, Ss, qtx) => ({
     label, gk: 'pair', q: T`Wyznacz wszystkie pary liczb rzeczywistych $x,y$: $$${qtx}$$`,
     fields: [0, 1].map(i => ({ label: i ? 'y' : 'x', ans: () => Cx.C(solve2(ev(Ps), ev(Qs), ev(Ss))[i]) })),
-    sol: [T`Upraszczamy współczynniki: przy $x$: $${nice(ev(Ps))}$, przy $y$: $${nice(ev(Qs))}$.`, 'Porównujemy części rzeczywiste i urojone obu stron — dostajemy układ dwóch równań z niewiadomymi rzeczywistymi.'],
+    sol: (() => { const P = ev(Ps), Q = ev(Qs), S0 = ev(Ss), [x, y] = solve2(P, Q, S0); const n = A.niceReal, f = t => t.replace(/\+ -/g, '- ').replace(/(^|[^0-9])1([xy])/g, '$1$2');
+      return [T`Najpierw zapisujemy współczynniki w postaci $a+bi$: przy $x$ stoi $${nice(P)}$, przy $y$ stoi $${nice(Q)}$.`,
+        T`$x,y$ są rzeczywiste, więc lewa strona to $\left(${f(n(P.re) + 'x + ' + n(Q.re) + 'y')}\right)+\left(${f(n(P.im) + 'x + ' + n(Q.im) + 'y')}\right)i$.`,
+        T`Dwie liczby zespolone są równe, gdy mają równe części rzeczywiste i urojone: $$\begin{cases}${f(n(P.re) + 'x + ' + n(Q.re) + 'y')}=${n(S0.re)}\\${f(n(P.im) + 'x + ' + n(Q.im) + 'y')}=${n(S0.im)}\end{cases}$$`,
+        T`Rozwiązujemy układ (np. metodą podstawiania): <b>$x=${n(Math.abs(x) < 1e-12 ? 0 : x)}$, $y=${n(Math.abs(y) < 1e-12 ? 0 : y)}$</b>.`]; })(),
   });
   function gen24() {
     for (;;) {
@@ -119,7 +124,11 @@
   const sysItem = (label, c, tex) => ({
     label, gk: 'sys', q: T`Rozwiąż w liczbach zespolonych: $$${tex}$$`,
     fields: [0, 1].map(i => ({ label: T`z_${i + 1}`, ans: () => cramer(...c)[i], restrict: ['alg'] })),
-    sol: [T`Wzory Cramera: $W=a_{11}a_{22}-a_{12}a_{21}$, $z_1=\frac{W_1}{W}$, $z_2=\frac{W_2}{W}$ (lub eliminacja).`],
+    sol: (() => { const [A11, A12, B1, A21, A22, B2] = c.map(ev); const W = Cx.sub(Cx.mul(A11, A22), Cx.mul(A12, A21)), W1 = Cx.sub(Cx.mul(B1, A22), Cx.mul(A12, B2)), W2 = Cx.sub(Cx.mul(A11, B2), Cx.mul(B1, A21)); const [z1, z2] = cramer(...c);
+      return [T`Wyznacznik główny (współczynniki przy $z_1,z_2$): $W=a_{11}a_{22}-a_{12}a_{21}=${nice(W)}$. Jest różny od zera, więc układ ma dokładnie jedno rozwiązanie.`,
+        T`$W_1$ — pierwszą kolumnę zastępujemy prawymi stronami: $W_1=b_1a_{22}-a_{12}b_2=${nice(W1)}$.`,
+        T`$W_2$ — drugą kolumnę zastępujemy prawymi stronami: $W_2=a_{11}b_2-b_1a_{21}=${nice(W2)}$.`,
+        T`<b>$z_1=\frac{W_1}{W}=${nice(z1)}$, $\ z_2=\frac{W_2}{W}=${nice(z2)}$</b> (dzielimy, mnożąc przez sprzężenie mianownika).`]; })(),
   });
   function gen25(gk) {
     if (gk === 'sing') {
@@ -155,7 +164,10 @@
   const quadItem = (label, a, b, c, tex, gk = 'quad') => ({
     label, gk, q: T`Rozwiąż w $\mathbb C$: $$${tex}$$`,
     fields: [{ label: 'z', kind: 'set', ans: () => quadRoots(a, b, c), restrict: ['alg'] }], keys: [';'],
-    sol: [T`$\Delta=b^2-4ac=${nice((() => { const [Aa, B, Cc] = [a, b, c].map(ev); return Cx.sub(Cx.mul(B, B), Cx.mul(Cx.C(4), Cx.mul(Aa, Cc))); })())}$.`, T`$\sqrt\Delta$: szukamy $(x+iy)^2=\Delta$, tzn. $x^2-y^2=\operatorname{Re}\Delta$, $2xy=\operatorname{Im}\Delta$.`, T`$z_{1,2}=\frac{-b\pm\sqrt\Delta}{2a}$.`],
+    sol: (() => { const [Aa, B, Cc] = [a, b, c].map(ev); const D = Cx.sub(Cx.mul(B, B), Cx.mul(Cx.C(4), Cx.mul(Aa, Cc))); const sD = Cx.nroot(D, 2); const [r1, r2] = quadRoots(a, b, c);
+      return [T`Współczynniki: $a=${nice(Aa)}$, $b=${nice(B)}$, $c=${nice(Cc)}$. Wyróżnik: $\Delta=b^2-4ac=${nice(D)}$.`,
+        Cx.isReal(D) ? T`$\Delta$ jest liczbą rzeczywistą ${D.re < 0 ? 'ujemną' : 'nieujemną'}, więc $\sqrt\Delta=${nice(sD)}$${D.re < 0 ? T` (bo $(${nice(sD)})^2=${nice(D)}$)` : ''}.` : T`Szukamy $\sqrt\Delta=x+iy$: z $(x+iy)^2=${nice(D)}$ mamy $x^2-y^2=${A.niceReal(D.re)}$, $2xy=${A.niceReal(D.im)}$, a dodatkowo $x^2+y^2=|\Delta|=${A.niceReal(Cx.abs(D))}$. Stąd $x^2=${A.niceReal((Cx.abs(D) + D.re) / 2)}$, $y^2=${A.niceReal((Cx.abs(D) - D.re) / 2)}$; znaki dobieramy tak, by $2xy=${A.niceReal(D.im)}$: $\sqrt\Delta=${nice(sD)}$.`,
+        T`$z_{1,2}=\frac{-b\pm\sqrt\Delta}{2a}$: <b>$z_1=${nice(r1)}$, $z_2=${nice(r2)}$</b>.`]; })(),
   });
   function sqrtSteps(w, r) { return T`Szukamy $x+iy$: $(x+iy)^2=${Z.tex(...w)}$, czyli $x^2-y^2=${w[0]}$, $2xy=${w[1]}$; dodatkowo $x^2+y^2=|${Z.tex(...w)}|=${Math.round(Math.sqrt(Z.n2(w)))}$. Stąd $\pm(${Z.tex(...r)})$.`; }
   function gen26(gk) {
@@ -275,29 +287,51 @@
     return {
       label: label || '$' + at + '$', gk: 'trig', q: T`Wyznacz wartości funkcji trygonometrycznych dla kąta $${at}$.`,
       fields: FN.map(([f, ft]) => { const v = TR[f](t); return { label: ft + ' ' + (at.length > 3 ? '\\left(' + at + '\\right)' : at), ans: v === null ? 'brak' : Cx.C(Math.abs(v) < 1e-12 ? 0 : v), allowBrak: true, restrict: ['notrig'] }; }),
-      keys: ['brak'],
+      keys: ['brak'], sol: trigSteps(p, q),
     };
   }
   function gen212() { const q = R.pick([6, 4, 3, 2, 6, 4]); const p = R.int(-q, 3 * q); return Object.assign(trigItem(p, q), { steps: trigSteps(p, q) }); }
   function gen214() { const q = R.pick([12, 8]); let p; do { p = R.int(1, 2 * q - 1); } while (A.gcd(p, q) !== 1); return Object.assign(trigItem(p, q), { steps: trigSteps(p, q) }); }
   function trigSteps(p, q) {
     const t = p * Math.PI / q; let u = ((t % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-    const quad = Math.floor(u / (Math.PI / 2) + 1e-9) + 1;
+    const quadN = Math.min(4, Math.floor(u / (Math.PI / 2) + 1e-9) + 1), quad = ['I', 'II', 'III', 'IV'][quadN - 1];
     const ref = Math.min(u % Math.PI, Math.PI - (u % Math.PI));
-    const rr = A.ratApprox(ref / Math.PI, 48);
-    return [T`Sprowadzamy kąt do przedziału $[0,2\pi)$: $${A.niceAngle(t)}$ — ćwiartka ${['I', 'II', 'III', 'IV', 'IV'][quad - 1]}.`,
-      T`Kąt odniesienia: $${rr ? A.angleTex(rr[0], rr[1]) : ref.toFixed(3)}$. Znaki: „w pierwszej wszystkie, w drugiej sinus, w trzeciej tangens i cotangens, w czwartej cosinus”.`,
-      T`$\sin=${A.niceReal(Math.sin(t))}$, $\cos=${A.niceReal(Math.cos(t))}$${TR.tg(t) === null ? ', tg nieokreślony' : T`, $\operatorname{tg}=${A.niceReal(TR.tg(t))}$`}${TR.ctg(t) === null ? ', ctg nieokreślony' : T`, $\operatorname{ctg}=${A.niceReal(TR.ctg(t))}$`}.`];
+    const rr = A.ratApprox(ref / Math.PI, 48) || [0, 1]; const refT = A.angleTex(rr[0], rr[1]);
+    const n = A.niceReal, out = [];
+    const onAxis = Math.abs(ref) < 1e-9 || Math.abs(ref - Math.PI / 2) < 1e-9;
+    if (Math.abs(u - t) > 1e-9) out.push(T`Funkcje trygonometryczne powtarzają się co $2\pi$, więc zamiast $${A.angleTex(p, q)}$ bierzemy kąt $${A.niceAngle(t)}$.`);
+    if (onAxis) out.push(T`Kąt $${A.niceAngle(t)}$ wyznacza punkt na osi układu: $(\cos,\sin)=(${n(Math.cos(t))},\,${n(Math.sin(t))})$ na okręgu jednostkowym.`);
+    else {
+      out.push(T`Kąt $${A.niceAngle(t)}$ leży w ćwiartce ${quad}. Jego kąt odniesienia (kąt ostry do osi poziomej) to $${refT}$.`);
+      const den = rr[1];
+      if (den === 12) out.push(rr[0] === 1 ? T`$\frac{\pi}{12}=\frac\pi3-\frac\pi4$, więc ze wzorów na różnicę: $\sin\frac{\pi}{12}=\frac{\sqrt3}{2}\cdot\frac{\sqrt2}{2}-\frac12\cdot\frac{\sqrt2}{2}=\frac{\sqrt6-\sqrt2}{4}$, $\ \cos\frac{\pi}{12}=\frac12\cdot\frac{\sqrt2}{2}+\frac{\sqrt3}{2}\cdot\frac{\sqrt2}{2}=\frac{\sqrt6+\sqrt2}{4}$.`
+        : T`$\frac{5\pi}{12}=\frac\pi2-\frac{\pi}{12}$, więc sinus i cosinus zamieniają się rolami: $\sin\frac{5\pi}{12}=\cos\frac{\pi}{12}=\frac{\sqrt6+\sqrt2}{4}$, $\ \cos\frac{5\pi}{12}=\sin\frac{\pi}{12}=\frac{\sqrt6-\sqrt2}{4}$.`);
+      else if (den === 8) out.push(rr[0] === 1 ? T`$\frac\pi8$ to połowa $\frac\pi4$. Z $\cos2\alpha=2\cos^2\alpha-1$: $\cos^2\frac\pi8=\frac{1+\cos\frac\pi4}{2}=\frac{2+\sqrt2}{4}$, więc $\cos\frac\pi8=\frac{\sqrt{2+\sqrt2}}{2}$; podobnie $\sin^2\frac\pi8=\frac{1-\cos\frac\pi4}{2}$, czyli $\sin\frac\pi8=\frac{\sqrt{2-\sqrt2}}{2}$.`
+        : T`$\frac{3\pi}{8}=\frac\pi2-\frac\pi8$, więc sinus i cosinus zamieniają się rolami: $\sin\frac{3\pi}{8}=\cos\frac\pi8=\frac{\sqrt{2+\sqrt2}}{2}$, $\ \cos\frac{3\pi}{8}=\sin\frac\pi8=\frac{\sqrt{2-\sqrt2}}{2}$.`);
+      else out.push(T`Z tabelki dla kąta $${refT}$: $\sin${refT.length > 3 ? '' : ' '}${refT}=${n(Math.sin(ref))}$, $\ \cos ${refT}=${n(Math.cos(ref))}$.`);
+      out.push(T`Znaki w ćwiartce ${quad}: $\sin$ jest ${Math.sin(t) > 0 ? 'dodatni' : 'ujemny'}, $\cos$ jest ${Math.cos(t) > 0 ? 'dodatni' : 'ujemny'}. Zatem $\sin=${n(Math.sin(t))}$, $\cos=${n(Math.cos(t))}$.`);
+    }
+    out.push((TR.tg(t) === null ? T`$\operatorname{tg}=\frac{\sin}{\cos}$ nie istnieje, bo $\cos=0$` : T`$\operatorname{tg}=\frac{\sin}{\cos}=${n(TR.tg(t))}$`) + '; ' + (TR.ctg(t) === null ? T`$\operatorname{ctg}=\frac{\cos}{\sin}$ nie istnieje, bo $\sin=0$.` : T`$\operatorname{ctg}=\frac{\cos}{\sin}=${n(TR.ctg(t))}$.`));
+    return out;
   }
   function angleFromItem(p, q, label) {
     const t = p * Math.PI / q;
     return { label, gk: 'ang', q: T`Wyznacz miarę kąta $\alpha\in[0,2\pi)$, wiedząc, że $$\sin\alpha=${A.niceReal(Math.sin(t))},\qquad\cos\alpha=${A.niceReal(Math.cos(t))}.$$`,
-      fields: [{ label: '\\alpha', kind: 'angle', ans: Cx.C(t), restrict: ['notrig'] }], keys: ['pi'] };
+      fields: [{ label: '\\alpha', kind: 'angle', ans: Cx.C(t), restrict: ['notrig'] }], keys: ['pi'], sol: angSteps(p, q) };
+  }
+  function angSteps(p, q) {
+    const t = p * Math.PI / q, u = ((t % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI); const ref = Math.min(u % Math.PI, Math.PI - (u % Math.PI)); const rr = A.ratApprox(ref / Math.PI, 48);
+    const s = Math.sin(t) > 0, c = Math.cos(t) > 0; const quad = s && c ? 'I' : s ? 'II' : !c ? 'III' : 'IV';
+    return [T`Znaki: $\sin\alpha${s ? '>' : '<'}0$ i $\cos\alpha${c ? '>' : '<'}0$, więc kąt leży w ćwiartce ${quad}.`,
+      T`Podwajamy kąt, żeby pozbyć się „piętrowych” pierwiastków: $\cos2\alpha=\cos^2\alpha-\sin^2\alpha=${A.niceReal(Math.cos(2 * t))}$, $\ \sin2\alpha=2\sin\alpha\cos\alpha=${A.niceReal(Math.sin(2 * t))}$.`,
+      T`To wartości z tabelki: $2\alpha=${A.niceAngle(2 * t)}$ (z dokładnością do pełnych obrotów), czyli kąt odniesienia dla $\alpha$ to $${A.angleTex(rr[0], rr[1])}$.`,
+      T`W ćwiartce ${quad}: <b>$\alpha=${A.niceAngle(t)}$</b>.`];
   }
   function gen215() {
     const q = R.pick([12, 8, 12]); let p; do { p = R.int(1, 2 * q - 1); } while (A.gcd(p, q) !== 1);
     const it = angleFromItem(p, q, '');
     const t = p * Math.PI / q, u = ((t % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI); const ref = Math.min(u % Math.PI, Math.PI - (u % Math.PI)); const rr = A.ratApprox(ref / Math.PI, 48);
+    it.steps = angSteps(p, q); return it;
     it.steps = [T`Znaki: $\sin\alpha${Math.sin(t) > 0 ? '>' : '<'}0$, $\cos\alpha${Math.cos(t) > 0 ? '>' : '<'}0$ — wyznacza to ćwiartkę.`, T`Rozpoznajemy kąt odniesienia z wartości bezwzględnych: $${A.angleTex(rr[0], rr[1])}$ (np. przez $\cos2\alpha=\cos^2\alpha-\sin^2\alpha$, $\sin2\alpha=2\sin\alpha\cos\alpha$).`, T`Wynik: $\alpha=${A.niceAngle(t)}$.`];
     return it;
   }
@@ -405,7 +439,7 @@
         ],
       },
       {
-        id: '2.7', name: 'Tożsamości z modułem', statement: T`Udowodnić: $|z_1+z_2|^2+|z_1-z_2|^2=2(|z_1|^2+|z_2|^2)$; $|1+z_1\overline{z_2}|^2+|z_1-z_2|^2=(1+|z_1|^2)(1+|z_2|^2)$; oraz tożsamość 7.3 dla trzech liczb.`,
+        id: '2.7', name: 'Tożsamości z modułem', statement: T`Udowodnić, że dla dowolnych liczb zespolonych $z_1,z_2,z_3$: $$|z_1+z_2|^2+|z_1-z_2|^2=2\left(|z_1|^2+|z_2|^2\right)\quad(7.1)$$ $$|1+z_1\overline{z_2}|^2+|z_1-z_2|^2=\left(1+|z_1|^2\right)\left(1+|z_2|^2\right)\quad(7.2)$$ $$|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2=4\left(|z_1|^2+|z_2|^2+|z_3|^2\right)\quad(7.3)$$`,
         wzory: [T`$|w|^2=w\overline w$.`, T`$\overline{z_1\pm z_2}=\overline{z_1}\pm\overline{z_2}$, $\overline{z_1z_2}=\overline{z_1}\,\overline{z_2}$, $\overline{\overline z}=z$.`, T`$z\overline w+\overline zw=2\operatorname{Re}(z\overline w)$ — wyrazy mieszane.`],
         gen: gen27, proof: true,
         items: [
@@ -428,7 +462,10 @@
       {
         id: '2.9', name: 'Iloczyn sum dwóch kwadratów', statement: 'Korzystając z własności modułu wykazać, że iloczyn dwóch liczb całkowitych, z których każda jest sumą kwadratów dwóch liczb całkowitych, też jest sumą kwadratów dwóch liczb całkowitych.',
         wzory: [T`$a^2+b^2=|a+bi|^2$.`, T`$|z_1z_2|=|z_1|\,|z_2|$.`, T`$(a+bi)(c+di)=(ac-bd)+(ad+bc)i$ — tożsamość Brahmagupty.`],
-        gen: () => { const [a, b, c, d] = [R.int(1, 5), R.int(1, 5), R.int(1, 6), R.int(1, 6)]; const it = sumsqItem('', a, b, c, d); it.steps = it.sol; return it; },
+        gen: () => { for (;;) { const [a, b, c, d] = [R.int(1, 5), R.int(1, 5), R.int(1, 6), R.int(1, 6)]; const N = (a * a + b * b) * (c * c + d * d);
+          const ds = [[a * c + b * d, a * d + b * c], [a * c, b * d], [a + c, b + d]]; const key = v => Math.min(...v.map(Math.abs)) + ',' + Math.max(...v.map(Math.abs));
+          if (ds.some(v => v[0] * v[0] + v[1] * v[1] === N) || new Set(ds.map(key)).size < 3 || a * c === b * d) continue;
+          const it = sumsqItem('', a, b, c, d); it.steps = it.sol; return it; } },
         items: [
           { label: 'dowód', type: 'order', gk: 'n', q: 'Ułóż dowód.', order: proof9 },
           sumsqItem('1·', 1, 2, 3, 4), sumsqItem('2·', 2, 3, 1, 4),
@@ -447,9 +484,9 @@
         wzory: [T`$\pi\ \text{rad}=180^\circ$.`, T`$\alpha^\circ=\alpha\cdot\frac{\pi}{180}$ rad, $\ x\ \text{rad}=x\cdot\frac{180^\circ}{\pi}$.`],
         gen: () => { const deg = Math.random() < 0.5; const dd = R.shuffle([10, 18, 24, 30, 36, 40, 50, 135, 140, 150, 160, 225, 240, 330]).slice(0, 4); return deg ? { q: 'Wyraź w radianach.', keys: ['pi'], fields: dd.map(d => ({ label: d + '^\\circ', ans: d + 'pi/180', restrict: ['notrig'], show: A.angleTex(d, 180) })), steps: [T`Mnożymy przez $\frac{\pi}{180}$ i skracamy, np. $${dd[0]}^\circ=\frac{${dd[0]}\pi}{180}=${A.niceAngle(dd[0] * Math.PI / 180)}$.`] } : { q: 'Wyraź w stopniach.', fields: dd.map(d => ({ label: A.niceAngle(d * Math.PI / 180), ans: String(d), restrict: ['plain'] })), steps: [T`Zamieniamy $\pi$ na $180^\circ$, np. $${A.niceAngle(dd[0] * Math.PI / 180)}=${dd[0]}^\circ$.`] }; },
         items: [
-          { label: '11.1', q: 'Wyraź w stopniach.', fields: [[1, 6], [1, 5], [3, 4], [5, 6], [5, 4], [4, 3], [11, 6]].map(([p, q]) => ({ label: A.angleTex(p, q), ans: String(180 * p / q), restrict: ['plain'] })) },
-          { label: '11.2a', q: 'Wyraź w radianach.', keys: ['pi'], fields: [15, 20, 45, 75, 60, 90].map(d => ({ label: d + '^\\circ', ans: d + 'pi/180', restrict: ['notrig'], show: A.angleTex(d, 180) })) },
-          { label: '11.2b', q: 'Wyraź w radianach.', keys: ['pi'], fields: [100, 120, 210, 300, 315, 270].map(d => ({ label: d + '^\\circ', ans: d + 'pi/180', restrict: ['notrig'], show: A.angleTex(d, 180) })) },
+          { label: '11.1', q: 'Wyraź w stopniach.', fields: [[1, 6], [1, 5], [3, 4], [5, 6], [5, 4], [4, 3], [11, 6]].map(([p, q]) => ({ label: A.angleTex(p, q), ans: String(180 * p / q), restrict: ['plain'] })), sol: [T`$\pi$ radianów to $180^\circ$ — w miejsce $\pi$ wstawiamy $180^\circ$.`, T`$\frac\pi6=\frac{180^\circ}{6}=30^\circ$, $\ \frac\pi5=36^\circ$, $\ \frac{3\pi}4=3\cdot45^\circ=135^\circ$, $\ \frac{5\pi}6=150^\circ$, $\ \frac{5\pi}4=225^\circ$, $\ \frac{4\pi}3=240^\circ$, $\ \frac{11\pi}6=330^\circ$.`] },
+          { label: '11.2a', q: 'Wyraź w radianach.', keys: ['pi'], fields: [15, 20, 45, 75, 60, 90].map(d => ({ label: d + '^\\circ', ans: d + 'pi/180', restrict: ['notrig'], show: A.angleTex(d, 180) })), sol: [T`$1^\circ=\frac{\pi}{180}$, więc mnożymy liczbę stopni przez $\frac{\pi}{180}$ i skracamy ułamek.`, T`$15^\circ=\frac{15\pi}{180}=\frac{\pi}{12}$, $\ 20^\circ=\frac\pi9$, $\ 45^\circ=\frac\pi4$, $\ 75^\circ=\frac{5\pi}{12}$, $\ 60^\circ=\frac\pi3$, $\ 90^\circ=\frac\pi2$.`] },
+          { label: '11.2b', q: 'Wyraź w radianach.', keys: ['pi'], fields: [100, 120, 210, 300, 315, 270].map(d => ({ label: d + '^\\circ', ans: d + 'pi/180', restrict: ['notrig'], show: A.angleTex(d, 180) })), sol: [T`Mnożymy liczbę stopni przez $\frac{\pi}{180}$ i skracamy.`, T`$100^\circ=\frac{100\pi}{180}=\frac{5\pi}9$, $\ 120^\circ=\frac{2\pi}3$, $\ 210^\circ=\frac{7\pi}6$, $\ 300^\circ=\frac{5\pi}3$, $\ 315^\circ=\frac{7\pi}4$, $\ 270^\circ=\frac{3\pi}2$.`] },
         ],
       },
       {
@@ -463,10 +500,10 @@
         wzory: [T`Punkt na okręgu jednostkowym: $(\cos\alpha,\sin\alpha)$. Odległość punktów dla kątów $\alpha,\beta$ równa jest odległości punktów dla $\alpha-\beta$ i $0$.`, T`Z tego: $\cos(\alpha-\beta)=\cos\alpha\cos\beta+\sin\alpha\sin\beta$.`, T`$\sin\alpha=\cos(\frac\pi2-\alpha)$, $\cos(-\beta)=\cos\beta$, $\sin(-\beta)=-\sin\beta$.`, T`$\cos2\alpha=\cos^2\alpha-\sin^2\alpha=2\cos^2\alpha-1=1-2\sin^2\alpha$.`],
         gen: gen213,
         items: [
-          { label: 'sin', keys: ['alpha', 'beta', 'sin', 'cos'], q: T`Wyraź za pomocą $\sin\alpha,\cos\alpha,\sin\beta,\cos\beta$:`, fields: [idf(T`\sin(\alpha+\beta)`, 'sin(alpha)cos(beta)+cos(alpha)sin(beta)'), idf(T`\sin(\alpha-\beta)`, 'sin(alpha)cos(beta)-cos(alpha)sin(beta)')] },
-          { label: 'cos', keys: ['alpha', 'beta', 'sin', 'cos'], q: T`Wyraź za pomocą $\sin\alpha,\cos\alpha,\sin\beta,\cos\beta$:`, fields: [idf(T`\cos(\alpha+\beta)`, 'cos(alpha)cos(beta)-sin(alpha)sin(beta)'), idf(T`\cos(\alpha-\beta)`, 'cos(alpha)cos(beta)+sin(alpha)sin(beta)')] },
-          { label: 'tg', keys: ['alpha', 'beta', 'tg', 'ctg'], q: T`Wyraź za pomocą $\operatorname{tg}\alpha,\operatorname{tg}\beta$ (oraz $\operatorname{ctg}$):`, fields: [idf(T`\operatorname{tg}(\alpha+\beta)`, '(tg(alpha)+tg(beta))/(1-tg(alpha)tg(beta))'), idf(T`\operatorname{tg}(\alpha-\beta)`, '(tg(alpha)-tg(beta))/(1+tg(alpha)tg(beta))'), idf(T`\operatorname{ctg}(\alpha+\beta)`, '(ctg(alpha)ctg(beta)-1)/(ctg(alpha)+ctg(beta))')] },
-          { label: '2α', keys: ['alpha', 'sin', 'cos', 'tg', 'ctg'], q: T`Kąt podwojony — wyraź przez funkcje kąta $\alpha$:`, fields: [idf(T`\sin2\alpha`, '2sin(alpha)cos(alpha)'), idf(T`\cos2\alpha`, 'cos(alpha)^2-sin(alpha)^2'), idf(T`\operatorname{tg}2\alpha`, '2tg(alpha)/(1-tg(alpha)^2)'), idf(T`\operatorname{ctg}2\alpha`, '(ctg(alpha)^2-1)/(2ctg(alpha))')] },
+          { label: 'sin', keys: ['alpha', 'beta', 'sin', 'cos'], q: T`Wyraź za pomocą $\sin\alpha,\cos\alpha,\sin\beta,\cos\beta$:`, fields: [idf(T`\sin(\alpha+\beta)`, 'sin(alpha)cos(beta)+cos(alpha)sin(beta)'), idf(T`\sin(\alpha-\beta)`, 'sin(alpha)cos(beta)-cos(alpha)sin(beta)')], sol: [T`Punkt wyjścia to wzór $\cos(\alpha-\beta)=\cos\alpha\cos\beta+\sin\alpha\sin\beta$ (wynika z porównania odległości punktów na okręgu jednostkowym).`, T`$\sin x=\cos\left(\frac\pi2-x\right)$, więc $\sin(\alpha+\beta)=\cos\left(\left(\frac\pi2-\alpha\right)-\beta\right)=\cos\left(\frac\pi2-\alpha\right)\cos\beta+\sin\left(\frac\pi2-\alpha\right)\sin\beta$.`, T`<b>$\sin(\alpha+\beta)=\sin\alpha\cos\beta+\cos\alpha\sin\beta$</b>.`, T`Wstawiając $-\beta$ w miejsce $\beta$ ($\cos(-\beta)=\cos\beta$, $\sin(-\beta)=-\sin\beta$): <b>$\sin(\alpha-\beta)=\sin\alpha\cos\beta-\cos\alpha\sin\beta$</b>.`] },
+          { label: 'cos', keys: ['alpha', 'beta', 'sin', 'cos'], q: T`Wyraź za pomocą $\sin\alpha,\cos\alpha,\sin\beta,\cos\beta$:`, fields: [idf(T`\cos(\alpha+\beta)`, 'cos(alpha)cos(beta)-sin(alpha)sin(beta)'), idf(T`\cos(\alpha-\beta)`, 'cos(alpha)cos(beta)+sin(alpha)sin(beta)')], sol: [T`Na okręgu jednostkowym punkty $A=(\cos\alpha,\sin\alpha)$ i $B=(\cos\beta,\sin\beta)$ są od siebie tak samo odległe jak punkty $C=(\cos(\alpha-\beta),\sin(\alpha-\beta))$ i $P=(1,0)$ — to ten sam kąt $\alpha-\beta$, tylko obrócony.`, T`$|AB|^2=2-2(\cos\alpha\cos\beta+\sin\alpha\sin\beta)$, a $|CP|^2=2-2\cos(\alpha-\beta)$ (korzystamy z $\sin^2+\cos^2=1$).`, T`Porównując: <b>$\cos(\alpha-\beta)=\cos\alpha\cos\beta+\sin\alpha\sin\beta$</b>.`, T`Wstawiając $-\beta$ w miejsce $\beta$: <b>$\cos(\alpha+\beta)=\cos\alpha\cos\beta-\sin\alpha\sin\beta$</b>.`] },
+          { label: 'tg', keys: ['alpha', 'beta', 'tg', 'ctg'], q: T`Wyraź za pomocą $\operatorname{tg}\alpha,\operatorname{tg}\beta$ (oraz $\operatorname{ctg}$):`, fields: [idf(T`\operatorname{tg}(\alpha+\beta)`, '(tg(alpha)+tg(beta))/(1-tg(alpha)tg(beta))'), idf(T`\operatorname{tg}(\alpha-\beta)`, '(tg(alpha)-tg(beta))/(1+tg(alpha)tg(beta))'), idf(T`\operatorname{ctg}(\alpha+\beta)`, '(ctg(alpha)ctg(beta)-1)/(ctg(alpha)+ctg(beta))')], sol: [T`$\operatorname{tg}(\alpha+\beta)=\frac{\sin(\alpha+\beta)}{\cos(\alpha+\beta)}=\frac{\sin\alpha\cos\beta+\cos\alpha\sin\beta}{\cos\alpha\cos\beta-\sin\alpha\sin\beta}$.`, T`Dzielimy licznik i mianownik przez $\cos\alpha\cos\beta$: <b>$\operatorname{tg}(\alpha+\beta)=\frac{\operatorname{tg}\alpha+\operatorname{tg}\beta}{1-\operatorname{tg}\alpha\operatorname{tg}\beta}$</b>.`, T`Dla różnicy wstawiamy $-\beta$ ($\operatorname{tg}(-\beta)=-\operatorname{tg}\beta$): <b>$\operatorname{tg}(\alpha-\beta)=\frac{\operatorname{tg}\alpha-\operatorname{tg}\beta}{1+\operatorname{tg}\alpha\operatorname{tg}\beta}$</b>.`, T`Cotangens: ten sam ułamek dzielimy przez $\sin\alpha\sin\beta$: <b>$\operatorname{ctg}(\alpha+\beta)=\frac{\operatorname{ctg}\alpha\operatorname{ctg}\beta-1}{\operatorname{ctg}\alpha+\operatorname{ctg}\beta}$</b>.`] },
+          { label: '2α', keys: ['alpha', 'sin', 'cos', 'tg', 'ctg'], q: T`Kąt podwojony — wyraź przez funkcje kąta $\alpha$:`, fields: [idf(T`\sin2\alpha`, '2sin(alpha)cos(alpha)'), idf(T`\cos2\alpha`, 'cos(alpha)^2-sin(alpha)^2'), idf(T`\operatorname{tg}2\alpha`, '2tg(alpha)/(1-tg(alpha)^2)'), idf(T`\operatorname{ctg}2\alpha`, '(ctg(alpha)^2-1)/(2ctg(alpha))')], sol: [T`We wzorach na sumę wstawiamy $\beta=\alpha$.`, T`<b>$\sin2\alpha=\sin\alpha\cos\alpha+\cos\alpha\sin\alpha=2\sin\alpha\cos\alpha$</b>.`, T`<b>$\cos2\alpha=\cos^2\alpha-\sin^2\alpha$</b> (a z $\sin^2\alpha+\cos^2\alpha=1$ także $=2\cos^2\alpha-1=1-2\sin^2\alpha$).`, T`<b>$\operatorname{tg}2\alpha=\frac{2\operatorname{tg}\alpha}{1-\operatorname{tg}^2\alpha}$</b>, $\ $<b>$\operatorname{ctg}2\alpha=\frac{\operatorname{ctg}^2\alpha-1}{2\operatorname{ctg}\alpha}$</b>.`] },
           { label: 'α/2', keys: ['alpha', 'sin', 'cos'], q: T`Połowa kąta — wyraź przez $\cos\alpha$ i $\sin\alpha$:`, fields: [idf(T`\cos^2\frac\alpha2`, '(1+cos(alpha))/2'), idf(T`\sin^2\frac\alpha2`, '(1-cos(alpha))/2'), idf(T`\operatorname{tg}\frac\alpha2`, '(1-cos(alpha))/sin(alpha)')], sol: [T`$\cos^2\frac\alpha2=\frac{1+\cos\alpha}2$ z $\cos\alpha=2\cos^2\frac\alpha2-1$.`, T`$\operatorname{tg}\frac\alpha2=\frac{\sin\frac\alpha2}{\cos\frac\alpha2}=\frac{2\sin^2\frac\alpha2}{2\sin\frac\alpha2\cos\frac\alpha2}=\frac{1-\cos\alpha}{\sin\alpha}$.`] },
         ],
       },
