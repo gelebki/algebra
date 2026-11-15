@@ -195,13 +195,13 @@
     [T`K_4=\{a+b\sqrt3\}`, 1], [T`K_5=\{a+b\sqrt[3]{3}\}`, 0], [T`K_6=\{a+b\sqrt[3]{3}+c\sqrt[3]{9}\}`, 1],
     [T`K_7=\{a+b\sqrt5\}`, 1], [T`K_8=\{a+b\sqrt[3]{5}\}`, 0], [T`K_9=\{a+b\sqrt[3]{5}+c\sqrt[3]{25}\}`, 1]];
   const KX = [
-    [T`\{a+b\sqrt6\mid a,b\in\mathbb Q\}`, 1], [T`\{a+b\sqrt[3]{7}\mid a,b\in\mathbb Q\}`, 0], [T`\{a+b\sqrt[3]{7}+c\sqrt[3]{49}\mid a,b,c\in\mathbb Q\}`, 1],
-    [T`\{a+b\sqrt2+c\sqrt3\mid a,b,c\in\mathbb Q\}`, 0], [T`\{a+bi\mid a,b\in\mathbb Q\}`, 1], [T`\{a+b\sqrt2\mid a,b\in\mathbb Z\}`, 0],
-    [T`\{a+b\sqrt[4]{2}\mid a,b\in\mathbb Q\}`, 0], [T`\{a+b\sqrt{11}\mid a,b\in\mathbb Q\}`, 1], [T`\mathbb{Z}`, 0], [T`\mathbb{Q}`, 1]];
+    [T`\{a+b\sqrt6:a,b\in\mathbb Q\}`, 1], [T`\{a+b\sqrt[3]{7}:a,b\in\mathbb Q\}`, 0], [T`\{a+b\sqrt[3]{7}+c\sqrt[3]{49}:a,b,c\in\mathbb Q\}`, 1],
+    [T`\{a+b\sqrt2+c\sqrt3:a,b,c\in\mathbb Q\}`, 0], [T`\{a+bi:a,b\in\mathbb Q\}`, 1], [T`\{a+b\sqrt2:a,b\in\mathbb Z\}`, 0],
+    [T`\{a+b\sqrt[4]{2}:a,b\in\mathbb Q\}`, 0], [T`\{a+b\sqrt{11}:a,b\in\mathbb Q\}`, 1], [T`\mathbb{Z}`, 0], [T`\mathbb{Q}`, 1]];
   function invItem(a, b, d) {
     const N = a * a - d * b * b;
     const it = {
-      q: T`W ciele $\{x+y\sqrt{${d}}\mid x,y\in\mathbb{Q}\}$ wyznacz $\left(${a}${b < 0 ? '-' : '+'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}\right)^{-1}=x+y\sqrt{${d}}$.`,
+      q: T`W ciele $\{x+y\sqrt{${d}}:x,y\in\mathbb{Q}\}$ wyznacz $\left(${a}${b < 0 ? '-' : '+'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}\right)^{-1}=x+y\sqrt{${d}}$.`,
       fields: [{ label: 'x', ans: frs(a, N), restrict: ['plain'] }, { label: 'y', ans: frs(-b, N), restrict: ['plain'] }],
       steps: [T`Mnożymy licznik i mianownik ułamka $\frac{1}{${a}${b < 0 ? '-' : '+'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}}$ przez sprzężenie $${a}${b < 0 ? '+' : '-'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}$.`,
         T`Mianownik: $${a}^2-${d}\cdot${b * b}=${N}$ (różnica kwadratów — liczba wymierna, niezerowa, bo $\sqrt{${d}}\notin\mathbb Q$).`,
@@ -213,7 +213,7 @@
     if (gk === 'choice') {
       const pool = R.shuffle(KX).slice(0, 6);
       return { type: 'choice', q: 'Które z tych zbiorów są ciałami liczbowymi?', choice: { multi: true, opts: pool.map(k => '$' + k[0] + '$'), correct: pool.map((k, i) => k[1] ? i : -1).filter(i => i >= 0) },
-        steps: ['Sprawdzamy zamkniętość na $+,-,\\cdot$ oraz istnienie odwrotności niezerowych elementów.', '$\\{a+b\\sqrt[3]{p}\\}$ nie jest zamknięty na mnożenie: $\\sqrt[3]{p}\\cdot\\sqrt[3]{p}=\\sqrt[3]{p^2}$.', '$\\{a+b\\sqrt2+c\\sqrt3\\}$: $\\sqrt2\\cdot\\sqrt3=\\sqrt6$ nie należy do zbioru.', '$\\{a+b\\sqrt2\\mid a,b\\in\\mathbb Z\\}$: brak odwrotności $2$.'] };
+        steps: ['Sprawdzamy zamkniętość na $+,-,\\cdot$ oraz istnienie odwrotności niezerowych elementów.', '$\\{a+b\\sqrt[3]{p}\\}$ nie jest zamknięty na mnożenie: $\\sqrt[3]{p}\\cdot\\sqrt[3]{p}=\\sqrt[3]{p^2}$.', '$\\{a+b\\sqrt2+c\\sqrt3\\}$: $\\sqrt2\\cdot\\sqrt3=\\sqrt6$ nie należy do zbioru.', '$\\{a+b\\sqrt2:a,b\\in\\mathbb Z\\}$: brak odwrotności $2$.'] };
     }
     if (gk === 'cinv') {
       const p = R.pick([2, 3, 5, 7]); const k = R.pick([1, 2]);
