@@ -15,29 +15,42 @@
     const vars = opt.vars || [];
     const z = env => A.evaluate(A.parse(expr, vars), env);
     const it = {
-      label, gk, q: T`Przedstaw w postaci trygonometrycznej $z=r(\cos\varphi+i\sin\varphi)$: $$z=${opt.tex || qtex(expr)}$$ Podaj moduł $r$ i argument $\varphi$.`,
+      fmt: 'polar', label, gk, q: T`Przedstaw w postaci trygonometrycznej $z=|z|(\cos\varphi+i\sin\varphi)$: $$z=${opt.tex || qtex(expr)}$$`,
       fields: [
         { label: '|z|', ans: env => Cx.C(Cx.abs(z(env))), restrict: ['noabs', 'notrig'], vars, samples: vars.length ? SA : undefined, show: opt.rShow },
         { label: '\\varphi', kind: 'angle', ans: env => Cx.C(Cx.arg(z(env))), vars, samples: vars.length ? SA : undefined, show: opt.phiShow, restrict: vars.length ? [] : ['notrig'] },
       ], keys: vars.length ? ['pi', 'alpha'] : ['pi'],
     };
     if (opt.mc) { it.mc = opt.mc; it.mcCorrect = opt.mcCorrect; }
-    if (!vars.length) { const zz = z({}); it.sol = [T`$r=\sqrt{a^2+b^2}=${A.niceReal(Cx.abs(zz))}$; $\cos\varphi=\frac ar$, $\sin\varphi=\frac br$.`, T`$z=${A.polarTex(zz)}$.`]; }
+    if (!vars.length) it.sol = polarSol(z({}), !/^[-\d√+i()]+$/.test(expr) || /\//.test(expr) ? (opt.tex || qtex(expr)) : null);
+    if (opt.sol) it.sol = opt.sol;
     return it;
+  }
+  function polarSol(zz, rawTex) {
+    const n = A.niceReal, a = zz.re, b = zz.im, m = Cx.abs(zz), pw = t => (/^\d+$/.test(t) ? t : '\\left(' + t + '\\right)');
+    const sgn = x => (x > 1e-12 ? 'dodatni' : x < -1e-12 ? 'ujemny' : 'równy $0$');
+    const out = [];
+    if (rawTex) out.push(T`Najpierw postać algebraiczna: $${rawTex}=${A.niceC(zz)}$.`);
+    out.push(T`Część rzeczywista $a=${n(a)}$, część urojona $b=${n(b)}$. Moduł: $|z|=\sqrt{a^2+b^2}=\sqrt{${pw(n(a))}^2+${pw(n(b))}^2}=${n(m)}$.`);
+    out.push(T`Argument $\varphi$ spełnia $\cos\varphi=\frac{a}{|z|}=${n(a / m)}$ oraz $\sin\varphi=\frac{b}{|z|}=${n(b / m)}$.`);
+    out.push(T`Cosinus jest ${sgn(a)}, sinus ${sgn(b)} — to wyznacza położenie kąta; z tabelki wartości: $\varphi=${A.argTex(zz)}$.`);
+    out.push(T`<b>$z=${A.polarTex(zz)}$</b>`);
+    return out;
   }
   function gen31() {
     const den = R.pick([4, 6, 3, 12]); let p; do { p = R.int(1, 2 * den - 1); } while (A.gcd(p, den) !== 1);
     const r = den === 12 ? R.pick([2, 4]) : R.pick([1, 2, 3, 4, 2, Math.SQRT2]);
     const t = p * Math.PI / den; const z = Cx.polar(r, t);
     const at = A.niceC(z);
-    const it = { q: T`Przedstaw w postaci trygonometrycznej: $$z=${at}$$ Podaj $r$ i $\varphi$.`, keys: ['pi'],
+    const it = { fmt: 'polar', gk: 'polar', q: T`Przedstaw w postaci trygonometrycznej $z=|z|(\cos\varphi+i\sin\varphi)$: $$z=${at}$$`, keys: ['pi'],
       fields: [{ label: '|z|', ans: Cx.C(r), restrict: ['noabs', 'notrig'] }, { label: '\\varphi', kind: 'angle', ans: Cx.C(t), restrict: ['notrig'] }] };
+    it.steps = polarSol(z); return it;
     it.steps = [T`$r=|z|=\sqrt{(\operatorname{Re}z)^2+(\operatorname{Im}z)^2}=${A.niceReal(r)}$.`, T`$\cos\varphi=\frac{\operatorname{Re}z}{r}=${A.niceReal(Math.cos(t))}$, $\sin\varphi=\frac{\operatorname{Im}z}{r}=${A.niceReal(Math.sin(t))}$.`, T`Ćwiartka ze znaków i kąt odniesienia: $\varphi=${A.angleTex(p, den)}$.`, T`$z=${A.polarTex(z)}$.`];
     return it;
   }
 
   /* ---------- 3.2 de Moivre ---------- */
-  const powItem = (label, expr, gk, extra = {}) => Object.assign({ label, gk, q: T`Oblicz, korzystając z postaci trygonometrycznej (wynik w postaci algebraicznej): $$${qtex(expr)}$$`, fields: [{ label: 'wynik', ans: expr, restrict: ['alg'] }] }, extra);
+  const powItem = (label, expr, gk, extra = {}) => Object.assign({ label, gk, q: T`Oblicz, korzystając z postaci trygonometrycznej (wynik w postaci algebraicznej): $$${qtex(expr)}$$`, fields: [{ label: 'wynik', ans: expr, restrict: ['alg'] }], sol: /[mn]/.test(expr) ? undefined : A.autoSol(expr) }, extra);
   const BASES = [['1+i', Math.SQRT2, 1, 4], ['1-i', Math.SQRT2, -1, 4], ['1+√3i', 2, 1, 3], ['√3+i', 2, 1, 6], ['-1+i', Math.SQRT2, 3, 4], ['√3-i', 2, -1, 6], ['-1+√3i', 2, 2, 3], ['1-√3i', 2, -1, 3]];
   function gen32(gk) {
     if (gk === 'quot') {
@@ -45,12 +58,12 @@
         const [a, b] = R.shuffle(BASES).slice(0, 2); const k = R.int(4, 12), l = R.int(2, 8);
         const expr = `(${a[0]})^${k}/(${b[0]})^${l}`; const v = ev(expr);
         if (!isNice(A.niceC(v)) || Cx.abs(v) > 1e6) continue;
-        return powItem('', expr, gk, { steps: [T`$${qtex(a[0])}=${A.niceReal(a[1])}\left(\cos${A.angleTex(a[2], a[3])}+i\sin${A.angleTex(a[2], a[3])}\right)$, $${qtex(b[0])}=${A.niceReal(b[1])}\left(\cos${A.angleTex(b[2], b[3])}+i\sin${A.angleTex(b[2], b[3])}\right)$.`, T`De Moivre: moduły podnosimy do potęgi, argumenty mnożymy; przy dzieleniu moduły dzielimy, argumenty odejmujemy.`, T`Argument wyniku: $${k}\cdot${A.angleTex(a[2], a[3])}-${l}\cdot${A.angleTex(b[2], b[3])}\equiv${A.niceAngle(Cx.arg(v))}$.`, T`Wynik: $${A.niceC(v)}$.`] });
+        return powItem('', expr, gk, { steps: A.autoSol(expr) });
       }
     }
     const a = R.pick(BASES); const k = R.int(6, 30);
     const expr = `(${a[0]})^${k}`; const v = ev(expr);
-    return powItem('', expr, 'pow', { steps: [T`$${qtex(a[0])}=${A.niceReal(a[1])}\left(\cos${A.angleTex(a[2], a[3])}+i\sin${A.angleTex(a[2], a[3])}\right)$.`, T`$\left(r(\cos\varphi+i\sin\varphi)\right)^{${k}}=r^{${k}}(\cos${k}\varphi+i\sin${k}\varphi)$.`, T`$${k}\cdot${A.angleTex(a[2], a[3])}=${A.angleTex(k * a[2], a[3])}\equiv${A.niceAngle(k * a[2] * Math.PI / a[3])}\pmod{2\pi}$.`, T`Wynik: $${A.niceC(v)}$.`] });
+    return powItem('', expr, 'pow', { steps: A.autoSol(expr) });
   }
 
   /* ---------- 3.5 pierwiastki ---------- */
@@ -60,7 +73,7 @@
     return {
       label, gk, q: T`Wyznacz wszystkie wartości pierwiastka: $$\sqrt${n === 2 ? '' : '[' + n + ']'}{${qtex(W)}}$$`,
       fields: [{ label: 'wartości', kind: 'set', ans: roots, restrict: ['roots'], show: showSet(roots()) }], keys: [';', 'pi'],
-      sol: [T`$${qtex(W)}=${A.polarTex(w)}$.`, T`$w_k=\sqrt[${n}]{r}\left(\cos\frac{\varphi+2k\pi}{${n}}+i\sin\frac{\varphi+2k\pi}{${n}}\right)$, $k=0,\ldots,${n - 1}$.`],
+      sol: [T`Liczba pod pierwiastkiem w postaci trygonometrycznej: $${qtex(W)}=${A.polarTex(w)}$, czyli moduł $${A.niceReal(Cx.abs(w))}$, argument $\varphi=${A.argTex(w)}$.`, T`Pierwiastek stopnia $${n}$ ma $${n}$ wartości: $w_k=\sqrt[${n}]{|z|}\left(\cos\frac{\varphi+2k\pi}{${n}}+i\sin\frac{\varphi+2k\pi}{${n}}\right)$, $k=0,\ldots,${n - 1}$. Tu $\sqrt[${n}]{|z|}=${A.niceReal(Math.pow(Cx.abs(w), 1 / n))}$.`, ...roots().map((z, k) => T`$k=${k}$: $\ w_${k}=${A.polarTex(z)}${/\d\.\d/.test(A.niceC(z)) ? '' : '=' + A.niceC(z)}$`)],
     };
   }
   function gen35() {
@@ -80,11 +93,11 @@
     const n = R.int(2, 5); const fam = R.int(0, 1);
     if (fam === 0) {
       const sols = [Cx.C(0), ...polarSet(1, 0, 2 * Math.PI / (n + 1), n + 1)];
-      return Object.assign(eqItem('', T`\overline{z}=z^{${n}}`, sols), { steps: [T`$z=0$ jest rozwiązaniem. Dla $z=r(\cos\varphi+i\sin\varphi)\neq0$: $\overline z=r(\cos(-\varphi)+i\sin(-\varphi))$.`, T`Moduły: $r=r^{${n}}\Rightarrow r=1$. Argumenty: $-\varphi\equiv${n}\varphi$, czyli $${n + 1}\varphi=2k\pi$.`, T`Rozwiązania: $0$ oraz $\cos\frac{2k\pi}{${n + 1}}+i\sin\frac{2k\pi}{${n + 1}}$, $k=0,\ldots,${n}$ — razem $${n + 2}$.`] });
+      return Object.assign(eqItem('', T`\overline{z}=z^{${n}}`, sols), { steps: [T`$z=0$ jest rozwiązaniem. Dla $z=|z|(\cos\varphi+i\sin\varphi)\neq0$ sprzężenie ma ten sam moduł i przeciwny argument: $\overline z=|z|(\cos(-\varphi)+i\sin(-\varphi))$.`, T`Moduły: $|z|=|z|^{${n}}$, a $|z|>0$, więc $|z|=1$. Argumenty: $${n}\varphi=-\varphi+2k\pi$, czyli $${n + 1}\varphi=2k\pi$.`, T`Rozwiązania: $0$ oraz $\cos\frac{2k\pi}{${n + 1}}+i\sin\frac{2k\pi}{${n + 1}}$, $k=0,\ldots,${n}$ — razem $${n + 2}$.`] });
     }
     const k = 2 ** (n - 1);
     const sols = [Cx.C(0), ...polarSet(2, 0, 2 * Math.PI / (n + 1), n + 1)];
-    return Object.assign(eqItem('', T`z^{${n}}=${k}\,\overline{z}`, sols), { steps: [T`$z=0$ spełnia równanie. Dla $z\neq0$ porównujemy moduły: $r^{${n}}=${k}r\Rightarrow r^{${n - 1}}=${k}$, $r=2$.`, T`Argumenty: $${n}\varphi\equiv-\varphi$, czyli $\varphi=\frac{2k\pi}{${n + 1}}$.`, T`Rozwiązania: $0$ oraz $2\left(\cos\frac{2k\pi}{${n + 1}}+i\sin\frac{2k\pi}{${n + 1}}\right)$, $k=0,\ldots,${n}$.`] });
+    return Object.assign(eqItem('', T`z^{${n}}=${k}\,\overline{z}`, sols), { steps: [T`$z=0$ spełnia równanie. Dla $z\neq0$ porównujemy moduły: $|z|^{${n}}=${k}|z|$, więc $|z|^{${n - 1}}=${k}$, czyli $|z|=2$.`, T`Argumenty: $${n}\varphi=-\varphi+2k\pi$, czyli $\varphi=\frac{2k\pi}{${n + 1}}$.`, T`Rozwiązania: $0$ oraz $2\left(\cos\frac{2k\pi}{${n + 1}}+i\sin\frac{2k\pi}{${n + 1}}\right)$, $k=0,\ldots,${n}$.`] });
   }
 
   A.addList({
@@ -92,19 +105,19 @@
     blurb: 'Moduł i argument, wzór de Moivre’a, pierwiastki z liczb zespolonych, pierwiastki z jedynki.',
     tasks: [
       {
-        id: '3.1', name: 'Postać trygonometryczna', statement: 'Następujące liczby zespolone przedstawić w postaci trygonometrycznej $z=r(\\cos\\varphi+i\\sin\\varphi)$.',
+        id: '3.1', name: 'Postać trygonometryczna', statement: 'Następujące liczby zespolone przedstawić w postaci trygonometrycznej $z=|z|(\\cos\\varphi+i\\sin\\varphi)$.',
         wzory: [T`$r=|z|=\sqrt{a^2+b^2}$ dla $z=a+bi$.`, T`$\cos\varphi=\frac ar$, $\sin\varphi=\frac br$ — oba warunki naraz wyznaczają $\varphi$ (mod $2\pi$).`, T`$\operatorname{tg}\frac\pi{12}=2-\sqrt3$, $\operatorname{tg}\frac{5\pi}{12}=2+\sqrt3$, $|\sqrt6\pm\sqrt2|$ pojawia się przy kątach $\frac{k\pi}{12}$.`, T`$\frac{z_1}{z_2}$: moduły dzielimy, argumenty odejmujemy.`, T`$\cos\alpha-i\sin\alpha=\cos(-\alpha)+i\sin(-\alpha)$; $\sin\alpha+i\cos\alpha=\cos(\frac\pi2-\alpha)+i\sin(\frac\pi2-\alpha)$.`],
         gen: gen31,
         items: [
           ...[['1.1', '1+i'], ['1.2', '-1+i'], ['1.3', '-1-i'], ['1.4', '1-i'], ['1.5', '1+√3i'], ['1.6', '-1+√3i'], ['1.7', '-1-√3i'], ['1.8', '1-√3i'], ['1.9', '√3+i'], ['1.10', '-√3+i'], ['1.11', '-√3-i'], ['1.12', '√3-i'],
             ['1.13', '2+√3+i'], ['1.14', '-2-√3+i'], ['1.15', '-2-√3-i'], ['1.16', '2+√3-i'], ['1.17', '1+(2+√3)i'], ['1.18', '-1+(2+√3)i'], ['1.19', '-1-(2+√3)i'], ['1.20', '1-(2+√3)i'],
             ['1.21', '√6+√2+(√6-√2)i'], ['1.22', '-√6-√2+(√6-√2)i'], ['1.23', '-√6-√2-(√6-√2)i'], ['1.24', '√6+√2-(√6-√2)i']].map(([l, e]) => polarItem(l, e)),
-          polarItem('1.25', 'cos(alpha)-i sin(alpha)', 'polarA', { vars: ['alpha'], tex: T`\cos\alpha-i\sin\alpha`, rShow: '1', phiShow: '-\\alpha' , mc: [{ tex: T`r = 1,\quad \varphi = \alpha`, why: T`Zły znak argumentu: $\cos\alpha-i\sin\alpha=\cos(-\alpha)+i\sin(-\alpha)$.` }, { tex: T`r = 1,\quad \varphi = \pi-\alpha`, why: 'Zła ćwiartka — to zmienia znak cosinusa.' }, { tex: T`r = -1,\quad \varphi = \alpha`, why: 'Moduł nigdy nie jest ujemny.' }], mcCorrect: T`r = 1,\quad \varphi = -\alpha` }),
-          polarItem('1.26', 'sin(alpha)+i cos(alpha)', 'polarA', { vars: ['alpha'], tex: T`\sin\alpha+i\cos\alpha`, rShow: '1', phiShow: '\\frac\\pi2-\\alpha' , mc: [{ tex: T`r = 1,\quad \varphi = \alpha`, why: T`Pomylone $\sin$ i $\cos$ — tu część rzeczywista to $\sin\alpha=\cos(\frac\pi2-\alpha)$.` }, { tex: T`r = 1,\quad \varphi = \alpha-\frac\pi2`, why: 'Zły znak argumentu.' }, { tex: T`r = 1,\quad \varphi = \frac\pi2+\alpha`, why: T`Zły wzór redukcyjny: $\cos(\frac\pi2+\alpha)=-\sin\alpha$.` }], mcCorrect: T`r = 1,\quad \varphi = \frac\pi2-\alpha` }),
+          polarItem('1.25', 'cos(alpha)-i sin(alpha)', 'polarA', { sol: [T`Chcemy zapisu $|z|(\cos\varphi+i\sin\varphi)$ — z plusem przed $i\sin$.`, T`Cosinus jest parzysty, sinus nieparzysty: $\cos(-\alpha)=\cos\alpha$, $\sin(-\alpha)=-\sin\alpha$.`, T`Zatem $\cos\alpha-i\sin\alpha=\cos(-\alpha)+i\sin(-\alpha)$. Moduł: $\sqrt{\cos^2\alpha+\sin^2\alpha}=1$.`, T`<b>$z=\cos(-\alpha)+i\sin(-\alpha)$</b>, czyli $|z|=1$, $\varphi=-\alpha$.`], vars: ['alpha'], tex: T`\cos\alpha-i\sin\alpha`, rShow: '1', phiShow: '-\\alpha' , mc: [{ tex: T`\left(\cos\left(\alpha\right)+i\sin\left(\alpha\right)\right)`, why: T`Zły znak argumentu: $\cos\alpha-i\sin\alpha=\cos(-\alpha)+i\sin(-\alpha)$.` }, { tex: T`\left(\cos\left(\pi-\alpha\right)+i\sin\left(\pi-\alpha\right)\right)`, why: 'Zła ćwiartka — to zmienia znak cosinusa.' }, { tex: T`-\left(\cos\left(\alpha\right)+i\sin\left(\alpha\right)\right)`, why: 'Moduł nigdy nie jest ujemny — minus trzeba schować w argumencie.' }], mcCorrect: T`\left(\cos\left(-\alpha\right)+i\sin\left(-\alpha\right)\right)` }),
+          polarItem('1.26', 'sin(alpha)+i cos(alpha)', 'polarA', { sol: [T`W postaci trygonometrycznej cosinus musi stać przy części rzeczywistej. Zamieniamy role wzorami $\sin\alpha=\cos\left(\frac\pi2-\alpha\right)$, $\cos\alpha=\sin\left(\frac\pi2-\alpha\right)$.`, T`$\sin\alpha+i\cos\alpha=\cos\left(\frac\pi2-\alpha\right)+i\sin\left(\frac\pi2-\alpha\right)$. Moduł to $1$.`, T`<b>$z=\cos\left(\frac\pi2-\alpha\right)+i\sin\left(\frac\pi2-\alpha\right)$</b>.`], vars: ['alpha'], tex: T`\sin\alpha+i\cos\alpha`, rShow: '1', phiShow: '\\frac\\pi2-\\alpha' , mc: [{ tex: T`\left(\cos\left(\alpha\right)+i\sin\left(\alpha\right)\right)`, why: T`Pomylone $\sin$ i $\cos$ — tu część rzeczywista to $\sin\alpha=\cos(\frac\pi2-\alpha)$.` }, { tex: T`\left(\cos\left(\alpha-\frac\pi2\right)+i\sin\left(\alpha-\frac\pi2\right)\right)`, why: 'Zły znak argumentu.' }, { tex: T`\left(\cos\left(\frac\pi2+\alpha\right)+i\sin\left(\frac\pi2+\alpha\right)\right)`, why: T`Zły wzór redukcyjny: $\cos(\frac\pi2+\alpha)=-\sin\alpha$.` }], mcCorrect: T`\left(\cos\left(\frac\pi2-\alpha\right)+i\sin\left(\frac\pi2-\alpha\right)\right)` }),
           polarItem('1.27', '(2+2i)/(1-i)'),
           polarItem('1.28', '(1-√3i)/(√3+i)'),
-          polarItem('1.29', '(ctg(alpha)+i)/(ctg(alpha)-i)', 'polarA', { vars: ['alpha'], tex: T`\frac{\operatorname{ctg}\alpha+i}{\operatorname{ctg}\alpha-i}`, rShow: '1', phiShow: '2\\alpha' , mc: [{ tex: T`r = 1,\quad \varphi = \alpha`, why: T`Licznik i mianownik mają argumenty $\pm\alpha$ — przy dzieleniu odejmujemy: $2\alpha$.` }, { tex: T`r = \operatorname{ctg}^2\alpha+1,\quad \varphi = 2\alpha`, why: 'Moduł ilorazu liczb o równych modułach to $1$.' }, { tex: T`r = 1,\quad \varphi = \pi-2\alpha`, why: 'Zła ćwiartka.' }], mcCorrect: T`r = 1,\quad \varphi = 2\alpha` }),
-          polarItem('1.30', '(1+i tg(alpha))/(1-i tg(alpha))', 'polarA', { vars: ['alpha'], tex: T`\frac{1+i\operatorname{tg}\alpha}{1-i\operatorname{tg}\alpha}`, rShow: '1', phiShow: '2\\alpha' , mc: [{ tex: T`r = 1,\quad \varphi = \alpha`, why: T`Przy dzieleniu argumenty się odejmują: $\alpha-(-\alpha)=2\alpha$.` }, { tex: T`r = 1+\operatorname{tg}^2\alpha,\quad \varphi = 2\alpha`, why: 'Licznik i mianownik mają ten sam moduł — iloraz ma moduł $1$.' }, { tex: T`r = 1,\quad \varphi = 0`, why: 'Argumenty się odejmują, a nie znoszą.' }], mcCorrect: T`r = 1,\quad \varphi = 2\alpha` }),
+          polarItem('1.29', '(ctg(alpha)+i)/(ctg(alpha)-i)', 'polarA', { sol: [T`$\operatorname{ctg}\alpha=\frac{\cos\alpha}{\sin\alpha}$. Mnożymy licznik i mianownik przez $\sin\alpha$: $\frac{\operatorname{ctg}\alpha+i}{\operatorname{ctg}\alpha-i}=\frac{\cos\alpha+i\sin\alpha}{\cos\alpha-i\sin\alpha}$.`, T`Licznik ma moduł $1$ i argument $\alpha$, mianownik moduł $1$ i argument $-\alpha$.`, T`Przy dzieleniu moduły dzielimy, a argumenty odejmujemy: $\alpha-(-\alpha)=2\alpha$.`, T`<b>$z=\cos2\alpha+i\sin2\alpha$</b>.`], vars: ['alpha'], tex: T`\frac{\operatorname{ctg}\alpha+i}{\operatorname{ctg}\alpha-i}`, rShow: '1', phiShow: '2\\alpha' , mc: [{ tex: T`\left(\cos\left(\alpha\right)+i\sin\left(\alpha\right)\right)`, why: T`Licznik i mianownik mają argumenty $\pm\alpha$ — przy dzieleniu odejmujemy: $2\alpha$.` }, { tex: T`\left(\operatorname{ctg}^2\alpha+1\right)\left(\cos\left(2\alpha\right)+i\sin\left(2\alpha\right)\right)`, why: 'Moduł ilorazu liczb o równych modułach to $1$.' }, { tex: T`\left(\cos\left(\pi-2\alpha\right)+i\sin\left(\pi-2\alpha\right)\right)`, why: 'Zła ćwiartka.' }], mcCorrect: T`\left(\cos\left(2\alpha\right)+i\sin\left(2\alpha\right)\right)` }),
+          polarItem('1.30', '(1+i tg(alpha))/(1-i tg(alpha))', 'polarA', { sol: [T`$\operatorname{tg}\alpha=\frac{\sin\alpha}{\cos\alpha}$. Mnożymy licznik i mianownik przez $\cos\alpha$: $\frac{1+i\operatorname{tg}\alpha}{1-i\operatorname{tg}\alpha}=\frac{\cos\alpha+i\sin\alpha}{\cos\alpha-i\sin\alpha}$.`, T`Licznik: moduł $1$, argument $\alpha$. Mianownik: moduł $1$, argument $-\alpha$.`, T`Dzielenie: argumenty odejmujemy, $\alpha-(-\alpha)=2\alpha$.`, T`<b>$z=\cos2\alpha+i\sin2\alpha$</b>.`], vars: ['alpha'], tex: T`\frac{1+i\operatorname{tg}\alpha}{1-i\operatorname{tg}\alpha}`, rShow: '1', phiShow: '2\\alpha' , mc: [{ tex: T`\left(\cos\left(\alpha\right)+i\sin\left(\alpha\right)\right)`, why: T`Przy dzieleniu argumenty się odejmują: $\alpha-(-\alpha)=2\alpha$.` }, { tex: T`\left(1+\operatorname{tg}^2\alpha\right)\left(\cos\left(2\alpha\right)+i\sin\left(2\alpha\right)\right)`, why: 'Licznik i mianownik mają ten sam moduł — iloraz ma moduł $1$.' }, { tex: T`\left(\cos\left(0\right)+i\sin\left(0\right)\right)`, why: 'Argumenty się odejmują, a nie znoszą.' }], mcCorrect: T`\left(\cos\left(2\alpha\right)+i\sin\left(2\alpha\right)\right)` }),
         ],
       },
       {
@@ -138,9 +151,9 @@
           return { q: T`Wiedząc, że $\cos\alpha=${A.fracTex(p, q)}$, oblicz $\cos4\alpha$.`, fields: [{ label: '\\cos4\\alpha', ans: r[0] + '/' + r[1], restrict: ['notrig'] }], steps: [T`$\cos4\alpha=c^4-6c^2s^2+s^4$, a po podstawieniu $s^2=1-c^2$: $8c^4-8c^2+1$.`, T`Wynik: $${A.fracTex(r[0], r[1])}$.`] };
         },
         items: [
-          { label: '3α', keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin3\\alpha', ans: '3cos(alpha)^2 sin(alpha)-sin(alpha)^3' }, { label: '\\cos3\\alpha', ans: 'cos(alpha)^3-3cos(alpha)sin(alpha)^2' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
-          { label: '4α', keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin4\\alpha', ans: '4cos(alpha)^3 sin(alpha)-4cos(alpha)sin(alpha)^3' }, { label: '\\cos4\\alpha', ans: 'cos(alpha)^4-6cos(alpha)^2 sin(alpha)^2+sin(alpha)^4' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
-          { label: '5α', keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin5\\alpha', ans: '5cos(alpha)^4 sin(alpha)-10cos(alpha)^2 sin(alpha)^3+sin(alpha)^5' }, { label: '\\cos5\\alpha', ans: 'cos(alpha)^5-10cos(alpha)^3 sin(alpha)^2+5cos(alpha)sin(alpha)^4' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
+          { label: '3α', sol: [T`Ze wzoru de Moivre’a: $\cos3\alpha+i\sin3\alpha=(\cos\alpha+i\sin\alpha)^3$. Oznaczmy $c=\cos\alpha$, $s=\sin\alpha$.`, T`$(c+is)^3=c^3+3c^2(is)+3c(is)^2+(is)^3=c^3+3c^2s\,i-3cs^2-s^3i$ (bo $i^2=-1$, $i^3=-i$).`, T`Część rzeczywista: <b>$\cos3\alpha=\cos^3\alpha-3\cos\alpha\sin^2\alpha$</b>.`, T`Część urojona: <b>$\sin3\alpha=3\cos^2\alpha\sin\alpha-\sin^3\alpha$</b>.`], keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin3\\alpha', ans: '3cos(alpha)^2 sin(alpha)-sin(alpha)^3' }, { label: '\\cos3\\alpha', ans: 'cos(alpha)^3-3cos(alpha)sin(alpha)^2' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
+          { label: '4α', sol: [T`$\cos4\alpha+i\sin4\alpha=(c+is)^4$, gdzie $c=\cos\alpha$, $s=\sin\alpha$. Współczynniki dwumianu: $1,4,6,4,1$.`, T`$(c+is)^4=c^4+4c^3(is)+6c^2(is)^2+4c(is)^3+(is)^4=c^4+4c^3s\,i-6c^2s^2-4cs^3i+s^4$.`, T`Część rzeczywista: <b>$\cos4\alpha=\cos^4\alpha-6\cos^2\alpha\sin^2\alpha+\sin^4\alpha$</b>.`, T`Część urojona: <b>$\sin4\alpha=4\cos^3\alpha\sin\alpha-4\cos\alpha\sin^3\alpha$</b>.`], keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin4\\alpha', ans: '4cos(alpha)^3 sin(alpha)-4cos(alpha)sin(alpha)^3' }, { label: '\\cos4\\alpha', ans: 'cos(alpha)^4-6cos(alpha)^2 sin(alpha)^2+sin(alpha)^4' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
+          { label: '5α', sol: [T`$\cos5\alpha+i\sin5\alpha=(c+is)^5$. Współczynniki dwumianu: $1,5,10,10,5,1$; potęgi $i$: $i,\,-1,\,-i,\,1,\,i$.`, T`$(c+is)^5=c^5+5c^4s\,i-10c^3s^2-10c^2s^3i+5cs^4+s^5i$.`, T`Część rzeczywista: <b>$\cos5\alpha=\cos^5\alpha-10\cos^3\alpha\sin^2\alpha+5\cos\alpha\sin^4\alpha$</b>.`, T`Część urojona: <b>$\sin5\alpha=5\cos^4\alpha\sin\alpha-10\cos^2\alpha\sin^3\alpha+\sin^5\alpha$</b>.`], keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin5\\alpha', ans: '5cos(alpha)^4 sin(alpha)-10cos(alpha)^2 sin(alpha)^3+sin(alpha)^5' }, { label: '\\cos5\\alpha', ans: 'cos(alpha)^5-10cos(alpha)^3 sin(alpha)^2+5cos(alpha)sin(alpha)^4' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
         ],
       },
       {
@@ -200,12 +213,12 @@
         wzory: [T`Zapisz $z=r(\cos\varphi+i\sin\varphi)$: $\overline z$ ma argument $-\varphi$, $|z|=r$.`, T`Porównaj osobno moduły i argumenty (argumenty modulo $2\pi$).`, T`Nie zapomnij o rozwiązaniu $z=0$!`, T`$-1-i\sqrt3=2\left(\cos\frac{4\pi}3+i\sin\frac{4\pi}3\right)$.`],
         gen: gen38,
         items: [
-          eqItem('8.1', T`\overline{z}\cdot|z|=z^4`, [Cx.C(0), ...polarSet(1, 0, 2 * Math.PI / 5, 5)]),
-          eqItem('8.2', T`\overline{z}^{\,4}=4z^6`, [Cx.C(0), ...polarSet(0.5, 0, Math.PI / 5, 10)]),
-          eqItem('8.3', T`\overline{z}=z^3`, [Cx.C(0), ...polarSet(1, 0, Math.PI / 2, 4)]),
-          eqItem('8.4', T`\frac{\overline{z}^{\,3}}{(-1-i\sqrt3)^4}=|z|`, [Cx.C(0), ...polarSet(4, 2 * Math.PI / 9, 2 * Math.PI / 3, 3)]),
-          eqItem('8.5', T`\frac{z^3\cdot\overline{z}}{(-1-i\sqrt3)^2}=|z|^3`, [Cx.C(0), ...polarSet(4, Math.PI / 3, Math.PI, 2)]),
-          eqItem('8.6', T`\frac{z^5\cdot|z|^3}{-\sqrt3+i}=(1+i)\cdot\overline{z}^{\,2}`, [Cx.C(0), ...polarSet(Math.pow(2, 0.25), 13 * Math.PI / 84, 2 * Math.PI / 7, 7)]),
+          Object.assign(eqItem('8.1', T`\overline{z}\cdot|z|=z^4`, [Cx.C(0), ...polarSet(1, 0, 2 * Math.PI / 5, 5)]), { sol: [T`Sprawdzamy $z=0$: obie strony są zerem — to rozwiązanie.`, T`Dla $z\neq0$ piszemy $z=|z|(\cos\varphi+i\sin\varphi)$. Wtedy $\overline z$ ma moduł $|z|$ i argument $-\varphi$, a $z^4$ ma moduł $|z|^4$ i argument $4\varphi$.`, T`Moduły: $|z|\cdot|z|=|z|^4$, więc $|z|=1$.`, T`Argumenty: $-\varphi=4\varphi+2k\pi$, czyli $\varphi=\frac{2k\pi}{5}$.`, T`<b>$z=0$ oraz $z=\cos\frac{2k\pi}5+i\sin\frac{2k\pi}5$, $k=0,1,2,3,4$</b> — razem 6 rozwiązań.`] }),
+          Object.assign(eqItem('8.2', T`\overline{z}^{\,4}=4z^6`, [Cx.C(0), ...polarSet(0.5, 0, Math.PI / 5, 10)]), { sol: [T`$z=0$ spełnia równanie.`, T`Dla $z\neq0$: lewa strona ma moduł $|z|^4$ i argument $-4\varphi$, prawa moduł $4|z|^6$ i argument $6\varphi$.`, T`Moduły: $|z|^4=4|z|^6$, więc $|z|^2=\frac14$, $|z|=\frac12$.`, T`Argumenty: $-4\varphi=6\varphi+2k\pi$, czyli $\varphi=\frac{k\pi}{5}$.`, T`<b>$z=0$ oraz $z=\frac12\left(\cos\frac{k\pi}5+i\sin\frac{k\pi}5\right)$, $k=0,\ldots,9$</b> — razem 11 rozwiązań.`] }),
+          Object.assign(eqItem('8.3', T`\overline{z}=z^3`, [Cx.C(0), ...polarSet(1, 0, Math.PI / 2, 4)]), { sol: [T`$z=0$ spełnia równanie.`, T`Dla $z\neq0$: moduły $|z|=|z|^3$, więc $|z|=1$; argumenty $-\varphi=3\varphi+2k\pi$, czyli $\varphi=\frac{k\pi}2$.`, T`<b>$z\in\{0,\ 1,\ i,\ -1,\ -i\}$</b>.`] }),
+          Object.assign(eqItem('8.4', T`\frac{\overline{z}^{\,3}}{(-1-i\sqrt3)^4}=|z|`, [Cx.C(0), ...polarSet(4, 2 * Math.PI / 9, 2 * Math.PI / 3, 3)]), { sol: [T`$-1-i\sqrt3=2\left(\cos\frac{4\pi}3+i\sin\frac{4\pi}3\right)$, więc $(-1-i\sqrt3)^4$ ma moduł $16$ i argument $\frac{16\pi}3$, czyli $\frac{4\pi}3$.`, T`Równanie: $\overline z^{\,3}=16\left(\cos\frac{4\pi}3+i\sin\frac{4\pi}3\right)|z|$. $z=0$ je spełnia.`, T`Dla $z\neq0$ — moduły: $|z|^3=16|z|$, więc $|z|=4$. Argumenty: $-3\varphi=\frac{4\pi}3+2k\pi$, czyli $\varphi=-\frac{4\pi}9-\frac{2k\pi}3$.`, T`<b>$z=0$ oraz $z=4(\cos\varphi+i\sin\varphi)$ dla $\varphi\in\left\{\frac{2\pi}9,\frac{8\pi}9,\frac{14\pi}9\right\}$</b>.`] }),
+          Object.assign(eqItem('8.5', T`\frac{z^3\cdot\overline{z}}{(-1-i\sqrt3)^2}=|z|^3`, [Cx.C(0), ...polarSet(4, Math.PI / 3, Math.PI, 2)]), { sol: [T`$(-1-i\sqrt3)^2$ ma moduł $4$ i argument $\frac{8\pi}3$, czyli $\frac{2\pi}3$. $z=0$ spełnia równanie.`, T`Dla $z\neq0$: $z^3\overline z$ ma moduł $|z|^4$ i argument $3\varphi-\varphi=2\varphi$.`, T`Moduły: $\frac{|z|^4}{4}=|z|^3$, więc $|z|=4$. Argumenty: $2\varphi-\frac{2\pi}3=2k\pi$ (prawa strona jest dodatnia), czyli $\varphi=\frac\pi3+k\pi$.`, T`<b>$z\in\{0,\ 2+2\sqrt3i,\ -2-2\sqrt3i\}$</b>.`] }),
+          Object.assign(eqItem('8.6', T`\frac{z^5\cdot|z|^3}{-\sqrt3+i}=(1+i)\cdot\overline{z}^{\,2}`, [Cx.C(0), ...polarSet(Math.pow(2, 0.25), 13 * Math.PI / 84, 2 * Math.PI / 7, 7)]), { sol: [T`$-\sqrt3+i=2\left(\cos\frac{5\pi}6+i\sin\frac{5\pi}6\right)$, $\ 1+i=\sqrt2\left(\cos\frac\pi4+i\sin\frac\pi4\right)$. $z=0$ spełnia równanie.`, T`Dla $z\neq0$ — lewa strona: moduł $\frac{|z|^8}{2}$, argument $5\varphi-\frac{5\pi}6$. Prawa: moduł $\sqrt2|z|^2$, argument $\frac\pi4-2\varphi$.`, T`Moduły: $|z|^6=2\sqrt2$, więc $|z|=\sqrt[4]2$. Argumenty: $7\varphi=\frac{13\pi}{12}+2k\pi$, czyli $\varphi=\frac{13\pi}{84}+\frac{2k\pi}7$.`, T`<b>$z=0$ oraz $z=\sqrt[4]2(\cos\varphi+i\sin\varphi)$, $\varphi=\frac{13\pi}{84}+\frac{2k\pi}7$, $k=0,\ldots,6$</b>.`] }),
         ],
       },
       {
