@@ -49,9 +49,9 @@
   // Progi dopasowane do list: Lista 1 = 520 XP, Listy 1–2 = 1650 XP, wszystko = 2500 XP (250 podpunktów × 10).
   // Arcymistrz przy 2300 XP ≈ 92% podstawowego zestawu; podobne przykłady przyspieszają drogę.
   const LEVELS = [0, 80, 170, 270, 390, 510, 680, 860, 1050, 1250, 1460, 1700, 1900, 2100, 2300];
-  const TITLES = ['Nowicjusz', 'Strażnik wymiernych', 'Pogromca niewymierności', 'Rachmistrz ℤₚ', 'Badacz działań', 'Budowniczy ciał',
-    'Odkrywca liczby i', 'Mistrz sprzężenia', 'Treser trójmianów', 'Znawca trygonometrii', 'Nawigator płaszczyzny zespolonej',
-    'Uczeń de Moivre’a', 'Władca potęg', 'Łowca pierwiastków', 'Arcymistrz algebry'];
+  const TITLES = ['Pierwszak', 'Tropiciel ułamków', 'Pogromca niewymierności', 'Zegarmistrz ℤₚ', 'Tester działań', 'Architekt ciał',
+    'Odkrywca liczby i', 'Mistrz sprzężenia', 'Zaklinacz delty', 'Kartograf płaszczyzny Gaussa', 'Nawigator kątów',
+    'Mag de Moivre’a', 'Władca potęg', 'Legenda okręgu jednostkowego', 'Arcymistrz algebry'];
   const MAXL = TITLES.length;
   function levelInfo(xp) {
     let L = 1; while (L < MAXL && xp >= LEVELS[L]) L++;
@@ -274,7 +274,8 @@
       const want = new Set(it.choice.correct);
       ok = want.size === T.choice.size && [...want].every(x => T.choice.has(x));
     } else if (type === 'guided') {
-      ok = T.gs.misses === 0;
+      ok = true;
+      if (T.gs.misses && T.mode === 'orig' && !S.items[T.origKey]) { S.tried = S.tried || {}; S.tried[T.origKey] = true; }
     } else if (type === 'order') {
       if (!T.order.length) { toast('Ułóż dowód', 'Klikaj kroki w kolejności', 'flag'); return; }
       const n = it.order.steps.length;
@@ -376,8 +377,18 @@
     if (!T.usedW && T.status === 'answering') { T.usedW = true; S.hints++; save(); }
     SFX.hint();
     const task = T.task;
+    const orig = T.mode === 'quick' ? T.item : task.items[T.idx]; const gk = (orig && orig.gk) || T.item.gk;
+    const list = A.wzoryFor(task, orig, gk);
     drawer('Wzory', IC.bulb, [
-      ...(() => { const orig = T.mode === 'quick' ? T.item : task.items[T.idx]; const gk = (orig && orig.gk) || T.item.gk; return A.wzoryFor ? A.wzoryFor(task, orig, gk) : task.wzory; })().map(w => mdEl('div', w, { class: 'formula' })),
+      h('p', { class: 'dnote' }, 'Wszystko, czego potrzeba do tego przykładu. Kliknij ', h('span', { class: 'qbtn mini' }, '?'), ', żeby zobaczyć, skąd bierze się wzór.'),
+      ...list.map(w => {
+        const d = h('div', { class: 'fwhy', hidden: true }, h('div', { class: 'glabel' }, 'Skąd to się bierze'), h('ol', {}, w.d.map(s => mdEl('li', s))));
+        const b = h('button', { class: 'qbtn', 'aria-expanded': 'false', 'aria-label': 'Skąd ten wzór?', title: 'Skąd ten wzór?', onclick: () => {
+          const open = d.hasAttribute('hidden'); if (open) d.removeAttribute('hidden'); else d.setAttribute('hidden', '');
+          b.setAttribute('aria-expanded', String(open)); b.textContent = open ? '×' : '?'; SFX.key();
+        } }, '?');
+        return h('div', { class: 'formula' }, h('div', { class: 'frow' }, mdEl('div', w.f, { class: 'ftx' }), b), d);
+      }),
     ]);
     renderActionsOnly();
   }
@@ -386,13 +397,13 @@
     SFX.hint();
     const gk = T.item.gk || (T.mode === 'orig' ? T.task.items[T.idx].gk : undefined) || (T.task.items[0] && T.task.items[0].gk);
     let ex; for (let k = 0; k < 8; k++) { ex = T.task.gen(gk); if (ex.q !== T.item.q) break; }
-    const steps = (ex.steps || []).slice();
     const type = ex.type || 'fields';
+    const steps = type === 'guided' ? ex.steps.map(s => s.line) : (ex.steps || []).slice();
     const stepsBox = h('div', { style: 'display:grid;gap:8px' });
     let shown = 0;
     const answerEl = () => {
       if (type === 'order') return h('div', { class: 'exq' }, h('b', {}, 'Dowód w kolejności:'), h('ol', {}, ex.order.steps.map(s => mdEl('li', s))));
-      if (type === 'guided') return h('div', { class: 'exq' }, h('b', {}, 'Dowód:'), h('ol', {}, ex.steps.map(s => mdEl('li', s.a))));
+      if (type === 'guided') return h('div', { class: 'exq' }, 'Dowód zakończony. Zauważ, że plan jest ten sam — zmieniają się tylko liczby.');
       if (type === 'choice') return h('div', { class: 'exq' }, h('b', {}, 'Odpowiedź: '), ...ex.choice.correct.map(i => mdEl('div', ex.choice.opts[i])));
       if (ex.check) return mdEl('div', '<b>Odpowiedź:</b> ' + ex.showAns, { class: 'exq' });
       ex.gk = ex.gk || gk; const mc = A.buildMC(ex);
@@ -405,7 +416,7 @@
     } }, 'Pokaż pierwszy krok');
     if (!steps.length) btn.textContent = 'Pokaż odpowiedź';
     drawer('Przykład', IC.book, [
-      h('div', { class: 'exq' }, md(ex.q)), stepsBox, btn,
+      h('div', { class: 'exq' }, h('div', { class: 'glabel' }, 'Podobny przykład'), md(ex.q)), ex.idea ? h('div', { class: 'gidea' }, h('div', { class: 'glabel' }, 'Pomysł'), mdEl('div', ex.idea)) : '', stepsBox, btn,
     ]);
     renderActionsOnly();
   }
@@ -515,8 +526,7 @@
       const q = T.quick; const bar = h('div', { class: 'quickbar' }, h('span', { class: 'muted' }, (q.i + 1) + '/10'), h('div', { class: 'bar' }, h('i', { style: `width:${100 * q.i / 10}%` })));
       sec.append(bar);
     } else {
-      const st = h('details', { class: 'statement' }, h('summary', {}, 'Treść z listy'), mdEl('div', task.statement, { style: 'margin-top:6px' }));
-      sec.append(st);
+
       const dots = h('div', { class: 'dots', role: 'list', 'aria-label': 'Podpunkty' });
       task.items.forEach((x, i) => {
         const k = itemKey(task, i), s = S.items[k];
@@ -527,13 +537,14 @@
       });
       sec.append(dots);
     }
+    sec.append(h('div', { class: 'statement' }, h('div', { class: 'slabel' }, 'Zadanie ' + task.id + ' · treść z listy'), mdEl('div', task.statement, { class: 'stx' })));
     // karta
     const card = h('article', { class: 'card', id: 'card' });
     const kick = h('div', { class: 'kicker' });
     if (quick) kick.append(h('span', { class: 'badge q' }, 'Zad. ' + task.id), mdEl('span', task.name));
     else if (T.mode === 'var') kick.append(h('span', { class: 'badge var' }, 'Podobny przykład'), h('span', {}, 'do ' + (task.items[T.idx].label || task.id)), pdots());
     else kick.append(h('span', { class: 'badge' }, task.id + (it.label ? ' · ' : '')), it.label ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', !['order', 'guided'].includes(it.type || 'fields') && T.task.gen ? pdots() : '');
-    card.append(kick, mdEl('div', it.q, { class: 'question' }));
+    card.append(kick); if (it.q !== task.statement) card.append(mdEl('div', it.q, { class: 'question' }));
     const type = it.type || 'fields';
     if (type === 'fields') card.append(mcUI(it));
     else if (type === 'choice') card.append(choiceUI(it));
@@ -717,28 +728,34 @@
     return box;
   }
   function guidedUI(it) {
-    if (!T.gs) T.gs = { i: 0, misses: 0, missed: [], pick: null, opts: it.steps.map(st => A.R.shuffle([{ t: st.a, ok: true }, ...st.w.map(([t, why]) => ({ t, why }))])) };
-    const g = T.gs, n = it.steps.length;
+    if (!T.gs) T.gs = { i: 0, misses: 0, bad: {}, opts: it.steps.map(st => A.R.shuffle([{ t: st.a, ok: true }, ...st.w.map(([t, why]) => ({ t, why }))])) };
+    const g = T.gs, n = it.steps.length, done = T.status !== 'answering';
     const box = h('div', { class: 'guided' });
-    const chain = h('ol', { class: 'gchain' });
-    for (let k = 0; k < Math.min(g.i, n); k++) chain.append(h('li', { class: g.missed[k] ? 'miss' : '' }, mdEl('span', it.steps[k].a)));
-    if (g.i) box.append(h('div', { class: 'glabel' }, 'Dowód'), chain);
-    if (g.i < n && T.status === 'answering') {
+    if (it.idea && !done) box.append(h('div', { class: 'gidea' }, h('div', { class: 'glabel' }, h('span', { html: IC.bulb }), 'Pomysł dowodu'), mdEl('div', it.idea)));
+    if (!done) box.append(h('div', { class: 'gprog', 'aria-label': 'Krok ' + Math.min(g.i + 1, n) + ' z ' + n }, ...it.steps.map((_, k) => h('i', { class: k < g.i ? 'on' : k === g.i ? 'cur' : '' }))));
+    const upto = done ? n : g.i;
+    if (upto) {
+      const chain = h('div', { class: 'gchain' + (done ? ' clean' : '') });
+      for (let k = 0; k < upto; k++) {
+        const st = it.steps[k];
+        chain.append(h('div', { class: 'gline' + (k === upto - 1 && !done ? ' new' : '') }, h('span', { class: 'n' }, String(k + 1)),
+          h('div', { class: 'gbody' }, mdEl('div', st.goal, { class: 'gg' }), mdEl('div', st.line, { class: 'gl' }), st.why ? mdEl('div', st.why, { class: 'gwhy' }) : '')));
+      }
+      box.append(h('div', { class: 'glabel' }, done ? 'Gotowy dowód — tak zapisz go na kolokwium' : 'Twój dowód do tej pory'), chain);
+    }
+    if (g.i < n && !done) {
       const st = it.steps[g.i], cur = h('div', { class: 'gstep' });
-      cur.append(h('div', { class: 'glabel' }, 'Krok ' + (g.i + 1) + ' z ' + n), mdEl('div', st.q, { class: 'gq' }));
-      const answered = g.pick != null;
+      cur.append(h('div', { class: 'glabel hl' }, 'Krok ' + (g.i + 1) + ' z ' + n + ' · ', md(st.goal)), mdEl('div', st.q, { class: 'gq' }));
       g.opts[g.i].forEach((o, oi) => {
-        let cls = 'opt mcopt';
-        if (answered) cls += o.ok ? ' ok' : oi === g.pick ? ' chosen' : ' dim';
-        cur.append(h('button', { class: cls, disabled: answered, onclick: () => {
-          g.pick = oi; SFX.key();
-          if (o.ok) { SFX.click(); g.i++; g.pick = null; if (g.i === n) { submit(); return; } }
-          else { g.misses++; g.missed[g.i] = true; SFX.wrong(); }
-          box.replaceWith(guidedUI(it));
+        const bad = !!g.bad[oi];
+        cur.append(h('button', { class: 'opt mcopt' + (bad ? ' chosen' : ''), disabled: bad, onclick: () => {
+          if (o.ok) { g.i++; g.bad = {}; if (g.i === n) { submit(); return; } SFX.star(); }
+          else { g.bad[oi] = true; g.misses++; SFX.wrong(); }
+          const nb = guidedUI(it); box.replaceWith(nb);
+          const tgt = nb.querySelector(o.ok ? '.gline.new' : '.why.hit'); if (tgt) tgt.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
         } }, h('span', { class: 'letter' }, 'ABC'[oi]), mdEl('span', o.t, { class: 'txt' })));
-        if (answered && oi === g.pick && o.why) cur.append(mdEl('div', '<b>Dlaczego nie:</b> ' + o.why, { class: 'why hit' }));
+        if (bad && o.why) cur.append(mdEl('div', '<b>Ten pomysł nie zadziała.</b> ' + o.why + ' Spróbuj innej opcji.', { class: 'why hit' }));
       });
-      if (answered) cur.append(h('div', { class: 'row', style: 'margin-top:10px' }, h('button', { class: 'btn primary', onclick: () => { g.i++; g.pick = null; if (g.i === n) { submit(); return; } box.replaceWith(guidedUI(it)); } }, 'Dalej', h('span', { html: IC.next }))));
       box.append(cur);
     }
     return box;
@@ -763,7 +780,8 @@
     const ok = T.status === 'correct'; const type = it.type || 'fields';
     const fb = h('div', { class: 'feedback ' + (ok ? 'ok' : 'learn'), id: 'feedback', role: 'status' });
     const msgsOk = ['Świetnie!', 'Dokładnie tak!', 'Pięknie policzone!', 'Bezbłędnie!', 'Tak jest!', 'Znakomicie!'];
-    if (ok) fb.append(h('h3', {}, h('span', { html: IC.check, style: 'width:22px;height:22px;display:grid' }), msgsOk[Math.floor(Math.random() * msgsOk.length)]));
+    if (ok) fb.append(h('h3', {}, h('span', { html: IC.check, style: 'width:22px;height:22px;display:grid' }), type === 'guided' ? 'Dowód kompletny!' : msgsOk[Math.floor(Math.random() * msgsOk.length)]));
+    if (ok && type === 'guided') fb.append(h('p', { style: 'margin:6px 0 0' }, 'Powyżej masz cały dowód w czystej postaci. Spróbuj odtworzyć go na kartce bez patrzenia.'));
     else fb.append(h('h3', {}, h('span', { html: IC.bulb, style: 'width:22px;height:22px;display:grid' }), type === 'guided' ? 'Dowód kompletny' : 'Zobacz, jak to policzyć'));
     if (ok && T.redeemed) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' zaliczony.'));
     if (!ok) {
@@ -777,9 +795,8 @@
       if (type !== 'fields' && type !== 'guided') fb.append(ans);
     }
     const sol = type === 'guided' ? null : (it.sol || it.steps);
-    if (type === 'guided' && !ok) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Cały dowód masz powyżej. Przejdź go jeszcze raz bez pomyłki, żeby zaliczyć podpunkt.'));
     if (sol && sol.length && (!ok || type !== 'order')) {
-      const det = h('details', { open: !ok ? '' : null }, h('summary', { style: 'cursor:pointer;font-weight:600' }, ok ? 'Rozwiązanie' : 'Rozwiązanie krok po kroku'), h('ol', {}, sol.map(s => mdEl('li', s))));
+      const det = h('details', { open: !ok ? '' : null }, h('summary', { style: 'cursor:pointer;font-weight:600' }, ok ? 'Rozwiązanie krok po kroku' : 'Rozwiązanie krok po kroku'), h('ol', { class: 'solsteps' }, sol.map(s => mdEl('li', s))));
       fb.append(det);
     }
     const row = h('div', { class: 'row' });
