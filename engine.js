@@ -579,9 +579,11 @@
     return t;
   };
   AQ.polarTex = function (z) {
-    const r = abs(z); const t = AQ.argTex(z);
+    const r = abs(z); let t = AQ.argTex(z); if (/^-/.test(t)) t = '\\left(' + t + '\\right)';
     const rt = niceReal(r);
-    return (rt === '1' ? '' : rt) + '\\left(\\cos ' + t + ' + i\\sin ' + t + '\\right)';
+    const core = '\\cos ' + t + ' + i\\sin ' + t;
+    if (rt === '1') return core;
+    return (/ [+-] /.test(rt) && !/^\\frac/.test(rt) ? '\\left(' + rt + '\\right)' : rt) + '\\left(' + core + '\\right)';
   };
 
   /* ---------- losowanie ---------- */
@@ -650,4 +652,3 @@
     return AQ.niceC(v);
   };
 })(typeof window !== 'undefined' ? window : globalThis);
- 
