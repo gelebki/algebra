@@ -603,6 +603,20 @@
     return h('span', { class: 'pdots' }, h('button', { class: 'plabel', onclick: go, title: 'Spróbuj podobnego przykładu' }, 'Podobne'),
       ...[0, 1, 2].map(i => h('button', { class: 'pdot' + (i < n ? ' on' : ''), onclick: go, title: (i < n ? 'Rozwiązany' : 'Spróbuj') + ' — podobny przykład ' + (i + 1) + '/3', 'aria-label': 'Podobny przykład ' + (i + 1) + ' z 3' + (i < n ? ', rozwiązany' : '') }, i < n ? h('span', { html: IC.check }) : String(i + 1))));
   }
+  // dzieli zapis odpowiedzi na części tylko na najwyższym poziomie (nie wewnątrz nawiasów zbioru itp.)
+  function topSplit(tex) {
+    const sep = ',\\quad ', out = []; let depth = 0, last = 0;
+    for (let i = 0; i < tex.length; i++) {
+      if (tex.startsWith('\\left', i)) { depth++; i += 4; continue; }
+      if (tex.startsWith('\\right', i)) { depth--; i += 5; continue; }
+      const c = tex[i];
+      if (c === '\\') { i++; if (tex[i] === '{' || tex[i] === '}') continue; continue; }
+      if (c === '{') depth++; else if (c === '}') depth--;
+      else if (depth === 0 && tex.startsWith(sep, i)) { out.push(tex.slice(last, i)); last = i + sep.length; i += sep.length - 1; }
+    }
+    out.push(tex.slice(last));
+    return out;
+  }
   function mcUI(it) {
     const mc = A.buildMC(it);
     const box = h('div', { class: 'mc' });
@@ -618,7 +632,7 @@
         const b = h('button', { class: cls, role: 'radio', 'aria-checked': sel ? 'true' : 'false', disabled: done, onclick: () => {
           T.sel[gi] = oi; SFX.key();
           if (single) submit(); else box.replaceWith(mcUI(it));
-        } }, h('span', { class: 'letter' }, 'ABCD'[oi]), mdEl('span', o.tex.split(',\\quad ').map(x => '<span class="part">$' + x + '$</span>').join('<span class="sep">, </span>'), { class: 'txt' }));
+        } }, h('span', { class: 'letter' }, 'ABCD'[oi]), mdEl('span', topSplit(o.tex).map(x => '<span class="part">$' + x + '$</span>').join('<span class="sep">, </span>'), { class: 'txt' }));
         if (done && sel) b.classList.add('picked');
         grp.append(b);
         if (done && sel && !o.ok && o.why) grp.append(mdEl('div', '<b>Skąd ten wynik:</b> ' + o.why, { class: 'why hit' }));
