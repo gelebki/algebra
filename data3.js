@@ -141,19 +141,62 @@
       {
         id: '3.3', name: 'Funkcje kąta wielokrotnego', statement: 'Korzystając z własności liczb zespolonych wyrazić $\\sin3\\alpha,\\cos3\\alpha,\\sin4\\alpha,\\cos4\\alpha,\\sin5\\alpha,\\cos5\\alpha$ za pomocą $\\sin\\alpha$ oraz $\\cos\\alpha$.',
         wzory: [T`$\cos n\alpha+i\sin n\alpha=(\cos\alpha+i\sin\alpha)^n$.`, T`Rozwiń dwumianem Newtona, oznaczając $c=\cos\alpha$, $s=\sin\alpha$: $(c+is)^n=\sum\binom nk c^{n-k}(is)^k$.`, T`Część rzeczywista $\to\cos n\alpha$, urojona $\to\sin n\alpha$.`],
-        gen: () => {
-          const which = R.int(0, 2);
-          if (which === 0) { const [p, q] = R.pick([[1, 3], [1, 2], [2, 3], [1, 4], [3, 4], [-1, 3]]); const c = p / q; const v = 4 * c ** 3 - 3 * c; const r = A.ratApprox(v, 100000);
-            return { q: T`Wiedząc, że $\cos\alpha=${A.fracTex(p, q)}$, oblicz $\cos3\alpha$.`, fields: [{ label: '\\cos3\\alpha', ans: r[0] + '/' + r[1], restrict: ['notrig'] }], steps: [T`$\cos3\alpha=\cos^3\alpha-3\cos\alpha\sin^2\alpha=4\cos^3\alpha-3\cos\alpha$.`, T`$4\left(${A.fracTex(p, q)}\right)^3-3\cdot${A.fracTex(p, q)}=${A.fracTex(r[0], r[1])}$.`] }; }
-          if (which === 1) { const [p, q] = R.pick([[1, 3], [1, 2], [2, 3], [1, 4], [3, 5], [-1, 2]]); const s = p / q; const v = 3 * s - 4 * s ** 3; const r = A.ratApprox(v, 100000);
-            return { q: T`Wiedząc, że $\sin\alpha=${A.fracTex(p, q)}$, oblicz $\sin3\alpha$.`, fields: [{ label: '\\sin3\\alpha', ans: r[0] + '/' + r[1], restrict: ['notrig'] }], steps: [T`$\sin3\alpha=3\cos^2\alpha\sin\alpha-\sin^3\alpha=3\sin\alpha-4\sin^3\alpha$.`, T`$3\cdot${A.fracTex(p, q)}-4\left(${A.fracTex(p, q)}\right)^3=${A.fracTex(r[0], r[1])}$.`] }; }
-          const [p, q] = R.pick([[1, 3], [1, 2], [2, 3], [1, 4], [3, 5]]); const c = p / q; const v = 8 * c ** 4 - 8 * c * c + 1; const r = A.ratApprox(v, 100000);
-          return { q: T`Wiedząc, że $\cos\alpha=${A.fracTex(p, q)}$, oblicz $\cos4\alpha$.`, fields: [{ label: '\\cos4\\alpha', ans: r[0] + '/' + r[1], restrict: ['notrig'] }], steps: [T`$\cos4\alpha=c^4-6c^2s^2+s^4$, a po podstawieniu $s^2=1-c^2$: $8c^4-8c^2+1$.`, T`Wynik: $${A.fracTex(r[0], r[1])}$.`] };
+        gen: gk => {
+          const fr = (p, q) => { const g = A.gcd(Math.abs(p), q) || 1; return [p / g, q / g]; };
+          const sv = ([p, q]) => (q === 1 ? String(p) : p + '/' + q);
+          const n = gk === '5α' ? 5 : gk === '4α' ? 4 : 3;
+          const kind = R.pick(n === 3 ? ['num', 'num', 'sum', 'diff', 'two'] : n === 4 ? ['num', 'num', 'two', 'sum'] : ['num', 'num', 'sum', 'diff']);
+          const tup = (L, V) => L.map((l, k) => l + '=' + V[k]).join(',\\quad ');
+          const grid = (L, ok, e1, e2, e12, w1, w2, w12) => ({ mcCorrect: tup(L, ok), mc: [{ tex: tup(L, e1), why: w1 }, { tex: tup(L, e2), why: w2 }, { tex: tup(L, e12), why: w12 }] });
+          const sym = (lab, fields, steps, g) => Object.assign({ gk, keys: ['alpha', 'sin', 'cos'], q: lab, fields: fields.map(f => Object.assign(f, { vars: ['alpha', 'beta'], restrict: ['trig'] })), steps }, g);
+          const cs = T`\cos\alpha\cos\beta`, ss = T`\sin\alpha\sin\beta`, sc = T`\sin\alpha\cos\beta`, csn = T`\cos\alpha\sin\beta`;
+          const IW = T`Zły znak w cosinusie — zapomniane, że $i\cdot i=i^2=-1$.`;
+          if (kind === 'two') return sym(T`Korzystając z liczb zespolonych, wyraź przez $\sin\alpha$ i $\cos\alpha$:`,
+            [{ label: '\\sin2\\alpha', ans: '2sin(alpha)cos(alpha)' }, { label: '\\cos2\\alpha', ans: 'cos(alpha)^2-sin(alpha)^2' }],
+            [T`Ze wzoru de Moivre’a: $\cos2\alpha+i\sin2\alpha=(\cos\alpha+i\sin\alpha)^2$. Oznaczmy $c=\cos\alpha$, $s=\sin\alpha$.`,
+              T`Wymnażamy: $(c+is)^2=c^2+2c\cdot is+(is)^2=c^2+2cs\,i-s^2$, bo $i^2=-1$.`,
+              T`Porównujemy części: rzeczywista $\cos2\alpha=c^2-s^2$, urojona $\sin2\alpha=2cs$.`,
+              T`<b>Odpowiedź:</b> $\sin2\alpha=2\sin\alpha\cos\alpha$, $\ \cos2\alpha=\cos^2\alpha-\sin^2\alpha$.`],
+            grid([T`\sin2\alpha`, T`\cos2\alpha`], [T`2\sin\alpha\cos\alpha`, T`\cos^2\alpha-\sin^2\alpha`], [T`2\sin\alpha\cos\alpha`, T`\cos^2\alpha+\sin^2\alpha`], [T`\sin\alpha\cos\alpha`, T`\cos^2\alpha-\sin^2\alpha`], [T`\sin\alpha\cos\alpha`, T`\cos^2\alpha+\sin^2\alpha`],
+              T`Zły znak w cosinusie: $(is)^2=i^2s^2=-s^2$, nie $+s^2$.`, T`Zgubiona dwójka: wyraz środkowy w $(c+is)^2$ to $2\cdot c\cdot is$.`, T`Dwa błędy naraz: zgubiona dwójka w $2\cdot c\cdot is$ i zły znak przy $(is)^2=-s^2$.`));
+          if (kind === 'sum') return sym(T`Mnożąc liczby $\cos\alpha+i\sin\alpha$ i $\cos\beta+i\sin\beta$, wyraź przez $\sin\alpha,\cos\alpha,\sin\beta,\cos\beta$:`,
+            [{ label: '\\sin(\\alpha+\\beta)', ans: 'sin(alpha)cos(beta)+cos(alpha)sin(beta)' }, { label: '\\cos(\\alpha+\\beta)', ans: 'cos(alpha)cos(beta)-sin(alpha)sin(beta)' }],
+            [T`Przy mnożeniu argumenty się dodają: $(\cos\alpha+i\sin\alpha)(\cos\beta+i\sin\beta)=\cos(\alpha+\beta)+i\sin(\alpha+\beta)$.`,
+              T`Wymnażamy lewą stronę każdy przez każdy: $$\cos\alpha\cos\beta+i\cos\alpha\sin\beta+i\sin\alpha\cos\beta+i^2\sin\alpha\sin\beta$$`,
+              T`$i^2=-1$, więc część rzeczywista to $\cos\alpha\cos\beta-\sin\alpha\sin\beta$, a urojona $\sin\alpha\cos\beta+\cos\alpha\sin\beta$.`,
+              T`<b>Odpowiedź:</b> $$\sin(\alpha+\beta)=\sin\alpha\cos\beta+\cos\alpha\sin\beta$$ $$\cos(\alpha+\beta)=\cos\alpha\cos\beta-\sin\alpha\sin\beta$$`],
+            grid([T`\sin(\alpha+\beta)`, T`\cos(\alpha+\beta)`], [sc + '+' + csn, cs + '-' + ss], [sc + '+' + csn, cs + '+' + ss], [sc + '-' + csn, cs + '-' + ss], [sc + '-' + csn, cs + '+' + ss],
+              IW, T`Zły znak w sinusie — tak wygląda $\sin(\alpha-\beta)$. Oba wyrazy z $i$ mają tu znak plus.`, T`Oba znaki odwrócone — to wzory dla $\alpha-\beta$, a mnożymy liczby o argumentach $\alpha$ i $\beta$.`));
+          if (kind === 'diff') return sym(T`Mnożąc liczby $\cos\alpha+i\sin\alpha$ i $\cos\beta-i\sin\beta$, wyraź przez $\sin\alpha,\cos\alpha,\sin\beta,\cos\beta$:`,
+            [{ label: '\\sin(\\alpha-\\beta)', ans: 'sin(alpha)cos(beta)-cos(alpha)sin(beta)' }, { label: '\\cos(\\alpha-\\beta)', ans: 'cos(alpha)cos(beta)+sin(alpha)sin(beta)' }],
+            [T`$\cos\beta-i\sin\beta=\cos(-\beta)+i\sin(-\beta)$ — to liczba o argumencie $-\beta$. Przy mnożeniu argumenty się dodają: iloczyn to $\cos(\alpha-\beta)+i\sin(\alpha-\beta)$.`,
+              T`Wymnażamy każdy przez każdy: $$\cos\alpha\cos\beta-i\cos\alpha\sin\beta+i\sin\alpha\cos\beta-i^2\sin\alpha\sin\beta$$`,
+              T`$-i^2=+1$, więc część rzeczywista to $\cos\alpha\cos\beta+\sin\alpha\sin\beta$, a urojona $\sin\alpha\cos\beta-\cos\alpha\sin\beta$.`,
+              T`<b>Odpowiedź:</b> $$\sin(\alpha-\beta)=\sin\alpha\cos\beta-\cos\alpha\sin\beta$$ $$\cos(\alpha-\beta)=\cos\alpha\cos\beta+\sin\alpha\sin\beta$$`],
+            grid([T`\sin(\alpha-\beta)`, T`\cos(\alpha-\beta)`], [sc + '-' + csn, cs + '+' + ss], [sc + '-' + csn, cs + '-' + ss], [sc + '+' + csn, cs + '+' + ss], [sc + '+' + csn, cs + '-' + ss],
+              T`Zły znak w cosinusie: $(i\sin\alpha)(-i\sin\beta)=-i^2\sin\alpha\sin\beta=+\sin\alpha\sin\beta$.`, T`Zły znak w sinusie: wyraz $\cos\alpha\cdot(-i\sin\beta)$ ma minus.`, T`Oba znaki odwrócone — to wzory dla $\alpha+\beta$, a drugi czynnik ma argument $-\beta$.`));
+          // liczbowo: cos α, sin α z trójki pitagorejskiej, potęga liczby zespolonej
+          const [a0, b0, d] = R.pick([[3, 4, 5], [4, 3, 5], [5, 12, 13], [12, 5, 13], [8, 15, 17], [15, 8, 17]]);
+          const a = a0 * R.pick([1, -1]), b = b0 * R.pick([1, 1, -1]);
+          const pw = [[a, b]]; for (let k = 1; k < n; k++) pw.push(Z.mul(pw[k - 1], [a, b]));
+          const dn = d ** n, re = fr(pw[n - 1][0], dn), im = fr(pw[n - 1][1], dn);
+          const ztex = (x, y) => Z.tex(x, y);
+          const lines = pw.slice(1).map((w, k) => T`$(${ztex(a, b)})^{${k + 2}}=${k ? T`(${ztex(...pw[k])})(${ztex(a, b)})` : T`(${ztex(a, b)})(${ztex(a, b)})`}=${ztex(...w)}$`);
+          const bre = re, bim = fr(-pw[n - 1][1], dn);
+          const L = [T`\cos${n}\alpha`, T`\sin${n}\alpha`], ft = v => A.fracTex(...v);
+          const g = grid(L, [ft(re), ft(im)], [ft(im), ft(re)], [ft(bre), ft(bim)], [ft(bim), ft(bre)],
+            T`Zamienione: część rzeczywista to $\cos${n}\alpha$, a urojona to $\sin${n}\alpha$.`, T`Zły znak sinusa — pomyłka przy potęgach $i$ (pamiętaj: $i^2=-1$, $i^3=-i$).`, T`Dwa błędy: zły znak części urojonej i zamienione części rzeczywista z urojoną.`);
+          return { gk, ...g, q: T`Wiadomo, że $\cos\alpha=${A.fracTex(...fr(a, d))}$ i $\sin\alpha=${A.fracTex(...fr(b, d))}$. Korzystając z liczb zespolonych, oblicz $\cos${n}\alpha$ i $\sin${n}\alpha$.`,
+            fields: [{ label: `\\cos${n}\\alpha`, ans: sv(re), restrict: ['notrig'] }, { label: `\\sin${n}\\alpha`, ans: sv(im), restrict: ['notrig'] }],
+            steps: [T`Ze wzoru de Moivre’a: $\cos${n}\alpha+i\sin${n}\alpha=(\cos\alpha+i\sin\alpha)^{${n}}=\left(\frac{${ztex(a, b)}}{${d}}\right)^{${n}}=\frac{(${ztex(a, b)})^{${n}}}{${d}^{${n}}}$.`,
+              T`Potęgę liczymy, mnożąc kolejno (pamiętaj, że $i^2=-1$): ` + lines.join(', ') + '.',
+              T`Dzielimy przez $${d}^{${n}}=${dn}$: $\ \cos${n}\alpha+i\sin${n}\alpha=\frac{${ztex(...pw[n - 1])}}{${dn}}$.`,
+              T`Część rzeczywista to cosinus, urojona — sinus. <b>Odpowiedź:</b> $\cos${n}\alpha=${A.fracTex(...re)}$, $\ \sin${n}\alpha=${A.fracTex(...im)}$.`] };
         },
         items: [
-          { label: '3α', sol: [T`Ze wzoru de Moivre’a: $\cos3\alpha+i\sin3\alpha=(\cos\alpha+i\sin\alpha)^3$. Oznaczmy $c=\cos\alpha$, $s=\sin\alpha$.`, T`$(c+is)^3=c^3+3c^2(is)+3c(is)^2+(is)^3=c^3+3c^2s\,i-3cs^2-s^3i$ (bo $i^2=-1$, $i^3=-i$).`, T`Część rzeczywista: <b>$\cos3\alpha=\cos^3\alpha-3\cos\alpha\sin^2\alpha$</b>.`, T`Część urojona: <b>$\sin3\alpha=3\cos^2\alpha\sin\alpha-\sin^3\alpha$</b>.`], keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin3\\alpha', ans: '3cos(alpha)^2 sin(alpha)-sin(alpha)^3' }, { label: '\\cos3\\alpha', ans: 'cos(alpha)^3-3cos(alpha)sin(alpha)^2' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
-          { label: '4α', sol: [T`$\cos4\alpha+i\sin4\alpha=(c+is)^4$, gdzie $c=\cos\alpha$, $s=\sin\alpha$. Współczynniki dwumianu: $1,4,6,4,1$.`, T`$(c+is)^4=c^4+4c^3(is)+6c^2(is)^2+4c(is)^3+(is)^4=c^4+4c^3s\,i-6c^2s^2-4cs^3i+s^4$.`, T`Część rzeczywista: <b>$\cos4\alpha=\cos^4\alpha-6\cos^2\alpha\sin^2\alpha+\sin^4\alpha$</b>.`, T`Część urojona: <b>$\sin4\alpha=4\cos^3\alpha\sin\alpha-4\cos\alpha\sin^3\alpha$</b>.`], keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin4\\alpha', ans: '4cos(alpha)^3 sin(alpha)-4cos(alpha)sin(alpha)^3' }, { label: '\\cos4\\alpha', ans: 'cos(alpha)^4-6cos(alpha)^2 sin(alpha)^2+sin(alpha)^4' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
-          { label: '5α', sol: [T`$\cos5\alpha+i\sin5\alpha=(c+is)^5$. Współczynniki dwumianu: $1,5,10,10,5,1$; potęgi $i$: $i,\,-1,\,-i,\,1,\,i$.`, T`$(c+is)^5=c^5+5c^4s\,i-10c^3s^2-10c^2s^3i+5cs^4+s^5i$.`, T`Część rzeczywista: <b>$\cos5\alpha=\cos^5\alpha-10\cos^3\alpha\sin^2\alpha+5\cos\alpha\sin^4\alpha$</b>.`, T`Część urojona: <b>$\sin5\alpha=5\cos^4\alpha\sin\alpha-10\cos^2\alpha\sin^3\alpha+\sin^5\alpha$</b>.`], keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin5\\alpha', ans: '5cos(alpha)^4 sin(alpha)-10cos(alpha)^2 sin(alpha)^3+sin(alpha)^5' }, { label: '\\cos5\\alpha', ans: 'cos(alpha)^5-10cos(alpha)^3 sin(alpha)^2+5cos(alpha)sin(alpha)^4' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
+          { label: '3α', gk: '3α', sol: [T`Ze wzoru de Moivre’a: $\cos3\alpha+i\sin3\alpha=(\cos\alpha+i\sin\alpha)^3$. Oznaczmy $c=\cos\alpha$, $s=\sin\alpha$.`, T`$(c+is)^3=c^3+3c^2(is)+3c(is)^2+(is)^3=c^3+3c^2s\,i-3cs^2-s^3i$ (bo $i^2=-1$, $i^3=-i$).`, T`Część rzeczywista: <b>$\cos3\alpha=\cos^3\alpha-3\cos\alpha\sin^2\alpha$</b>.`, T`Część urojona: <b>$\sin3\alpha=3\cos^2\alpha\sin\alpha-\sin^3\alpha$</b>.`], keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin3\\alpha', ans: '3cos(alpha)^2 sin(alpha)-sin(alpha)^3' }, { label: '\\cos3\\alpha', ans: 'cos(alpha)^3-3cos(alpha)sin(alpha)^2' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
+          { label: '4α', gk: '4α', sol: [T`$\cos4\alpha+i\sin4\alpha=(c+is)^4$, gdzie $c=\cos\alpha$, $s=\sin\alpha$. Współczynniki dwumianu: $1,4,6,4,1$.`, T`$(c+is)^4=c^4+4c^3(is)+6c^2(is)^2+4c(is)^3+(is)^4=c^4+4c^3s\,i-6c^2s^2-4cs^3i+s^4$.`, T`Część rzeczywista: <b>$\cos4\alpha=\cos^4\alpha-6\cos^2\alpha\sin^2\alpha+\sin^4\alpha$</b>.`, T`Część urojona: <b>$\sin4\alpha=4\cos^3\alpha\sin\alpha-4\cos\alpha\sin^3\alpha$</b>.`], keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin4\\alpha', ans: '4cos(alpha)^3 sin(alpha)-4cos(alpha)sin(alpha)^3' }, { label: '\\cos4\\alpha', ans: 'cos(alpha)^4-6cos(alpha)^2 sin(alpha)^2+sin(alpha)^4' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
+          { label: '5α', gk: '5α', sol: [T`$\cos5\alpha+i\sin5\alpha=(c+is)^5$. Współczynniki dwumianu: $1,5,10,10,5,1$; potęgi $i$: $i,\,-1,\,-i,\,1,\,i$.`, T`$(c+is)^5=c^5+5c^4s\,i-10c^3s^2-10c^2s^3i+5cs^4+s^5i$.`, T`Część rzeczywista: <b>$\cos5\alpha=\cos^5\alpha-10\cos^3\alpha\sin^2\alpha+5\cos\alpha\sin^4\alpha$</b>.`, T`Część urojona: <b>$\sin5\alpha=5\cos^4\alpha\sin\alpha-10\cos^2\alpha\sin^3\alpha+\sin^5\alpha$</b>.`], keys: ['alpha', 'sin', 'cos'], q: 'Wyraź przez $\\sin\\alpha$ i $\\cos\\alpha$:', fields: [{ label: '\\sin5\\alpha', ans: '5cos(alpha)^4 sin(alpha)-10cos(alpha)^2 sin(alpha)^3+sin(alpha)^5' }, { label: '\\cos5\\alpha', ans: 'cos(alpha)^5-10cos(alpha)^3 sin(alpha)^2+5cos(alpha)sin(alpha)^4' }].map(f => Object.assign(f, { vars: ['alpha'], restrict: ['trig'] })) },
         ],
       },
       {
