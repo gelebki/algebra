@@ -43,6 +43,10 @@
   let S = blank();
   try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(blank(), JSON.parse(raw)); } catch (e) { /* bez pamięci */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } if (window.AQRank && window.AQRank.queue) window.AQRank.queue(); };
+  const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const yesterday = () => { const y = new Date(); y.setDate(y.getDate() - 1); return ymd(y); };
+  const liveStreak = (n, day) => (day && (day === today() || day === yesterday()) ? n || 0 : 0);
+  const curStreak = () => liveStreak(S.dayStreak, S.lastDay);
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
   /* ---------------- poziomy ---------------- */
@@ -457,7 +461,7 @@
       h('div', { class: 'player' },
         h('div', { class: 'lvl', title: 'Poziom ' + lv.L, html: ringSVG(lv.into / lv.need, 42, 4, 'var(--xp)') + `<span style="position:relative">${lv.L}</span>` }),
         h('div', { class: 'xpbox' }, h('div', { class: 't' }, h('b', {}, lv.title), h('span', {}, xpText(lv))), h('div', { class: 'bar' }, h('i', { style: `width:${(100 * lv.into / lv.need).toFixed(1)}%` })))),
-      h('span', { class: 'chip flame', title: 'Rozwiązane dzisiaj', html: IC.flame + '<span>' + ((S.days[today()] || {}).ok || 0) + '</span>' }),
+      h('span', { class: 'chip flame', title: 'Seria: dni nauki z rzędu (dzisiaj rozwiązane: ' + ((S.days[today()] || {}).ok || 0) + ')', 'aria-label': 'Seria dni nauki z rzędu', html: IC.flame + '<span>' + curStreak() + '</span>' }),
       h('button', { class: 'iconbtn', 'aria-label': S.sound ? 'Wycisz dźwięki' : 'Włącz dźwięki', title: S.sound ? 'Dźwięk włączony' : 'Dźwięk wyłączony', html: S.sound ? IC.sound : IC.mute, onclick: () => { S.sound = !S.sound; save(); renderTop(); if (S.sound) SFX.correct(); } })));
     return top;
   }
@@ -731,7 +735,10 @@
     if (!T.gs) T.gs = { i: 0, misses: 0, bad: {}, opts: it.steps.map(st => A.R.shuffle([{ t: st.a, ok: true }, ...st.w.map(([t, why]) => ({ t, why }))])) };
     const g = T.gs, n = it.steps.length, done = T.status !== 'answering';
     const box = h('div', { class: 'guided' });
-    if (it.idea && !done) box.append(h('div', { class: 'gidea' }, h('div', { class: 'glabel' }, h('span', { html: IC.bulb }), 'Pomysł dowodu'), mdEl('div', it.idea)));
+    if (it.idea && !done) {
+      if (g.showIdea) box.append(h('div', { class: 'gidea' }, h('div', { class: 'glabel' }, h('span', { html: IC.bulb }), 'Wskazówka · pomysł dowodu'), mdEl('div', it.idea)));
+      else box.append(h('div', {}, h('button', { class: 'btn small hintbtn', onclick: () => { g.showIdea = true; SFX.hint(); box.replaceWith(guidedUI(it)); } }, h('span', { html: IC.bulb }), 'Wskazówka')));
+    }
     if (!done) box.append(h('div', { class: 'gprog', 'aria-label': 'Krok ' + Math.min(g.i + 1, n) + ' z ' + n }, ...it.steps.map((_, k) => h('i', { class: k < g.i ? 'on' : k === g.i ? 'cur' : '' }))));
     const upto = done ? n : g.i;
     if (upto) {
@@ -745,7 +752,10 @@
     }
     if (g.i < n && !done) {
       const st = it.steps[g.i], cur = h('div', { class: 'gstep' });
-      cur.append(h('div', { class: 'glabel hl' }, 'Krok ' + (g.i + 1) + ' z ' + n + ' · ', md(st.goal)), mdEl('div', st.q, { class: 'gq' }));
+      cur.append(h('div', { class: 'glabel hl' }, 'Krok ' + (g.i + 1) + ' z ' + n + ' · ', md(st.goal)));
+      const eqs = it.steps.slice(0, g.i).filter(x => x.eq);
+      if (eqs.length) cur.append(h('div', { class: 'geqs' }, h('div', { class: 'glabel' }, 'Oznaczone równania'), ...eqs.map(x => h('div', { class: 'geq' }, h('span', { class: 'en' }, '(' + x.eq.n + ')'), mdEl('span', '$' + x.eq.tex + '$')))));
+      cur.append(mdEl('div', st.q, { class: 'gq' }));
       g.opts[g.i].forEach((o, oi) => {
         const bad = !!g.bad[oi];
         cur.append(h('button', { class: 'opt mcopt' + (bad ? ' chosen' : ''), disabled: bad, onclick: () => {
@@ -820,8 +830,8 @@
   const DEMO = {
     demo: true, meNo: 7,
     others: [
-      { id: 'd1', name: 'Kasia', xp: 3210, solved: 178, week: 410 }, { id: 'd2', name: 'Anon 3', xp: 2480, solved: 141, week: 95 },
-      { id: 'd3', name: 'Bartek M.', xp: 1890, solved: 109, week: 520 }, { id: 'd4', name: 'Ola', xp: 1320, solved: 80, week: 260 },
+      { id: 'd1', name: 'Kasia', xp: 3210, solved: 178, week: 410, streak: 12 }, { id: 'd2', name: 'Anon 3', xp: 2480, solved: 141, week: 95, streak: 2 },
+      { id: 'd3', name: 'Bartek M.', xp: 1890, solved: 109, week: 520, streak: 5 }, { id: 'd4', name: 'Ola', xp: 1320, solved: 80, week: 260 },
       { id: 'd5', name: 'Anon 5', xp: 760, solved: 44, week: 0 }, { id: 'd6', name: 'Michał', xp: 540, solved: 33, week: 140 },
       { id: 'd7', name: 'Anon 2', xp: 210, solved: 12, week: 30 }, { id: 'd8', name: 'Zuza', xp: 95, solved: 6, week: 95 },
     ],
@@ -838,9 +848,9 @@
   function rankRows() {
     const P = window.AQRank;
     const wk = weekKey();
-    const others = P ? P.rows().filter(r => r.id !== P.uid && r.xp > 0).map(r => Object.assign({}, r, { week: r.weekKey === wk ? (r.week || 0) : 0 })) : DEMO.others;
+    const others = P ? P.rows().filter(r => r.id !== P.uid && r.xp > 0).map(r => Object.assign({}, r, { week: r.weekKey === wk ? (r.week || 0) : 0, streak: liveStreak(r.streak, r.streakDay) })) : DEMO.others;
     const sm = summary();
-    const me = { id: 'me', me: true, name: myName(), xp: S.xp, solved: sm.solved, week: myWeekXP() };
+    const me = { id: 'me', me: true, name: myName(), xp: S.xp, solved: sm.solved, week: myWeekXP(), streak: curStreak() };
     return [...others, me];
   }
   function renameDialog() {
@@ -859,6 +869,7 @@
   const AV = ['var(--l1)', 'var(--l2)', 'var(--l3)', 'var(--accent)', '#7fb3e6', '#d7a6d0'];
   const avatar = name => { let hs = 0; for (const ch of name) hs = (hs * 31 + ch.charCodeAt(0)) >>> 0; const ini = /^Anon \d+$/.test(name) ? 'A' + name.slice(5) : name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(); return h('span', { class: 'av', style: '--c:' + AV[hs % AV.length] }, ini); };
   let rankMode = 'all';
+  const streakPill = n => (n > 0 ? h('span', { class: 'rstreak', title: 'Seria: ' + n + (n === 1 ? ' dzień' : ' dni') + ' nauki z rzędu', html: IC.flame + '<span>' + n + '</span>' }) : '');
   function rankView() {
     const sec = h('section', { class: 'h-st' });
     const P = window.AQRank;
@@ -884,7 +895,7 @@
     sec.append(h('div', { class: 'hero' }, h('div', {}, h('h1', {}, 'Ranking'))));
     sec.append(h('div', { class: 'mecard' },
       avatar(me.name),
-      h('div', { class: 'mewho' }, h('b', {}, me.name), h('small', {}, lvMe.title)),
+      h('div', { class: 'mewho' }, h('b', {}, me.name, streakPill(me.streak)), h('small', {}, lvMe.title)),
       h('button', { class: 'btn small', onclick: renameDialog }, 'Zmień nazwę'),
       h('div', { class: 'mepos' }, h('small', {}, rankMode === 'week' ? 'w tym tygodniu' : 'miejsce'), h('b', {}, pos + '.'))));
     const seg = h('div', { class: 'seg', role: 'tablist' },
@@ -896,7 +907,7 @@
       const lv = levelInfo(r.xp);
       list.append(h('li', { class: 'rrow' + (r.me ? ' me' : ''), style: `animation-delay:${i * 30}ms` },
         h('span', { class: 'rpos' }, String(i + 1)), avatar(r.name),
-        h('div', { class: 'rwho' }, h('b', {}, r.name, r.me ? h('span', { class: 'you' }, 'Ty') : ''), h('small', {}, lv.title + ' · ' + r.solved + '/' + total), h('div', { class: 'bar' }, h('i', { style: `width:${Math.min(100, 100 * r.solved / total)}%` }))),
+        h('div', { class: 'rwho' }, h('b', {}, r.name, r.me ? h('span', { class: 'you' }, 'Ty') : '', streakPill(r.streak)), h('small', {}, lv.title + ' · ' + r.solved + '/' + total), h('div', { class: 'bar' }, h('i', { style: `width:${Math.min(100, 100 * r.solved / total)}%` }))),
         h('div', { class: 'rxp' }, h('b', {}, String(r[key])), h('small', {}, rankMode === 'week' ? 'XP w tym tyg.' : 'XP'))));
     });
     sec.append(list);
@@ -917,7 +928,7 @@
       kpi('Zaliczone podpunkty', solved + '/' + totalItems, Math.round(100 * solved / totalItems) + '% wszystkich list'),
       kpi('Rozwiązane przykłady', String(S.correct), 'łącznie z podobnymi'),
       kpi('Podobne przykłady', String(S.variants), Object.values(S.practice || {}).filter(x => x >= 3).length + ' pełnych serii'),
-      kpi('Dni nauki z rzędu', String(S.dayStreak || 0), 'dzisiaj: ' + ((S.days[today()] || {}).ok || 0))));
+      kpi('Dni nauki z rzędu', String(curStreak()), 'dzisiaj: ' + ((S.days[today()] || {}).ok || 0))));
     sec.append(h('h2', { class: 'sec' }, 'Listy'));
     const lp = h('div', { class: 'lp' });
     LISTS.forEach(L => {
@@ -987,7 +998,7 @@
     for (const L of LISTS) { const p = listProgress(L); solved += p.solved; total += p.total; stars += p.stars; }
     return { xp: S.xp, level: levelInfo(S.xp).L, solved, total, stars, correct: S.correct, attempts: S.correct, best: 0 };
   }
-  A.ui = { weekKey, myWeekXP, myName, h, IC, md, toast, SFX, confetti, levelInfo, summary, getS: () => S, setS: ns => { S = Object.assign(blank(), ns); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } }, render: () => { if (booted) render(); }, isRank: () => V.view === 'rank', closeOverlays, modal };
+  A.ui = { curStreak, weekKey, myWeekXP, myName, h, IC, md, toast, SFX, confetti, levelInfo, summary, getS: () => S, setS: ns => { S = Object.assign(blank(), ns); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } }, render: () => { if (booted) render(); }, isRank: () => V.view === 'rank', closeOverlays, modal };
   if (window.AQRank && window.AQRank.init) window.AQRank.init();
   waitMJ();
 })();
