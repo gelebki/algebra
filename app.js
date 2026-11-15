@@ -19,6 +19,7 @@
   /* ---------------- ikony ---------------- */
   const IC = {
     star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg>',
+    solved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/></svg>',
     flame: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3.5 5.5 5.6 5.5 11a5.5 5.5 0 0 1-11 0c0-2.4 1.2-4 2.5-5 .1 1.6.8 2.7 2 3.2C10.6 8.6 11 5 12 2z"/></svg>',
     sound: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>',
     mute: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>',
@@ -461,7 +462,7 @@
       h('div', { class: 'player' },
         h('div', { class: 'lvl', title: 'Poziom ' + lv.L, html: ringSVG(lv.into / lv.need, 42, 4, 'var(--xp)') + `<span style="position:relative">${lv.L}</span>` }),
         h('div', { class: 'xpbox' }, h('div', { class: 't' }, h('b', {}, lv.title), h('span', {}, xpText(lv))), h('div', { class: 'bar' }, h('i', { style: `width:${(100 * lv.into / lv.need).toFixed(1)}%` })))),
-      h('span', { class: 'chip flame', title: 'Dobrze rozwiązane przykłady łącznie (dzisiaj: ' + ((S.days[today()] || {}).ok || 0) + ')', 'aria-label': 'Dobrze rozwiązane przykłady łącznie: ' + (S.correct || 0), html: IC.flame + '<span>' + (S.correct || 0) + '</span>' }),
+      h('span', { class: 'chip solved', title: 'Dobrze rozwiązane przykłady łącznie (dzisiaj: ' + ((S.days[today()] || {}).ok || 0) + ')', 'aria-label': 'Dobrze rozwiązane przykłady łącznie: ' + (S.correct || 0), html: IC.solved + '<span>' + (S.correct || 0) + '</span>' }),
       h('button', { class: 'iconbtn', 'aria-label': S.sound ? 'Wycisz dźwięki' : 'Włącz dźwięki', title: S.sound ? 'Dźwięk włączony' : 'Dźwięk wyłączony', html: S.sound ? IC.sound : IC.mute, onclick: () => { S.sound = !S.sound; save(); renderTop(); if (S.sound) SFX.correct(); } })));
     return top;
   }
