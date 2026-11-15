@@ -9,7 +9,7 @@
   /* ---------- 1.2 ---------- */
   function p12(p) {
     const t = T`\sqrt[3]{${p}}`, pc = p === 1 ? '' : String(p);
-    return {
+    const r = {
       idea: T`Mamy równanie z $t=${t}$ i $t^2$. Gdyby któraś z liczb $b$, $c$ nie była zerem, dałoby się z niego wyliczyć $t$ jako zwykły ułamek. A to niemożliwe, bo $${t}$ jest liczbą niewymierną. Robimy to jak w układzie równań: zdobywamy drugie równanie i pozbywamy się $t^2$.`,
       steps: [
         S('Oznaczenia', T`Oznaczmy $t=${t}$. Co wiemy o tej liczbie?`,
@@ -50,6 +50,9 @@
           [T`$b=t$`, T`$b$ jest wymierne, a $t$ nie. Poza tym $b^2=ac=0$.`]),
       ],
     };
+    const E = [[0, 1, T`a+bt+ct^2=0`], [1, 2, T`${pc}c+at+bt^2=0`], [2, 3, T`(b^2-ac)\,t=${pc}c^2-ab`]];
+    E.forEach(([k, n, tex]) => { r.steps[k].eq = { n, tex }; });
+    return r;
   }
 
   const toolStep = S('Narzędzie', 'Moduł sumy trudno rozpisać. Czym zastąpić kwadrat modułu?',
