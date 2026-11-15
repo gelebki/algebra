@@ -24,7 +24,7 @@
     if (v === 'brak') return '\\text{brak}';
     if (typeof v === 'boolean') return v ? '\\text{tak}' : '\\text{nie}';
     if (v && v.expr !== undefined) return A.toTex(A.parse(v.expr, f.vars || []));
-    if (Array.isArray(v)) return v.length ? v.map(cTex).join(',\\quad ') : '\\varnothing';
+    if (Array.isArray(v)) return v.length ? '\\left\\{' + v.map(cTex).join(',\\quad ') + '\\right\\}' : '\\varnothing';
     if (f.kind === 'angle') return A.niceAngle(v.re);
     if (f.kind === 'mod') return String(md(v.re, f.mod));
     if (f.kind === 'pm') return '\\pm\\left(' + cTex(v) + '\\right)';
@@ -201,14 +201,14 @@
       add(C((p - x) % p), 'Wzięto element przeciwny ($-a$) zamiast właściwego.');
       add(C((x + 1) % p), 'Pomyłka o $1$ przy redukcji modulo $' + p + '$.');
       add(C((x + p - 1) % p), 'Pomyłka o $1$ przy redukcji modulo $' + p + '$.');
-      add(C((2 * x) % p), 'Błąd rachunkowy przy mnożeniu.');
-      add(C((x * x) % p), 'Błąd rachunkowy przy redukcji.');
+      add(C((2 * x) % p), 'Błąd rachunkowy — policz jeszcze raz i weź resztę z dzielenia.');
+      add(C((x * x) % p), 'Błąd przy braniu reszty z dzielenia.');
       return out.filter(m => md(m.v.re, p) !== x);
     }
     if (f.kind === 'angle') {
       add(C(PI - v.re), 'Zła ćwiartka: $\\pi-\\varphi$ zamiast $\\varphi$.');
       add(C(-v.re), 'Zły znak argumentu.');
-      add(C(v.re + PI), 'Przeciwna ćwiartka — $\\operatorname{arctg}$ bez poprawki o $\\pi$.');
+      add(C(v.re + PI), 'Kąt przesunięty o $\\pi$ — to punkt po przeciwnej stronie zera. Sprawdź znaki $\\cos\\varphi$ i $\\sin\\varphi$.');
       add(C(PI / 2 - v.re), 'Pomylone $\\sin$ i $\\cos$.');
       return out;
     }
@@ -227,7 +227,7 @@
       const r2 = A.ratApprox(x * x, 48);
       if (r2 && !A.ratApprox(x, 48)) { add(C(x * x), 'Zapomniany pierwiastek.'); }
       if (Number.isInteger(Math.round(x * 1e9) / 1e9) && Math.abs(x) < 1e6) { add(C(x + 1), 'Pomyłka o $1$ w rachunkach.'); add(C(x - 1), 'Pomyłka o $1$ w rachunkach.'); }
-      if (Math.abs(x) > 1e-12) { add(C(2 * x), 'Zgubiony czynnik $2$ (np. w mianowniku $2a$).'); add(C(x / 2), 'Podwójnie podzielone przez $2$.'); }
+      if (Math.abs(x) > 1e-12) { add(C(2 * x), 'Wynik dwa razy za duży — sprawdź jeszcze raz rachunek (np. potęgę modułu albo dzielenie przez $2$).'); add(C(x / 2), 'Wynik dwa razy za mały — sprawdź jeszcze raz rachunek (np. potęgę modułu albo mnożenie przez $2$).'); }
       else { add(C(1), 'Błąd: suma/wartość wynosi $0$, a nie $1$.'); add(C(-1), 'Błąd: wynik to $0$.'); add('brak', 'Wartość istnieje — to $0$.'); }
       return out;
     }
@@ -255,8 +255,8 @@
       const [r, f] = cv; return [
         { vals: [C(r.re * r.re), f], why: 'Moduł bez pierwiastka: $a^2+b^2$ zamiast $\\sqrt{a^2+b^2}$.' },
         { vals: [r, C(PI - f.re)], why: 'Zła ćwiartka argumentu.' },
-        { vals: [r, C(f.re + PI)], why: '$\\operatorname{arctg}\\frac ba$ bez poprawki o $\\pi$.' },
-        { vals: [r, C(PI / 2 - f.re)], why: 'Pomylone $\\cos\\varphi=\\frac ar$ i $\\sin\\varphi=\\frac br$.' }];
+        { vals: [r, C(f.re + PI)], why: 'Kąt przesunięty o $\\pi$ — to punkt po przeciwnej stronie zera. Sprawdź znaki $\\cos\\varphi$ i $\\sin\\varphi$.' },
+        { vals: [r, C(PI / 2 - f.re)], why: 'Pomylone $\\cos\\varphi=\\frac a{|z|}$ i $\\sin\\varphi=\\frac b{|z|}$.' }];
     },
   };
   TRAPS.polarA = null;
@@ -278,7 +278,7 @@
       try {
         if (tupleEq(F, c.vals, correct)) continue;
         if (chosen.some(d => tupleEq(F, d.vals, c.vals))) continue;
-        const tx = F.map((f, i) => valTex(f, c.vals[i])).join('');
+        const tx = tupleTex(F, c.vals, false);
         if (dec(tx)) continue;
         chosen.push(c);
       } catch (e) { /* pomiń */ }
@@ -291,11 +291,25 @@
   const labTex = l => wordy(l) ? '\\text{' + l + '}' : (l || 'x');
   A.mcLabel = l => wordy(l) ? l : '$' + l + '$';
   function shown(f, v, showCorrect) {
-    if (showCorrect && f.show) { if (v == null) return f.show; const t = valTex(f, v); return dec(t) ? f.show : t; }
+    if (showCorrect && f.show) {
+      const wrapSet = t => (f.kind === 'set' && !/^\\left\\\{/.test(t) ? '\\left\\{' + t + '\\right\\}' : t);
+      if (v == null) return wrapSet(f.show); const t = valTex(f, v); return dec(t) ? wrapSet(f.show) : t;
+    }
     return valTex(f, v);
   }
-  function tupleTex(F, vals, showCorrect) {
-    if (F.length === 1) return shown(F[0], vals[0], showCorrect);
+  const parNeg = t => (/^-/.test(t) ? '\\left(' + t + '\\right)' : t);
+  function polarFmt(F, vals) { // |z|(cos φ + i sin φ)
+    const r = valTex(F[0], vals[0]), ph = parNeg(valTex(F[1], vals[1]));
+    const rt = r === '1' ? '' : (/ [+-] /.test(r) && !/^\\frac/.test(r) ? '\\left(' + r + '\\right)' : r);
+    return rt + '\\left(\\cos ' + ph + ' + i\\sin ' + ph + '\\right)';
+  }
+  function tupleTex(F, vals, showCorrect, item) {
+    if (item && item.fmt === 'polar' && F.length === 2) return polarFmt(F, vals);
+    if (F.length === 1) {
+      const f = F[0], body = shown(f, vals[0], showCorrect);
+      if (/^z(_\d)?$/.test(f.label || '')) return f.label + (f.kind === 'set' ? ' \\in ' : ' = ') + body;
+      return body;
+    }
     return F.map((f, i) => {
       const cond = /^[a-z0-9]+\s*(=|\\ge|\\le)\s*\d|\\n?mid/.test(f.label || '');
       const OPSYM = { dodawanie: '+', odejmowanie: '-', 'mnożenie': '\\cdot', dzielenie: '\\div' };
@@ -304,8 +318,78 @@
     }).join(',\\quad ');
   }
 
+  /* ---------- siatka 2×2: dwa niezależne błędy; każda cecha występuje w dokładnie dwóch opcjach ---------- */
+  const AX = {
+    trig() {
+      const neg = x => (x === 'brak' ? x : Cx.neg(x));
+      return [
+        { why: 'Pomylone $\\sin$ z $\\cos$ (i $\\operatorname{tg}$ z $\\operatorname{ctg}$).', apply: v => [v[1], v[0], v[3], v[2]] },
+        { why: 'Zły znak sinusa — źle rozpoznana ćwiartka.', apply: v => [neg(v[0]), v[1], neg(v[2]), neg(v[3])] },
+        { why: 'Zły znak cosinusa — źle rozpoznana ćwiartka.', apply: v => [v[0], neg(v[1]), neg(v[2]), neg(v[3])] },
+      ];
+    },
+    polar() {
+      const R = (fn, why) => ({ field: 0, why, apply: v => { const n = fn(v[0].re); return n == null ? null : [C(n), v[1]]; } });
+      const P = (fn, why) => ({ field: 1, why, apply: v => [v[0], C(fn(v[1].re))] });
+      return shuffle([
+        R(r => (Math.abs(r * r - r) < 1e-9 ? null : r * r), 'Moduł bez pierwiastka: $a^2+b^2$ zamiast $\\sqrt{a^2+b^2}$.'),
+        R(r => r * Math.SQRT2, 'Błąd w module: $|z|=\\sqrt{a^2+b^2}$ — sprawdź rachunek pod pierwiastkiem.'),
+        R(r => r / Math.SQRT2, 'Błąd w module: $|z|=\\sqrt{a^2+b^2}$ — sprawdź rachunek pod pierwiastkiem.'),
+        R(r => 2 * r, 'Błąd w module: $|z|=\\sqrt{a^2+b^2}$, a nie $|a|+|b|$ ani $a^2+b^2$.'),
+      ]).concat(shuffle([
+        P(f => PI - f, 'Zła ćwiartka: zły znak $\\cos\\varphi$.'),
+        P(f => f + PI, 'Przeciwna ćwiartka: kąt przesunięty o $\\pi$, więc oba znaki są złe.'),
+        P(f => -f, 'Zły znak $\\sin\\varphi$ — odbicie względem osi rzeczywistej.'),
+        P(f => PI / 2 - f, 'Pomylone $\\cos\\varphi=\\frac{a}{|z|}$ i $\\sin\\varphi=\\frac{b}{|z|}$.'),
+      ]));
+    },
+  };
+  function axesFor(F, correct, gk) {
+    const ax = [];
+    if (AX[gk]) ax.push(...AX[gk](F, correct));
+    if (gk === 'polar') return ax;
+    F.forEach((f, i) => {
+      const list = [
+        ...exprModes(f).map(m => ({ fn: () => m.v, why: m.why })),
+        ...mutations(f, correct[i]).map(m => ({ why: m.why, fn: x => { try { const r = mutations(f, x).find(y => y.why === m.why); return r ? r.v : null; } catch (e) { return null; } } })),
+      ];
+      list.slice(0, 8).forEach(op => ax.push({ field: i, why: (F.length > 1 ? A.mcLabel(F[i].label) + ': ' : '') + op.why,
+        apply: vals => { const n = op.fn(vals[i]); if (n == null) return null; const c = vals.slice(); c[i] = n; return c; } }));
+    });
+    return ax;
+  }
+  function okTuple(F, t, item) {
+    if (!t || t.some(x => x == null)) return false;
+    if (t.some(x => Array.isArray(x) && x.some((z, k) => x.findIndex(w => A.close(w, z, 1e-6)) !== k))) return false;
+    try { return !dec(tupleTex(F, t, false, item)); } catch (e) { return false; }
+  }
+  function grid(F, correct, gk, item) {
+    const ax = axesFor(F, correct, gk); const valid = [];
+    const multi = F.length > 1 && new Set(ax.map(a => a.field)).size > 1;
+    for (const pass of (multi ? [1, 2] : [2])) {
+      for (let a = 0; a < ax.length && valid.length < 6; a++) for (let b = a + 1; b < ax.length && valid.length < 6; b++) {
+        const X = ax[a], Y = ax[b];
+        if (pass === 1 && X.field !== undefined && X.field === Y.field) continue;
+        let o1, o2, o3;
+        try { o1 = X.apply(correct); o2 = Y.apply(correct); o3 = o2 && X.apply(o2); } catch (e) { continue; }
+        const all = [correct, o1, o2, o3];
+        if (![o1, o2, o3].every(t => okTuple(F, t, item))) continue;
+        let distinct = true;
+        for (let p = 0; p < 4 && distinct; p++) for (let q = p + 1; q < 4; q++) if (tupleEq(F, all[p], all[q])) { distinct = false; break; }
+        if (!distinct) continue;
+        valid.push([{ vals: o1, why: X.why }, { vals: o2, why: Y.why }, { vals: o3, why: X.why + ' ' + Y.why }]);
+      }
+      if (valid.length) break;
+    }
+    return valid.length ? valid[Math.floor(Math.random() * Math.min(valid.length, 2))] : null;
+  }
+
   function groupFor(F, gk, item) {
     const correct = F.map(correctVal);
+    if (!correct.some(v => v == null)) {
+      const g = grid(F, correct, gk, item);
+      if (g) return { opts: shuffle([{ tex: tupleTex(F, correct, true, item), ok: true }, ...g.map(w => ({ tex: tupleTex(F, w.vals, false, item), ok: false, why: w.why }))]) };
+    }
     let cands = [];
     if (TRAPS[gk]) cands.push(...TRAPS[gk](F, correct));
     if (F.length === 1) {
@@ -328,7 +412,7 @@
     }
     if (!TRAPS[gk] && F.length > 1 && !F.every(f => f.kind === 'yesno')) { const [first, ...rest] = cands; cands = [first, ...shuffle(rest)].filter(Boolean); }
     const wrong = pick3(F, correct, cands);
-    const opts = [{ tex: tupleTex(F, correct, true), ok: true }, ...wrong.map(w => ({ tex: tupleTex(F, w.vals), ok: false, why: w.why }))];
+    const opts = [{ tex: tupleTex(F, correct, true, item), ok: true }, ...wrong.map(w => ({ tex: tupleTex(F, w.vals, false, item), ok: false, why: w.why }))];
     return { opts: shuffle(opts) };
   }
 
@@ -338,7 +422,7 @@
     const F = item.fields;
     let groups;
     if (item.mc) {
-      const correctTex = item.mcCorrect || tupleTex(F, F.map(f => { try { return correctVal(f); } catch (e) { return null; } }), true);
+      const correctTex = item.mcCorrect || tupleTex(F, F.map(f => { try { return correctVal(f); } catch (e) { return null; } }), true, item);
       groups = [{ opts: shuffle([{ tex: correctTex, ok: true }, ...item.mc.map(d => ({ tex: d.tex, ok: false, why: d.why }))]) }];
     } else if (F.some(f => (f.vars || []).length)) {
       groups = F.map(f => Object.assign(groupFor([f], item.gk, item), { label: f.label }));
