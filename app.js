@@ -461,7 +461,7 @@
       h('div', { class: 'player' },
         h('div', { class: 'lvl', title: 'Poziom ' + lv.L, html: ringSVG(lv.into / lv.need, 42, 4, 'var(--xp)') + `<span style="position:relative">${lv.L}</span>` }),
         h('div', { class: 'xpbox' }, h('div', { class: 't' }, h('b', {}, lv.title), h('span', {}, xpText(lv))), h('div', { class: 'bar' }, h('i', { style: `width:${(100 * lv.into / lv.need).toFixed(1)}%` })))),
-      h('span', { class: 'chip flame', title: 'Seria: dni nauki z rzędu (dzisiaj rozwiązane: ' + ((S.days[today()] || {}).ok || 0) + ')', 'aria-label': 'Seria dni nauki z rzędu', html: IC.flame + '<span>' + curStreak() + '</span>' }),
+      h('span', { class: 'chip flame', title: 'Dobrze rozwiązane przykłady łącznie (dzisiaj: ' + ((S.days[today()] || {}).ok || 0) + ')', 'aria-label': 'Dobrze rozwiązane przykłady łącznie: ' + (S.correct || 0), html: IC.flame + '<span>' + (S.correct || 0) + '</span>' }),
       h('button', { class: 'iconbtn', 'aria-label': S.sound ? 'Wycisz dźwięki' : 'Włącz dźwięki', title: S.sound ? 'Dźwięk włączony' : 'Dźwięk wyłączony', html: S.sound ? IC.sound : IC.mute, onclick: () => { S.sound = !S.sound; save(); renderTop(); if (S.sound) SFX.correct(); } })));
     return top;
   }
