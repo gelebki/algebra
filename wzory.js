@@ -177,7 +177,7 @@
     '2.15': { '*': ['signs', 'dbl', 'trigtable'] },
     '3.1': { 'G:polar': ['modulus', 'polar', 'trigtable', 'signs'], 'G:polarA': ['polar', 'evenodd', 'cofun', 'polarmuldiv'] },
     '3.2': { '*': ['polar', 'demoivre', 'period', 'trigtable'] },
-    '3.3': { '*': ['demoivre', 'binom', 'i2'] },
+    '3.3': { '*': ['demoivre', 'binom', 'i2', 'sumsin', 'sumcos'] },
     '3.4': { '*': ['binom', 'i2', 'demoivre'] },
     '3.5': { '*': ['polar', 'roots', 'trigtable'] },
     '3.6': { '*': ['biq', 'quad', 'roots'] },
