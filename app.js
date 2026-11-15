@@ -411,7 +411,7 @@
     };
     const btn = h('button', { class: 'btn primary', onclick: () => {
       if (shown < steps.length) { stepsBox.append(h('div', { class: 'exstep' }, h('span', { class: 'n' }, String(shown + 1)), mdEl('div', steps[shown]))); shown++; SFX.key(); }
-      if (shown >= steps.length) { btn.replaceWith(answerEl()); SFX.star(); }
+      if (shown >= steps.length) { if (/^<b>Odpowied/.test(steps[steps.length - 1] || '')) btn.remove(); else btn.replaceWith(answerEl()); SFX.star(); }
       else btn.textContent = 'Następny krok (' + (shown + 1) + '/' + steps.length + ')';
     } }, 'Pokaż pierwszy krok');
     if (!steps.length) btn.textContent = 'Pokaż odpowiedź';
