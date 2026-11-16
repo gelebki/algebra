@@ -440,9 +440,16 @@
   // x ≈ (p + q√c)/d
   const isDec = t => /\d\.\d|e[+-]\d/.test(t);
   // liczba całkowita (być może ogromna) -> TeX, z potęgą 2/3/5 gdy duża
+  // duża dokładna potęga liczby pierwszej (≥ 1000) -> b^{k}, np. 524288 -> 2^{19}
+  function powForm(a) {
+    a = Math.round(a); if (a < 1000) return null;
+    for (const b of [2, 3, 5, 7]) { let k = 0, m = a; while (m % b === 0) { m /= b; k++; } if (m === 1) return b + '^{' + k + '}'; }
+    return null;
+  }
+  AQ.powForm = powForm;
   function bigInt(p) {
     const s = p < 0 ? '-' : ''; let a = Math.abs(p);
-    if (a < 1e7) return s + Math.round(a);
+    if (a < 1e7) { const pf = powForm(a); return s + (pf || Math.round(a)); }
     for (const b of [2, 5, 3]) {
       let k = 0, m = a;
       while (m / b >= 1 && Math.abs(m / b - Math.round(m / b)) < 1e-9 * (m / b) && k < 400) { m /= b; k++; }
@@ -476,7 +483,7 @@
     const sq = c === 1 ? '' : '\\sqrt{' + c + '}';
     const ap = Math.abs(p);
     let num = (ap === 1 && (sq || (b > 1 && k > 0)) ? '' : (b === 1 ? bigInt(ap) : String(ap))) + sq;
-    let den = q === 1 ? '' : String(q);
+    let den = q === 1 ? '' : (powForm(q) || String(q));
     if (b > 1 && k > 0) num = (num ? num + '\\cdot ' : '') + b + '^{' + k + '}';
     if (b > 1 && k < 0) den = (den ? den + '\\cdot ' : '') + b + '^{' + (-k) + '}';
     if (!num) num = '1';
