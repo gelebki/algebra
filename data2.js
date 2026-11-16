@@ -382,7 +382,7 @@
         items: [
           { label: '3.1', gk: 'lin', q: T`$$(1+2i)(i-z)+(3-4i)(1-iz)=1+7i$$`, fields: [{ label: 'z', ans: '-1-i', restrict: ['alg'] }], sol: [T`Współczynnik przy $z$: $-(1+2i)-i(3-4i)=-5-5i$; wyraz wolny: $(1+2i)i+3-4i=1-3i$.`, T`$(-5-5i)z=10i\Rightarrow z=-1-i$.`] },
           { label: '3.2', gk: 'conj', q: T`$$(1-2i)\overline{z}-(3+2i)(1+iz)=5-2i$$`, fields: [{ label: 'z', ans: '1+5i', restrict: ['alg'] }], sol: [T`$(1-2i)\overline z+(2-3i)z=8$. Dla $z=x+iy$: $3x+y=8$, $-5x+y=0$.`, T`$x=1$, $y=5$: $z=1+5i$.`] },
-          { label: '3.3', gk: 'lin', q: T`$$\frac{(5-i)\overline{(7-6i)}z}{3-i}+\frac{-(1+3i)\overline{(8+i)}z}{(2+i)^2}=\left(\frac{(8+i)(1-2i)}{2-3i}\right)^2$$`, fields: [{ label: 'z', ans: () => { const a = ev('(5-i)(7+6i)/(3-i)'), b = ev('-(1+3i)(8-i)/(2+i)^2'), c = ev('((8+i)(1-2i)/(2-3i))^2'); return Cx.div(c, Cx.add(a, b)); }, restrict: ['alg'] }], sol: [T`Upraszczamy każdy współczynnik osobno: $\frac{(5-i)(7+6i)}{3-i}$, $\frac{-(1+3i)(8-i)}{(2+i)^2}$ oraz prawą stronę; potem $z=\frac{\text{prawa}}{\text{suma współczynników}}$.`] },
+          { label: '3.3', gk: 'lin', q: T`$$\begin{aligned}&\frac{(5-i)\overline{(7-6i)}z}{3-i}+\frac{-(1+3i)\overline{(8+i)}z}{(2+i)^2}\\&\qquad=\left(\frac{(8+i)(1-2i)}{2-3i}\right)^2\end{aligned}$$`, fields: [{ label: 'z', ans: () => { const a = ev('(5-i)(7+6i)/(3-i)'), b = ev('-(1+3i)(8-i)/(2+i)^2'), c = ev('((8+i)(1-2i)/(2-3i))^2'); return Cx.div(c, Cx.add(a, b)); }, restrict: ['alg'] }], sol: [T`Upraszczamy każdy współczynnik osobno: $\frac{(5-i)(7+6i)}{3-i}$, $\frac{-(1+3i)(8-i)}{(2+i)^2}$ oraz prawą stronę; potem $z=\frac{\text{prawa}}{\text{suma współczynników}}$.`] },
         ],
       },
       {
@@ -422,7 +422,7 @@
           { label: '6.3', gk: 'sq', q: T`$$z^2=3-4i$$`, fields: [{ label: 'z', kind: 'set', ans: ['2-i', '-2+i'], restrict: ['alg'] }], keys: [';'], sol: [sqrtSteps([3, -4], [2, -1])] },
           { label: '6.4', gk: 'sq', q: T`$$z^2=5-12i$$`, fields: [{ label: 'z', kind: 'set', ans: ['3-2i', '-3+2i'], restrict: ['alg'] }], keys: [';'], sol: [sqrtSteps([5, -12], [3, -2])] },
           quadItem('6.5', '1', '-4', '5', T`z^2-4z+5=0`),
-          { label: '6.6', gk: 'biq', q: T`$$z^4-4z^2+5=0$$`, fields: [{ label: 'z', kind: 'set', ans: () => [...Cx.allRoots(Cx.C(2, 1), 2), ...Cx.allRoots(Cx.C(2, -1), 2)], restrict: ['alg'], show: T`\pm\left(\sqrt{\tfrac{\sqrt5+2}{2}}+i\sqrt{\tfrac{\sqrt5-2}{2}}\right),\ \pm\left(\sqrt{\tfrac{\sqrt5+2}{2}}-i\sqrt{\tfrac{\sqrt5-2}{2}}\right)` }], keys: [';'], mc: [
+          { label: '6.6', gk: 'biq', q: T`$$z^4-4z^2+5=0$$`, fields: [{ label: 'z', kind: 'set', ans: () => [...Cx.allRoots(Cx.C(2, 1), 2), ...Cx.allRoots(Cx.C(2, -1), 2)], restrict: ['alg'], show: T`\pm\left(\sqrt{\tfrac{\sqrt5+2}{2}}+i\sqrt{\tfrac{\sqrt5-2}{2}}\right),\quad \pm\left(\sqrt{\tfrac{\sqrt5+2}{2}}-i\sqrt{\tfrac{\sqrt5-2}{2}}\right)` }], keys: [';'], mc: [
             { tex: T`\pm\sqrt{2+i},\ \text{i nic więcej}`, why: 'Zgubione rozwiązania z $z^2=2-i$.' },
             { tex: T`\pm\left(\sqrt{\tfrac{\sqrt5-2}{2}}\pm i\sqrt{\tfrac{\sqrt5+2}{2}}\right)`, why: T`Zamienione $x^2$ i $y^2$: część rzeczywista to $\sqrt{\frac{\sqrt5+2}{2}}$.` },
             { tex: T`\pm\sqrt{2},\ \pm i\sqrt{2}`, why: T`Potraktowano $w=2\pm i$ jak $w=2$ — zgubiona część urojona.` }], sol: [T`$w=z^2$: $w^2-4w+5=0$, $w=2\pm i$.`, T`$\sqrt{2+i}$: $x^2-y^2=2$, $x^2+y^2=\sqrt5$, więc $x^2=\frac{\sqrt5+2}{2}$, $y^2=\frac{\sqrt5-2}{2}$, $xy>0$.`] },
@@ -439,14 +439,14 @@
         ],
       },
       {
-        id: '2.7', name: 'Tożsamości z modułem', statement: T`Udowodnić, że dla dowolnych liczb zespolonych $z_1,z_2,z_3$: $$|z_1+z_2|^2+|z_1-z_2|^2=2\left(|z_1|^2+|z_2|^2\right)\quad(7.1)$$ $$|1+z_1\overline{z_2}|^2+|z_1-z_2|^2=\left(1+|z_1|^2\right)\left(1+|z_2|^2\right)\quad(7.2)$$ $$|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2=4\left(|z_1|^2+|z_2|^2+|z_3|^2\right)\quad(7.3)$$`,
+        id: '2.7', name: 'Tożsamości z modułem', statement: T`Udowodnić, że dla dowolnych liczb zespolonych $z_1,z_2,z_3$: $$|z_1+z_2|^2+|z_1-z_2|^2=2\left(|z_1|^2+|z_2|^2\right)\quad(7.1)$$ $$|1+z_1\overline{z_2}|^2+|z_1-z_2|^2=\left(1+|z_1|^2\right)\left(1+|z_2|^2\right)\quad(7.2)$$ $$\begin{aligned}&|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2\\&+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2\\&=4\left(|z_1|^2+|z_2|^2+|z_3|^2\right)\qquad(7.3)\end{aligned}$$`,
         wzory: [T`$|w|^2=w\overline w$.`, T`$\overline{z_1\pm z_2}=\overline{z_1}\pm\overline{z_2}$, $\overline{z_1z_2}=\overline{z_1}\,\overline{z_2}$, $\overline{\overline z}=z$.`, T`$z\overline w+\overline zw=2\operatorname{Re}(z\overline w)$ — wyrazy mieszane.`],
         gen: gen27, proof: true,
         items: [
           { label: '7.1', type: 'order', gk: 'num', q: T`Ułóż dowód tożsamości równoległoboku $|z_1+z_2|^2+|z_1-z_2|^2=2(|z_1|^2+|z_2|^2)$.`, order: proof71 },
           { label: '7.2', type: 'order', gk: 'num', q: T`Ułóż dowód: $|1+z_1\overline{z_2}|^2+|z_1-z_2|^2=(1+|z_1|^2)(1+|z_2|^2)$.`, order: proof72 },
-          { label: '7.3 liczbowo', gk: 'num', q: T`Sprawdź tożsamość 7.3 liczbowo: dla $z_1=1$, $z_2=i$, $z_3=1+i$ oblicz $|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2$.`, fields: [{ label: 'wynik', ans: '16', restrict: ['plain'] }], sol: [T`$\overline{z_3}=1-i$: składniki to $|2|^2=4$, $|-2i|^2=4$, $|2-2i|^2=8$, $|0|^2=0$.`, T`Suma $16=4(1+1+2)$ ✓.`] },
-          { label: '7.3', type: 'order', gk: 'num', q: T`Ułóż dowód tożsamości 7.3: $|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2=4(|z_1|^2+|z_2|^2+|z_3|^2)$.`, order: proof73 },
+          { label: '7.3 liczbowo', gk: 'num', q: T`Sprawdź tożsamość 7.3 liczbowo: dla $z_1=1$, $z_2=i$, $z_3=1+i$ oblicz $$\begin{aligned}&|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2\\&+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2\end{aligned}$$`, fields: [{ label: 'wynik', ans: '16', restrict: ['plain'] }], sol: [T`$\overline{z_3}=1-i$: składniki to $|2|^2=4$, $|-2i|^2=4$, $|2-2i|^2=8$, $|0|^2=0$.`, T`Suma $16=4(1+1+2)$ ✓.`] },
+          { label: '7.3', type: 'order', gk: 'num', q: T`Ułóż dowód tożsamości 7.3: $$\begin{aligned}&|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2\\&+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2\\&=4\left(|z_1|^2+|z_2|^2+|z_3|^2\right)\end{aligned}$$`, order: proof73 },
           { label: '7.1 liczbowo', gk: 'num', q: T`Dla $z_1=2+i$, $z_2=1-3i$ oblicz $|z_1+z_2|^2+|z_1-z_2|^2$.`, fields: [{ label: 'wynik', ans: '30', restrict: ['plain'] }], sol: [T`$|3-2i|^2+|1+4i|^2=13+17=30=2(5+10)$.`] },
         ],
       },
