@@ -80,7 +80,7 @@
     return {
       label, gk, q: T`Wyznacz wszystkie wartości pierwiastka: $$\sqrt${n === 2 ? '' : '[' + n + ']'}{${qtex(W)}}$$`,
       fields: [{ label: 'wartości', kind: 'set', ans: roots, restrict: ['roots'], show: showSet(roots()) }], keys: [';', 'pi'],
-      sol: [T`Liczba pod pierwiastkiem w postaci trygonometrycznej: $${qtex(W)}=${A.polarTex(w)}$, czyli moduł $${A.niceReal(Cx.abs(w))}$, argument $\varphi=${A.argTex(w)}$.`, T`Pierwiastek stopnia $${n}$ ma $${n}$ wartości: $w_k=\sqrt[${n}]{|z|}\left(\cos\frac{\varphi+2k\pi}{${n}}+i\sin\frac{\varphi+2k\pi}{${n}}\right)$, $k=0,\ldots,${n - 1}$. Tu $\sqrt[${n}]{|z|}=${A.niceReal(Math.pow(Cx.abs(w), 1 / n))}$.`, ...roots().map((z, k) => T`$k=${k}$: $\ w_${k}=${A.polarTex(z)}${/\d\.\d/.test(A.niceC(z)) ? '' : '=' + A.niceC(z)}$`)],
+      sol: (() => { const rs = A.rootSteps(w, n, qtex(W)); if (!rs) return [T`Liczba pod pierwiastkiem w postaci trygonometrycznej: $${qtex(W)}=${A.polarTex(w)}$, czyli moduł $${A.niceReal(Cx.abs(w))}$, argument $\varphi=${A.argTex(w)}$.`, T`Pierwiastek stopnia $${n}$ ma $${n}$ wartości: $w_k=\sqrt[${n}]{|z|}\left(\cos\frac{\varphi+2k\pi}{${n}}+i\sin\frac{\varphi+2k\pi}{${n}}\right)$, $k=0,\ldots,${n - 1}$. Tu $\sqrt[${n}]{|z|}=${A.niceReal(Math.pow(Cx.abs(w), 1 / n))}$.`, ...roots().map((z, k) => T`$k=${k}$: $\ w_${k}=${A.polarTex(z)}${/\d\.\d/.test(A.niceC(z)) ? '' : '=' + A.niceC(z)}$`)]; return [...rs.lines, T`<b>Odpowiedź:</b> $\left\{${showSet(roots())}\right\}$`]; })(),
     };
   }
   function gen35() {
@@ -89,7 +89,7 @@
     let W = [1, 0]; for (let k = 0; k < n; k++) W = Z.mul(W, w0);
     const Ws = Z.str(...W); const it = rootItem('', n, Ws);
     const wv = ev(Ws); const r = Cx.abs(wv), t = Cx.arg(wv);
-    it.steps = [T`Postać trygonometryczna: $${Z.tex(...W)}=${A.polarTex(wv)}$.`, T`Moduł pierwiastków: $\sqrt[${n}]{${A.niceReal(r)}}=${A.niceReal(Math.pow(r, 1 / n))}$; argumenty: $\frac{\varphi+2k\pi}{${n}}$, gdzie $\varphi=${A.argTex(wv)}$, $k=0,\ldots,${n - 1}$.`, T`Wartości: $${showSet(Cx.allRoots(wv, n))}$.`, T`Kontrola: jedną wartością jest $${Z.tex(...w0)}$, bo $(${Z.tex(...w0)})^{${n}}=${Z.tex(...W)}$; pozostałe to jej obroty o $\frac{2\pi}{${n}}$.`];
+    it.steps = it.sol.concat([T`Kontrola: jedną wartością jest $${Z.tex(...w0)}$, bo $(${Z.tex(...w0)})^{${n}}=${Z.tex(...W)}$; pozostałe to jej obroty o $\frac{2\pi}{${n}}$.`]);
     return it;
   }
 
