@@ -814,7 +814,7 @@
         h('button', { class: 'btn small' + (T.usedW ? ' used' : ''), onclick: showWzory, title: 'Koło ratunkowe 1: wzory i definicje' }, h('span', { html: IC.bulb }), 'Wzory'),
         h('button', { class: 'btn small' + (T.usedP ? ' used' : ''), onclick: showPrzyklad, title: 'Koło ratunkowe 2: podobny przykład z rozwiązaniem' }, h('span', { html: IC.book }), 'Przykład')));
     }
-    return bar;
+    return bar; 
   }
   function feedbackUI(it) {
     const ok = T.status === 'correct'; const type = it.type || 'fields';
