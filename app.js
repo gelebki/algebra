@@ -421,7 +421,7 @@
     } }, 'Pokaż pierwszy krok');
     if (!steps.length) btn.textContent = 'Pokaż odpowiedź';
     drawer('Przykład', IC.book, [
-      h('div', { class: 'exq' }, h('div', { class: 'glabel' }, 'Podobny przykład'), md(ex.q)), ex.idea ? h('div', { class: 'gidea' }, h('div', { class: 'glabel' }, 'Pomysł'), mdEl('div', ex.idea)) : '', stepsBox, btn,
+      h('div', { class: 'exq' }, h('div', { class: 'glabel' }, 'Podobny przykład'), md(ex.q), type === 'choice' ? h('ul', { class: 'exopts' }, ex.choice.opts.map(o => mdEl('li', o))) : ''), ex.idea ? h('div', { class: 'gidea' }, h('div', { class: 'glabel' }, 'Pomysł'), mdEl('div', ex.idea)) : '', stepsBox, btn,
     ]);
     renderActionsOnly();
   }
@@ -639,6 +639,7 @@
     const single = mc.groups.length === 1;
     mc.groups.forEach((g, gi) => {
       const grp = h('div', { class: 'mcg', role: 'radiogroup' });
+      if (g.part) grp.append(h('div', { class: 'mcpart' }, g.part));
       if (g.label) grp.append(mdEl('div', A.mcLabel(g.label), { class: 'mcl' }));
       const done = T.status !== 'answering';
       g.opts.forEach((o, oi) => {
@@ -957,8 +958,8 @@
       kpi('Doświadczenie', S.xp + ' XP', lv.max ? 'poziom maksymalny' : (lv.need - lv.into) + ' XP do kolejnego'),
       kpi('Zaliczone podpunkty', solved + '/' + totalItems, Math.round(100 * solved / totalItems) + '% wszystkich list'),
       kpi('Rozwiązane przykłady', String(S.correct), 'łącznie z podobnymi'),
-      kpi('Podobne przykłady', String(S.variants), Object.values(S.practice || {}).filter(x => x >= 3).length + ' pełnych serii'),
-      kpi('Dni nauki z rzędu', String(curStreak()), 'dzisiaj: ' + ((S.days[today()] || {}).ok || 0))));
+      kpi('Podobne przykłady', String(S.variants), ''),
+      kpi('Dni nauki z rzędu', String(curStreak()), (() => { const n = (S.days[today()] || {}).ok || 0, m10 = n % 10, m100 = n % 100; return 'dzisiaj: ' + n + (n === 1 ? ' przykład' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? ' przykłady' : ' przykładów'); })())));
     sec.append(h('h2', { class: 'sec' }, 'Listy'));
     const lp = h('div', { class: 'lp' });
     LISTS.forEach(L => {
