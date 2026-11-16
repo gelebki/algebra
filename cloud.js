@@ -47,10 +47,16 @@
       P.meNo = await noP;
     }
     const doc = { no: P.meNo, name: ui.myName(), xp: sm.xp, solved: sm.solved, total: sm.total, week: ui.myWeekXP(), weekKey: ui.weekKey() };
+    if (!P.oldRules) { doc.streak = ui.curStreak(); doc.streakDay = ui.getS().lastDay || ''; }
     const sig = JSON.stringify(doc);
     if (!force && sig === lastSent) return;
     lastSent = sig;
-    await db.collection('board').doc(P.uid).set(Object.assign(doc, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }));
+    try { await db.collection('board').doc(P.uid).set(Object.assign({}, doc, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() })); }
+    catch (e) { // stare reguły bez pola serii — zapisujemy bez niego
+      if (P.oldRules || !('streak' in doc)) throw e;
+      P.oldRules = true; delete doc.streak; delete doc.streakDay; lastSent = JSON.stringify(doc);
+      await db.collection('board').doc(P.uid).set(Object.assign(doc, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }));
+    }
   }
   P.queue = function () { if (!P.uid) return; clearTimeout(pushT); pushT = setTimeout(() => push().catch(fail), 1200); };
   P.rename = function () { P.queue(); };
