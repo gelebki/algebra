@@ -6,7 +6,14 @@
   const qtex = s => A.toTex(A.parse(s, ['alpha', 'm', 'n']));
   const isNice = t => !/\d\.\d/.test(t);
   const showZ = z => { const p = A.polarTex(z), a = A.niceC(z); return Cx.abs(z) < 1e-12 ? '0' : (isNice(a) ? a : p); };
-  const showSet = arr => arr.map(showZ).join(',\\quad ');
+  const showSet = arr => {
+    let ts = arr.map(showZ);
+    if (ts.some(t => /\\cos/.test(t)) && ts.some(t => !/\\cos/.test(t) && t !== '0')) {
+      const ps = arr.map(z => (Cx.abs(z) < 1e-12 ? '0' : A.polarTex(z)));
+      if (!ps.some(t => /arctg|\\d\\.\\d/.test(t))) ts = ps;
+    }
+    return ts.join(',\\quad ');
+  };
   const SA = [{ alpha: 0.31 }, { alpha: 0.77 }, { alpha: 1.12 }, { alpha: 0.53 }];
   const BIN = (n, k) => { let r = 1; for (let i = 1; i <= k; i++) r = r * (n - k + i) / i; return Math.round(r); };
 
@@ -125,7 +132,7 @@
         wzory: [T`$\left(r(\cos\varphi+i\sin\varphi)\right)^n=r^n(\cos n\varphi+i\sin n\varphi)$.`, T`$z_1z_2$: $r_1r_2$, $\varphi_1+\varphi_2$; $\frac{z_1}{z_2}$: $\frac{r_1}{r_2}$, $\varphi_1-\varphi_2$.`, T`$1+i=\sqrt2\,e^{i\pi/4}$, $1+i\sqrt3=2e^{i\pi/3}$, $\sqrt3+i=2e^{i\pi/6}$ (skrót: $e^{i\varphi}=\cos\varphi+i\sin\varphi$).`, T`Argument redukuj modulo $2\pi$: np. $50\pi\equiv0$.`],
         gen: gen32,
         items: [
-          powItem('2.1', '(1+√3i)^150', 'pow'), powItem('2.2', '(√3-i)^20', 'pow'), Object.assign(powItem('2.3', '(2-√3+i)^12', 'pow'), { fields: [{ label: 'wynik', ans: '(2-√3+i)^12', restrict: ['alg'], show: T`-4096\left(1351-780\sqrt3\right)` }], mcCorrect: T`-4096\left(1351-780\sqrt3\right)`, mc: [{ tex: T`4096\left(1351-780\sqrt3\right)`, why: T`Argument $12\cdot\frac{5\pi}{12}=5\pi$ daje $\cos5\pi=-1$ — zgubiony minus.` }, { tex: T`-4096\left(1351+780\sqrt3\right)`, why: T`Błąd znaku przy $(2-\sqrt3)^6$.` }, { tex: T`-4096i\left(1351-780\sqrt3\right)`, why: T`Zły argument — pomyłka o $\frac\pi2$.` }] }),
+          powItem('2.1', '(1+√3i)^150', 'pow'), powItem('2.2', '(√3-i)^20', 'pow'), Object.assign(powItem('2.3', '(2-√3+i)^12', 'pow'), { fields: [{ label: 'wynik', ans: '(2-√3+i)^12', restrict: ['alg'], show: T`-2^{12}\left(1351-780\sqrt3\right)` }], mcCorrect: T`-2^{12}\left(1351-780\sqrt3\right)`, mc: [{ tex: T`2^{12}\left(1351-780\sqrt3\right)`, why: T`Argument $12\cdot\frac{5\pi}{12}=5\pi$ daje $\cos5\pi=-1$ — zgubiony minus.` }, { tex: T`-2^{12}\left(1351+780\sqrt3\right)`, why: T`Błąd znaku przy $(2-\sqrt3)^6$.` }, { tex: T`-2^{12}i\left(1351-780\sqrt3\right)`, why: T`Zły argument — pomyłka o $\frac\pi2$.` }] }),
           powItem('2.4', '((1-√3i)/(1+i))^12', 'quot'), powItem('2.5', '((√3+i)/(1-i))^30', 'quot'),
           Object.assign(powItem('2.6', '((-1+i)/(1+√3i))^2013', 'quot'), { fields: [{ label: 'wynik', ans: '((-1+i)/(1+√3i))^2013', restrict: ['alg'], scale: 2 ** 1007 }] }),
           powItem('2.7', '(1+i)^10/(1+√3i)^15', 'quot'), powItem('2.8', '(-5+5i)^36/(√5-√15i)^20', 'quot'), powItem('2.9', '(-1+√3i)^28/(1-i)^26+(-1-√3i)^28/(1+i)^26', 'quot'),
@@ -238,7 +245,20 @@
         items: [
           eqItem('6.1', T`z^6+\left(2-(1-\sqrt3)i\right)z^3+1+\sqrt3-(1-\sqrt3)i=0`, [...Cx.allRoots(Cx.C(-1, 1), 3), ...Cx.allRoots(Cx.C(-1, -Math.sqrt(3)), 3)]),
           eqItem('6.2', T`\frac{(1-i\sqrt3)z^3}{2}=\frac{8\left(\cos\frac{3\pi}8+i\sin\frac{3\pi}8\right)^{10}}{\cos\frac{5\pi}4+i\sin\frac{5\pi}4}`, Cx.allRoots(ev('8(cos(3pi/8)+i sin(3pi/8))^10/(cos(5pi/4)+i sin(5pi/4))*2/(1-√3i)'), 3)),
-        ].map((it, i) => Object.assign(it, { sol: i === 0 ? [T`$w=z^3$: $\Delta=-4-2\sqrt3=\left(i(1+\sqrt3)\right)^2$, więc $w_1=-1+i$, $w_2=-1-\sqrt3i$.`, T`$z^3=\sqrt2e^{3\pi i/4}$ oraz $z^3=2e^{4\pi i/3}$ — po 3 pierwiastki.`] : [T`Prawa strona: $8e^{i(30\pi/8-5\pi/4)}=8e^{i\pi/2}=8i$; lewa: $e^{-i\pi/3}z^3$.`, T`$z^3=8e^{i5\pi/6}$, więc $z=2e^{i(5\pi/18+2k\pi/3)}$.`] })),
+        ].map((it, i) => Object.assign(it, { sol: i === 0 ? [
+          T`Podstawiamy $w=z^3$: $\ w^2+\left(2-(1-\sqrt3)i\right)w+1+\sqrt3-(1-\sqrt3)i=0$.`,
+          T`$\Delta=\left(2-(1-\sqrt3)i\right)^2-4\left(1+\sqrt3-(1-\sqrt3)i\right)=2\sqrt3-4(1-\sqrt3)i-4-4\sqrt3+4(1-\sqrt3)i=-4-2\sqrt3$.`,
+          T`$-4-2\sqrt3=-(1+\sqrt3)^2=\left(i(1+\sqrt3)\right)^2$, więc $\sqrt\Delta=i(1+\sqrt3)$ i $\ w=\frac{-2+(1-\sqrt3)i\pm(1+\sqrt3)i}{2}$: $\ w_1=-1+i$, $\ w_2=-1-\sqrt3i$.`,
+          T`$z^3=-1+i=\sqrt2\left(\cos\frac{3\pi}4+i\sin\frac{3\pi}4\right)$: $\ z=\sqrt[6]2\left(\cos\frac{\frac{3\pi}4+2k\pi}{3}+i\sin\frac{\frac{3\pi}4+2k\pi}{3}\right)$, czyli kąty $\frac{\pi}4,\ \frac{11\pi}{12},\ \frac{19\pi}{12}$.`,
+          T`$z^3=-1-\sqrt3i=2\left(\cos\frac{4\pi}3+i\sin\frac{4\pi}3\right)$: $\ z=\sqrt[3]2\left(\cos\frac{\frac{4\pi}3+2k\pi}{3}+i\sin\frac{\frac{4\pi}3+2k\pi}{3}\right)$, czyli kąty $\frac{4\pi}9,\ \frac{10\pi}9,\ \frac{16\pi}9$.`,
+          T`<b>Odpowiedź:</b> sześć rozwiązań — $\sqrt[6]2\left(\cos\varphi+i\sin\varphi\right)$ dla $\varphi\in\left\{\frac{\pi}4,\frac{11\pi}{12},\frac{19\pi}{12}\right\}$ oraz $\sqrt[3]2\left(\cos\varphi+i\sin\varphi\right)$ dla $\varphi\in\left\{\frac{4\pi}9,\frac{10\pi}9,\frac{16\pi}9\right\}$.`,
+        ] : [
+          T`Licznik prawej strony (de Moivre): $8\left(\cos\frac{30\pi}8+i\sin\frac{30\pi}8\right)=8\left(\cos\frac{15\pi}4+i\sin\frac{15\pi}4\right)$.`,
+          T`Dzielimy przez $\cos\frac{5\pi}4+i\sin\frac{5\pi}4$ — argumenty odejmujemy: $\frac{15\pi}4-\frac{5\pi}4=\frac{5\pi}2$, czyli $\frac\pi2$. Prawa strona to $8\left(\cos\frac\pi2+i\sin\frac\pi2\right)=8i$.`,
+          T`Lewa strona: $\frac{1-i\sqrt3}{2}=\cos\left(-\frac\pi3\right)+i\sin\left(-\frac\pi3\right)$. Dzielimy przez nią: $z^3=8\left(\cos\left(\frac\pi2+\frac\pi3\right)+i\sin\left(\frac\pi2+\frac\pi3\right)\right)=8\left(\cos\frac{5\pi}6+i\sin\frac{5\pi}6\right)$.`,
+          T`Pierwiastki: $z=2\left(\cos\frac{\frac{5\pi}6+2k\pi}{3}+i\sin\frac{\frac{5\pi}6+2k\pi}{3}\right)$, $k=0,1,2$, czyli kąty $\frac{5\pi}{18},\ \frac{17\pi}{18},\ \frac{29\pi}{18}$.`,
+          T`<b>Odpowiedź:</b> $z\in\left\{2\left(\cos\frac{5\pi}{18}+i\sin\frac{5\pi}{18}\right),\ 2\left(\cos\frac{17\pi}{18}+i\sin\frac{17\pi}{18}\right),\ 2\left(\cos\frac{29\pi}{18}+i\sin\frac{29\pi}{18}\right)\right\}$`,
+        ] })),
       },
       {
         id: '3.7', name: 'Pierwiastki przez jedną wartość', statement: T`7.1: wyznaczyć wszystkie wartości $\sqrt[n]z$, wiedząc, że jedna z nich to $\omega$. 7.2: wyznaczyć wszystkie wartości $\sqrt[3]{(3+2i)^3}$ oraz $\sqrt[3]{(5-i)^{12}}$.`,
