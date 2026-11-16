@@ -228,6 +228,15 @@
       add(Cx.mul(v, C(2)), 'Zgubiony czynnik $2$.');
       return out;
     }
+    // kąt w stopniach: typowe pomyłki przy zamianie radianów
+    if (f.unit === '^\\circ' && Math.abs(v.im) < 1e-9) {
+      const x = v.re;
+      add(C(2 * x), 'W miejsce $\\pi$ wstawiono $360^\\circ$ — a $\\pi$ to $180^\\circ$ (pół obrotu).');
+      add(C(x / 2), 'W miejsce $\\pi$ wstawiono $90^\\circ$ — a $\\pi$ to $180^\\circ$.');
+      if (x !== 90) add(C(180 - x), 'To dopełnienie do $180^\\circ$, a nie sam kąt.');
+      add(C(x + 180), 'Dodane pół obrotu za dużo.');
+      return out;
+    }
     // zwykła liczba
     if (Math.abs(v.im) <= 1e-10 * Cx.abs(v)) {
       const x = v.re;
@@ -299,7 +308,8 @@
   const wordy = l => /^[a-ząćęłńóśźż ]{3,}$/i.test(l || '');
   const labTex = l => wordy(l) ? '\\text{' + l + '}' : (l || 'x');
   A.mcLabel = l => wordy(l) ? l : '$' + l + '$';
-  function shown(f, v, showCorrect) {
+  function shown(f, v, showCorrect) { const t0 = shown0(f, v, showCorrect); return f.unit && t0 !== '\\text{brak}' ? t0 + f.unit : t0; }
+  function shown0(f, v, showCorrect) {
     if (showCorrect && f.show) {
       const wrapSet = t => (f.kind === 'set' && !/^\\(left|Bigl)\\\{/.test(t) ? '\\Bigl\\{' + t + '\\Bigr\\}' : t);
       if (v == null) return wrapSet(f.show); const t = valTex(f, v); return dec(t) || /arctg/.test(t) ? wrapSet(f.show) : t;
