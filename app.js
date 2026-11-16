@@ -814,7 +814,7 @@
         h('button', { class: 'btn small' + (T.usedW ? ' used' : ''), onclick: showWzory, title: 'Koło ratunkowe 1: wzory i definicje' }, h('span', { html: IC.bulb }), 'Wzory'),
         h('button', { class: 'btn small' + (T.usedP ? ' used' : ''), onclick: showPrzyklad, title: 'Koło ratunkowe 2: podobny przykład z rozwiązaniem' }, h('span', { html: IC.book }), 'Przykład')));
     }
-    return bar; 
+    return bar;
   }
   function feedbackUI(it) {
     const ok = T.status === 'correct'; const type = it.type || 'fields';
@@ -1026,7 +1026,7 @@
       cv.setAttribute('text-anchor', anchor); cd.setAttribute('text-anchor', anchor);
       const dx = anchor === 'end' ? -10 : anchor === 'start' ? 10 : 0;
       cv.textContent = p.v;
-      cd.textContent = (k === n - 1 ? 'dziś' : p.lab) + (p.day ? ' · +' + p.day : '');
+      cd.textContent = p.day ? '+' + p.day : '';
       lab.style.transform = `translate(${(px + dx).toFixed(1)}px, ${Math.max(py, 48).toFixed(1)}px)`;
       guide.setAttribute('y1', (py + 9).toFixed(1));
       guide.style.transform = `translateX(${px.toFixed(1)}px)`;
