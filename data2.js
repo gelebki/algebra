@@ -321,10 +321,7 @@
     else {
       out.push(T`Kąt $${A.niceAngle(t)}$ leży w ćwiartce ${quad}. Jego kąt odniesienia (kąt ostry do osi poziomej) to $${refT}$.`);
       const den = rr[1];
-      if (den === 12) out.push(rr[0] === 1 ? T`$\frac{\pi}{12}=\frac\pi3-\frac\pi4$, więc ze wzorów na różnicę: $\sin\frac{\pi}{12}=\frac{\sqrt3}{2}\cdot\frac{\sqrt2}{2}-\frac12\cdot\frac{\sqrt2}{2}=\frac{\sqrt6-\sqrt2}{4}$, $\ \cos\frac{\pi}{12}=\frac12\cdot\frac{\sqrt2}{2}+\frac{\sqrt3}{2}\cdot\frac{\sqrt2}{2}=\frac{\sqrt6+\sqrt2}{4}$.`
-        : T`$\frac{5\pi}{12}=\frac\pi2-\frac{\pi}{12}$, więc sinus i cosinus zamieniają się rolami: $\sin\frac{5\pi}{12}=\cos\frac{\pi}{12}=\frac{\sqrt6+\sqrt2}{4}$, $\ \cos\frac{5\pi}{12}=\sin\frac{\pi}{12}=\frac{\sqrt6-\sqrt2}{4}$.`);
-      else if (den === 8) out.push(rr[0] === 1 ? T`$\frac\pi8$ to połowa $\frac\pi4$. Z $\cos2\alpha=2\cos^2\alpha-1$: $\cos^2\frac\pi8=\frac{1+\cos\frac\pi4}{2}=\frac{2+\sqrt2}{4}$, więc $\cos\frac\pi8=\frac{\sqrt{2+\sqrt2}}{2}$; podobnie $\sin^2\frac\pi8=\frac{1-\cos\frac\pi4}{2}$, czyli $\sin\frac\pi8=\frac{\sqrt{2-\sqrt2}}{2}$.`
-        : T`$\frac{3\pi}{8}=\frac\pi2-\frac\pi8$, więc sinus i cosinus zamieniają się rolami: $\sin\frac{3\pi}{8}=\cos\frac\pi8=\frac{\sqrt{2+\sqrt2}}{2}$, $\ \cos\frac{3\pi}{8}=\sin\frac\pi8=\frac{\sqrt{2-\sqrt2}}{2}$.`);
+      if (den === 12 || den === 8) out.push(...A.trigLines(rr[0], rr[1], new Set()));
       else out.push(T`Z tabelki dla kąta $${refT}$: $\sin${refT.length > 3 ? '' : ' '}${refT}=${n(Math.sin(ref))}$, $\ \cos ${refT}=${n(Math.cos(ref))}$.`);
       out.push(T`Znaki w ćwiartce ${quad}: $\sin$ jest ${Math.sin(t) > 0 ? 'dodatni' : 'ujemny'}, $\cos$ jest ${Math.cos(t) > 0 ? 'dodatni' : 'ujemny'}. Zatem $\sin=${n(Math.sin(t))}$, $\cos=${n(Math.cos(t))}$.`);
     }
