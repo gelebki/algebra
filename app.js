@@ -904,6 +904,7 @@
   }
   function sparkSVG(series) {
     if (!series || !series.length) return '';
+    if (series[0] > 0) series = [0, ...series]; // jak duży wykres: start od zera (dzień przed pierwszym dniem nauki)
     const W = 92, H = 30, pad = 4, n = series.length, max = Math.max(1, ...series);
     const x = i => n === 1 ? W - pad : pad + (W - 2 * pad) * i / (n - 1), y = v => H - pad - (H - 2 * pad) * v / max;
     const line = n === 1 ? `M${pad} ${y(0)} L${x(0)} ${y(series[0])}` : series.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
