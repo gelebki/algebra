@@ -1001,19 +1001,50 @@
     let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Łączna liczba rozwiązanych przykładów"><defs><linearGradient id="cg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".28"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>`;
     for (let g = 0; g <= 4; g++) { const v = step * g; svg += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Inter">${v}</text>`; }
     const line = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
-    svg += `<path d="${line} L${x(n - 1).toFixed(1)} ${y(0)} L${x(0).toFixed(1)} ${y(0)} Z" fill="url(#cg)"/>`;
-    svg += `<path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    svg += `<path class="carea" d="${line} L${x(n - 1).toFixed(1)} ${y(0)} L${x(0).toFixed(1)} ${y(0)} Z" fill="url(#cg)"/>`;
+    svg += `<line class="cguide" x1="0" x2="0" y1="${padT - 6}" y2="${y(0)}" stroke="var(--accent)" stroke-opacity=".35" stroke-dasharray="3 4"/>`;
+    svg += `<path class="cline" pathLength="1" d="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
     const every = Math.max(1, Math.ceil(n / (narrow ? 4 : 8)));
+    const showDots = n <= (narrow ? 16 : 45);
     pts.forEach((p, i) => {
       const last = i === n - 1;
-      if (n <= (narrow ? 16 : 45) || last) svg += `<circle cx="${x(i)}" cy="${y(p.v)}" r="${last ? 5 : 3.2}" fill="${last ? 'var(--accent)' : 'var(--surface)'}" stroke="var(--accent)" stroke-width="2"><title>${last ? 'dziś' : p.lab}: łącznie ${p.v}${p.day ? ' (+' + p.day + ')' : ''}</title></circle>`;
+      svg += `<circle class="cdot${showDots || last ? '' : ' hid'}" data-i="${i}" cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="6"/>`;
       if (last || ((n - 1 - i) % every === 0 && n - 1 - i >= every * 0.6)) svg += `<text x="${x(i)}" y="${H - 8}" text-anchor="${last ? 'end' : 'middle'}" font-size="11" fill="var(--muted)" font-family="Inter">${last ? 'dziś' : p.lab}</text>`;
     });
-    const lp = pts[n - 1];
-    svg += `<text x="${x(n - 1) - 4}" y="${y(lp.v) - 14}" text-anchor="end" font-size="13" font-weight="700" fill="var(--accent)" font-family="Inter">${lp.v}</text>`;
+    svg += `<g class="clabel"><text class="cv" text-anchor="middle" y="-34" font-size="15" font-weight="700" fill="var(--accent)" font-family="Inter"></text><text class="cd" text-anchor="middle" y="-19" font-size="11" fill="var(--muted)" font-family="Inter"></text></g>`;
     svg += '</svg>';
-    const legend = h('div', { style: 'font-size:12.5px;color:var(--muted);margin-top:6px' }, 'Łącznie rozwiązane przykłady' + (n > 8 ? ' — od pierwszego dnia nauki' : ''));
-    return h('div', { class: 'chart' }, h('div', { html: svg }), legend);
+    const legend = h('div', { style: 'font-size:12.5px;color:var(--muted);margin-top:6px' }, 'Łącznie rozwiązane przykłady' + (n > 8 ? ' — od pierwszego dnia nauki' : '') + (coarse() ? '' : ' · najedź na wykres, żeby zobaczyć dzień'));
+    const holder = h('div', { html: svg });
+    const el = holder.firstChild, dots = [...el.querySelectorAll('.cdot')], lab = el.querySelector('.clabel'), guide = el.querySelector('.cguide');
+    const cv = lab.querySelector('.cv'), cd = lab.querySelector('.cd');
+    let cur = -1;
+    const setActive = k => {
+      if (k === cur) return; cur = k;
+      dots.forEach((d, i) => d.classList.toggle('on', i === k));
+      const p = pts[k], px = x(k), py = y(p.v);
+      const anchor = px > W - 60 ? 'end' : px < padL + 40 ? 'start' : 'middle';
+      cv.setAttribute('text-anchor', anchor); cd.setAttribute('text-anchor', anchor);
+      const dx = anchor === 'end' ? -10 : anchor === 'start' ? 10 : 0;
+      cv.textContent = p.v;
+      cd.textContent = (k === n - 1 ? 'dziś' : p.lab) + (p.day ? ' · +' + p.day : '');
+      lab.style.transform = `translate(${(px + dx).toFixed(1)}px, ${Math.max(py, 48).toFixed(1)}px)`;
+      guide.setAttribute('y1', (py + 9).toFixed(1));
+      guide.style.transform = `translateX(${px.toFixed(1)}px)`;
+      guide.style.opacity = k === n - 1 ? '0' : '1';
+      lab.classList.remove('pop'); void lab.getBBox; requestAnimationFrame(() => lab.classList.add('pop'));
+    };
+    const pick = e => {
+      const r = el.getBoundingClientRect(); if (!r.width) return;
+      const vx = (e.clientX - r.left) / r.width * W;
+      let k = Math.round((vx - padL) / ((W - padL - padR) / Math.max(1, n - 1)));
+      setActive(Math.min(n - 1, Math.max(0, k)));
+    };
+    el.addEventListener('pointermove', pick);
+    el.addEventListener('pointerdown', pick);
+    let backT = 0;
+    el.addEventListener('pointerleave', e => { clearTimeout(backT); if (e.pointerType === 'touch') backT = setTimeout(() => setActive(n - 1), 2500); else setActive(n - 1); });
+    setActive(n - 1);
+    return h('div', { class: 'chart' }, holder, legend);
   }
 
   /* ---------------- start ---------------- */
