@@ -443,6 +443,15 @@
     if (item.mc) {
       const correctTex = item.mcCorrect || tupleTex(F, F.map(f => { try { return correctVal(f); } catch (e) { return null; } }), true, item);
       groups = [{ opts: shuffle([{ tex: correctTex, ok: true }, ...item.mc.map(d => ({ tex: d.tex, ok: false, why: d.why }))]) }];
+    } else if (item.pairs && F.length >= 3) {
+      // długie listy niezależnych wartości odpytujemy po dwie — każda wartość w każdej grupie jest „do policzenia”
+      groups = [];
+      for (let k = 0; k < F.length; k += 2) {
+        const part = F.slice(k, k + 2), g = groupFor(part, item.gk, item);
+        if (part.length === 1) g.label = part[0].label;
+        groups.push(g);
+      }
+      groups.forEach((g, k) => { g.part = 'Część ' + (k + 1) + ' z ' + groups.length; });
     } else if (F.some(f => (f.vars || []).length)) {
       groups = F.map(f => Object.assign(groupFor([f], item.gk, item), { label: f.label }));
     } else {
@@ -452,4 +461,11 @@
     return item._mc;
   };
   A.mcValTex = valTex;
+  // zadania, w których odpowiedź to lista niezależnych wartości — odpytujemy po dwie
+  const PAIRS = { '1.4': 1, '1.6': 1, '1.8': 1, '2.10': 1, '2.11': 1 };
+  for (const L of A.lists || []) for (const t of L.tasks) {
+    if (!PAIRS[t.id]) continue;
+    t.items.forEach(it => { if ((it.type || 'fields') === 'fields') it.pairs = true; });
+    if (t.gen) { const g0 = t.gen; t.gen = (...args) => { const it = g0(...args); if (it && (it.type || 'fields') === 'fields') it.pairs = true; return it; }; }
+  }
 })(typeof window !== 'undefined' ? window : globalThis);
