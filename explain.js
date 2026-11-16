@@ -12,8 +12,8 @@
       T`Oznaczmy $z=2-\sqrt3+i$. Kwadrat modułu: $|z|^2=(2-\sqrt3)^2+1^2=4-4\sqrt3+3+1=8-4\sqrt3=4(2-\sqrt3)$.`,
       T`Argument: $z$ leży w I ćwiartce, a $\operatorname{tg}\varphi=\frac{1}{2-\sqrt3}=2+\sqrt3$. Wiemy, że $\operatorname{tg}\frac{\pi}{12}=2-\sqrt3$, więc $\operatorname{tg}\left(\frac\pi2-\frac\pi{12}\right)=\frac{1}{2-\sqrt3}$, czyli $\varphi=\frac{5\pi}{12}$.`,
       T`Wzór de Moivre’a: $z^{12}=|z|^{12}\left(\cos\left(12\cdot\frac{5\pi}{12}\right)+i\sin\left(12\cdot\frac{5\pi}{12}\right)\right)=|z|^{12}(\cos5\pi+i\sin5\pi)=-|z|^{12}$.`,
-      T`Moduł: $|z|^{12}=\left(|z|^2\right)^6=4^6(2-\sqrt3)^6=4096\left((2-\sqrt3)^2\right)^3=4096\,(7-4\sqrt3)^3=4096\,(1351-780\sqrt3)$.`,
-      T`<b>Odpowiedź:</b> $-4096\left(1351-780\sqrt3\right)$`],
+      T`Moduł: $|z|^{12}=\left(|z|^2\right)^6=4^6(2-\sqrt3)^6=2^{12}\left((2-\sqrt3)^2\right)^3=2^{12}(7-4\sqrt3)^3=2^{12}(1351-780\sqrt3)$.`,
+      T`<b>Odpowiedź:</b> $-2^{12}\left(1351-780\sqrt3\right)$`],
     '3.2#2.6': [
       T`Licznik: $|-1+i|=\sqrt2$, punkt w II ćwiartce, więc $-1+i=\sqrt2\left(\cos\frac{3\pi}4+i\sin\frac{3\pi}4\right)$.`,
       T`Mianownik: $|1+\sqrt3i|=\sqrt{1+3}=2$, więc $1+\sqrt3i=2\left(\cos\frac\pi3+i\sin\frac\pi3\right)$.`,
