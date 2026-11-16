@@ -899,7 +899,7 @@
   const AV = ['var(--l1)', 'var(--l2)', 'var(--l3)', 'var(--accent)', '#7fb3e6', '#d7a6d0'];
   const avatar = name => { let hs = 0; for (const ch of name) hs = (hs * 31 + ch.charCodeAt(0)) >>> 0; const ini = /^Anon \d+$/.test(name) ? 'A' + name.slice(5) : name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(); return h('span', { class: 'av', style: '--c:' + AV[hs % AV.length] }, ini); };
   let rankMode = 'all';
-  const streakPill = n => (n > 0 ? h('span', { class: 'rstreak', title: 'Seria: ' + n + (n === 1 ? ' dzień' : ' dni') + ' nauki z rzędu', html: IC.flame + '<span>' + n + '</span>' }) : '');
+  const streakPill = n => (n > 1 ? h('span', { class: 'rstreak', title: 'Seria: ' + n + (n === 1 ? ' dzień' : ' dni') + ' nauki z rzędu', html: IC.flame + '<span>' + n + '</span>' }) : '');
   function rankView() {
     const sec = h('section', { class: 'h-st' });
     const P = window.AQRank;
