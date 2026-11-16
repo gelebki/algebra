@@ -122,7 +122,7 @@
     document.body.append(f); setTimeout(() => f.remove(), 1400);
   }
   function toast(title, sub, icon = 'trophy') {
-    const t = h('div', { class: 'toast' }, h('span', { html: IC[icon] }), h('div', {}, h('b', {}, title), h('small', {}, sub)));
+    const t = h('div', { class: 'toast' }, h('span', { html: IC[icon] }), h('div', {}, h('b', {}, title), h('small', {}, typeof sub === 'string' && sub.includes('$') ? md(sub) : sub)));
     $('#toasts').append(t); setTimeout(() => { t.style.transition = 'opacity .4s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3600);
   }
 
@@ -256,6 +256,7 @@
   }
   function submit() {
     if (T.status !== 'answering') return;
+    T.starsBefore = T.mode === 'quick' ? 0 : taskProgress(T.task).stars;
     const it = T.item; const type = it.type || 'fields';
     let ok = false;
     if (type === 'fields') {
@@ -324,6 +325,7 @@
     render();
     const fb = $('#feedback'); if (fb) fb.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
     if (ok && isOrig) { const p = taskProgress(T.task); if (p.solved === p.total && !T.celebrated) { T.celebrated = true; setTimeout(() => taskDone(p), 900); } }
+    if (ok && T.mode === 'var') { const p = taskProgress(T.task); if (p.stars === 3 && T.starsBefore !== 3) setTimeout(() => taskDone(p), 900); }
   }
   function goNext() {
     if (T.mode === 'quick') {
@@ -334,6 +336,17 @@
     const task = T.task; const n = task.items.length;
     let next = -1;
     for (let k = 1; k <= n; k++) { const j = (T.idx + k) % n; if (!S.items[itemKey(task, j)]) { next = j; break; } }
+    if (next < 0 && task.gen) {
+      // wszystkie podpunkty zaliczone — prowadzimy po trzecią gwiazdkę: podobny przykład w kolejnym podpunkcie bez ćwiczenia
+      for (let k = 1; k <= n; k++) {
+        const j = (T.idx + k) % n, it = task.items[j], key = itemKey(task, j);
+        if (['order', 'guided'].includes(it.type || 'fields') || ((S.practice || {})[key] || 0) >= 1) continue;
+        T.idx = j; T.mode = 'orig'; T.item = it; T.origKey = key; T.redeemed = false;
+        startVariant();
+        toast('Podobny przykład', 'do podpunktu ' + (it.label || j + 1), 'star');
+        return;
+      }
+    }
     if (next < 0) { V = { view: 'list', list: T.li }; T = null; setHash('l' + (V.list + 1)); render(); return; }
     T.idx = next; T.mode = 'orig'; T.item = task.items[next]; T.origKey = itemKey(task, next); T.redeemed = false; resetAttempt(); render(); SFX.whoosh();
     window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
@@ -562,7 +575,7 @@
     const card = h('article', { class: 'card', id: 'card' });
     const kick = h('div', { class: 'kicker' });
     if (quick) kick.append(h('span', { class: 'badge q' }, 'Zad. ' + task.id), mdEl('span', task.name));
-    else if (T.mode === 'var') kick.append(h('span', { class: 'badge var' }, 'Podobny przykład'), h('span', {}, 'do ' + (task.items[T.idx].label || task.id)), pdots());
+    else if (T.mode === 'var') kick.append(h('span', { class: 'badge var' }, 'Podobny przykład'), md('do ' + (task.items[T.idx].label || task.id)), pdots());
     else kick.append(h('span', { class: 'badge' }, task.id + (it.label ? ' · ' : '')), it.label ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', !['order', 'guided'].includes(it.type || 'fields') && T.task.gen ? pdots() : '');
     card.append(kick); if (it.q !== task.statement) card.append(mdEl('div', it.q, { class: 'question' }));
     const type = it.type || 'fields';
