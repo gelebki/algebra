@@ -190,9 +190,49 @@
     '3.11': { '*': ['zinv', 'quad', 'demoivre'] },
     '3.12': { '*': ['unityroots', 'geom', 'trigdef'] },
   };
+  // wzory dobrane do kątów, które naprawdę występują w danym przykładzie
+  const angleIds = zs => {
+    const ids = new Set(); let off = false;
+    for (const z of zs) {
+      if (!z || AQ.C.abs(z) < 1e-12) continue;
+      const f = AQ.piFrac(AQ.C.arg(z)); if (!f) continue;
+      const [p, q] = f; ids.add('trigtable');
+      if (q === 12 || q === 24) { ids.add('sumsin'); ids.add('sumcos'); }
+      if (q === 8 || q === 16) ids.add('half');
+      if (p / q >= 0.5 && !(p === 0)) off = true;
+    }
+    if (off) ids.add('signs');
+    return [...ids];
+  };
+  const rootsOf = it => { try { const f = it.fields && it.fields[0]; const v = f && typeof f.ans === 'function' ? f.ans() : null; return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+  M['3.5'] = { fn: it => { const r = rootsOf(it), ids = angleIds(r); return !ids.length && r.length === 2 ? ['modulus', 'sqrtC'] : ['polar', 'roots', ...ids]; } };
+  // kąt z treści przykładu (np. „dla kąta $\frac{3\pi}{8}$”) -> wzory tylko do tego kąta
+  const angleOfQ = it => {
+    const q = (it && it.q) || '';
+    const m = [...q.matchAll(/(-?)\\frac\{(\d*)\\pi\}\{(\d+)\}|(-?)(\d*)\\pi(?![}\d])/g)].pop();
+    if (!m) return /\$0\$|kąta \$0/.test(q) ? [0, 1] : null;
+    return m[3] ? [(m[1] ? -1 : 1) * +(m[2] || 1), +m[3]] : [(m[4] ? -1 : 1) * +(m[5] || 1), 1];
+  };
+  const trigIds = it => {
+    const a = angleOfQ(it); if (!a) return null;
+    const [p, q] = a, t = (((p / q) % 2) + 2) % 2, ids = [];
+    if (q <= 2) ids.push('trigdef'); // kąty na osiach: odczyt z okręgu jednostkowego
+    ids.push('trigtable');
+    if (q === 12 || q === 24) ids.push('sumsin', 'sumcos', 'a12');
+    if (q === 8 || q === 16) ids.push('cos2', 'half');
+    if (q > 2 && t > 0.5) ids.push('signs');
+    if (p < 0) ids.push('evenodd');
+    if (p / q >= 2) ids.push('period');
+    return ids;
+  };
+  M['2.12'] = { fn: it => trigIds(it) || ['trigdef', 'trigtable', 'signs'] };
+  M['2.14'] = { fn: it => trigIds(it) || ['cos2', 'half', 'a12', 'signs'] };
+  M['3.6'] = { fn: it => ['biq', 'quad', 'roots', ...angleIds(rootsOf(it))] };
+  M['3.8'] = { fn: it => ['polar', 'conjpolar', 'polarmuldiv', ...angleIds(rootsOf(it))] };
   AQ.wzoryLib = F; AQ.wzoryMap = M;
-  AQ.wzoryFor = function (task, item, gk) {
+  AQ.wzoryFor = function (task, item, gk, cur) {
     const m = M[task.id] || {};
+    if (m.fn) { try { return [...new Set(m.fn(cur || item))].map(id => F[id]).filter(Boolean); } catch (e) { /* zwykły zestaw */ } }
     const ids = (item && item.label && m['L:' + item.label]) || (gk && m['G:' + gk]) || m['*'] || Object.values(m)[0] || [];
     return ids.map(id => F[id]).filter(Boolean);
   };
