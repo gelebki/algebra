@@ -396,7 +396,7 @@
     SFX.hint();
     const task = T.task;
     const orig = T.mode === 'quick' ? T.item : task.items[T.idx]; const gk = (orig && orig.gk) || T.item.gk;
-    const list = A.wzoryFor(task, orig, gk);
+    const list = A.wzoryFor(task, orig, gk, T.item);
     drawer('Wzory', IC.bulb, [
       h('p', { class: 'dnote' }, 'Wszystko, czego potrzeba do tego przykładu. Kliknij ', h('span', { class: 'qbtn mini' }, '?'), ', żeby zobaczyć, skąd bierze się wzór.'),
       ...list.map(w => {
