@@ -648,7 +648,7 @@
         const b = h('button', { class: cls, role: 'radio', 'aria-checked': sel ? 'true' : 'false', disabled: done, onclick: () => {
           T.sel[gi] = oi; SFX.key();
           if (single) submit(); else box.replaceWith(mcUI(it));
-        } }, h('span', { class: 'letter' }, 'ABCD'[oi]), mdEl('span', topSplit(o.tex).map(x => '<span class="part">$' + x + '$</span>').join('<span class="sep">, </span>'), { class: 'txt' }));
+        } }, h('span', { class: 'letter' }, 'ABCD'[oi]), mdEl('span', topSplit(o.tex).map((x, k, all) => '<span class="part">$' + x + (k < all.length - 1 ? ',\\quad' : '') + '$</span>').join(''), { class: 'txt' }));
         if (done && sel) b.classList.add('picked');
         grp.append(b);
         if (done && sel && !o.ok && o.why) grp.append(mdEl('div', '<b>Skąd ten wynik:</b> ' + o.why, { class: 'why hit' }));
