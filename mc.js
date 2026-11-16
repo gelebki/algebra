@@ -24,7 +24,16 @@
     if (v === 'brak') return '\\text{brak}';
     if (typeof v === 'boolean') return v ? '\\text{tak}' : '\\text{nie}';
     if (v && v.expr !== undefined) return A.toTex(A.parse(v.expr, f.vars || []));
-    if (Array.isArray(v)) return v.length ? '\\left\\{' + v.map(cTex).join(',\\quad ') + '\\right\\}' : '\\varnothing';
+    if (Array.isArray(v)) {
+      if (!v.length) return '\\varnothing';
+      let ts = v.map(cTex);
+      // spójny zapis: jeśli choć jeden element wymaga postaci trygonometrycznej, wszystkie w tej postaci
+      if (ts.some(t => /\\cos/.test(t)) && ts.some(t => !/\\cos/.test(t) && t !== '0')) {
+        const ps = v.map(z => (Cx.abs(z) < 1e-12 ? '0' : A.polarTex(z)));
+        if (!ps.some(t => /arctg|\\d\\.\\d/.test(t))) ts = ps;
+      }
+      return '\\Bigl\\{' + ts.join(',\\quad ') + '\\Bigr\\}';
+    }
     if (f.kind === 'angle') return A.niceAngle(v.re);
     if (f.kind === 'mod') return String(md(v.re, f.mod));
     if (f.kind === 'pm') return '\\pm\\left(' + cTex(v) + '\\right)';
@@ -292,8 +301,8 @@
   A.mcLabel = l => wordy(l) ? l : '$' + l + '$';
   function shown(f, v, showCorrect) {
     if (showCorrect && f.show) {
-      const wrapSet = t => (f.kind === 'set' && !/^\\left\\\{/.test(t) ? '\\left\\{' + t + '\\right\\}' : t);
-      if (v == null) return wrapSet(f.show); const t = valTex(f, v); return dec(t) ? wrapSet(f.show) : t;
+      const wrapSet = t => (f.kind === 'set' && !/^\\(left|Bigl)\\\{/.test(t) ? '\\Bigl\\{' + t + '\\Bigr\\}' : t);
+      if (v == null) return wrapSet(f.show); const t = valTex(f, v); return dec(t) || /arctg/.test(t) ? wrapSet(f.show) : t;
     }
     return valTex(f, v);
   }
