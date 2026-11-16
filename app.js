@@ -874,10 +874,10 @@
   const DEMO = {
     demo: true, meNo: 7,
     others: [
-      { id: 'd1', name: 'Kasia', xp: 3210, solved: 178, week: 410, streak: 12 }, { id: 'd2', name: 'Anon 3', xp: 2480, solved: 141, week: 95, streak: 2 },
-      { id: 'd3', name: 'Bartek M.', xp: 1890, solved: 109, week: 520, streak: 5 }, { id: 'd4', name: 'Ola', xp: 1320, solved: 80, week: 260 },
+      { id: 'd1', name: 'Kasia', xp: 3210, solved: 178, week: 410, streak: 12, spark: '12,40,40,95,130,160,210,250,251,290,330' }, { id: 'd2', name: 'Anon 3', xp: 2480, solved: 141, week: 95, streak: 2 },
+      { id: 'd3', name: 'Bartek M.', xp: 1890, solved: 109, week: 520, streak: 5, spark: '30,30,30,60,61,90,150,190' }, { id: 'd4', name: 'Ola', xp: 1320, solved: 80, week: 260, spark: '50,90,120,130' },
       { id: 'd5', name: 'Anon 5', xp: 760, solved: 44, week: 0 }, { id: 'd6', name: 'Michał', xp: 540, solved: 33, week: 140 },
-      { id: 'd7', name: 'Anon 2', xp: 210, solved: 12, week: 30 }, { id: 'd8', name: 'Zuza', xp: 95, solved: 6, week: 95 },
+      { id: 'd7', name: 'Anon 2', xp: 210, solved: 12, week: 30 }, { id: 'd8', name: 'Zuza', xp: 95, solved: 6, week: 95, spark: '9' },
     ],
   };
   function weekStart(d = new Date()) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
@@ -889,6 +889,31 @@
     return w;
   }
   const myName = () => S.name || (window.AQRank ? (window.AQRank.meNo ? 'Anon ' + window.AQRank.meNo : 'Anon') : 'Anon ' + DEMO.meNo);
+  // skumulowana liczba rozwiązanych przykładów dzień po dniu (od pierwszego dnia nauki), maks. 30 punktów
+  function mySeries() {
+    const dk = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const keys = Object.keys(S.days || {}).filter(k => (S.days[k].ok || 0) > 0).sort();
+    if (!keys.length) return [];
+    const [yy, mm, dd] = keys[0].split('-').map(Number); const f = new Date(yy, mm - 1, dd, 12), t = new Date(); t.setHours(12, 0, 0, 0);
+    const n = Math.max(1, Math.round((t - f) / 864e5) + 1);
+    const sumAll = keys.reduce((a, k) => a + (S.days[k].ok || 0), 0);
+    let acc = Math.max(0, (S.correct || 0) - sumAll); const out = [];
+    for (let k = 0; k < n; k++) { const d = new Date(f); d.setDate(f.getDate() + k); acc += (S.days[dk(d)] || {}).ok || 0; out.push(acc); }
+    if (out.length <= 30) return out;
+    return [...Array(30)].map((_, i) => out[Math.round(i * (out.length - 1) / 29)]);
+  }
+  function sparkSVG(series) {
+    if (!series || !series.length) return '';
+    const W = 92, H = 30, pad = 4, n = series.length, max = Math.max(1, ...series);
+    const x = i => n === 1 ? W - pad : pad + (W - 2 * pad) * i / (n - 1), y = v => H - pad - (H - 2 * pad) * v / max;
+    const line = n === 1 ? `M${pad} ${y(0)} L${x(0)} ${y(series[0])}` : series.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+    const id = 'sg' + Math.random().toString(36).slice(2, 8);
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".35"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>`
+      + `<path class="sa" d="${line} L${x(n - 1).toFixed(1)} ${H - pad} L${n === 1 ? pad : x(0).toFixed(1)} ${H - pad} Z" fill="url(#${id})"/>`
+      + `<path class="sl" pathLength="1" d="${line}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>`
+      + `<circle class="sd" cx="${x(n - 1).toFixed(1)}" cy="${y(series[n - 1]).toFixed(1)}" r="2.6" fill="var(--accent)"/></svg>`;
+  }
+  const sparkOf = r => (r.me ? mySeries() : typeof r.spark === 'string' && r.spark ? r.spark.split(',').map(Number).filter(v => isFinite(v)) : Array.isArray(r.spark) ? r.spark : null);
   function rankRows() {
     const P = window.AQRank;
     const wk = weekKey();
@@ -926,6 +951,7 @@
       const list = h('ol', { class: 'rlist' });
       list.append(h('li', { class: 'rrow me' }, h('span', { class: 'rpos' }, '–'), avatar(nm),
         h('div', { class: 'rwho' }, h('b', {}, nm, h('span', { class: 'you' }, 'Ty')), h('small', {}, lv.title + ' · ' + sm.solved + '/' + sm.total), h('div', { class: 'bar' }, h('i', { style: `width:${100 * sm.solved / sm.total}%` }))),
+        h('div', { class: 'rspark', html: sparkSVG(mySeries()) }),
         h('div', { class: 'rxp' }, h('b', {}, String(S.xp)), h('small', {}, 'XP'))));
       sec.append(list, h('p', { class: 'demo-note' }, P.status === 'error' ? 'Wyniki innych graczy są chwilowo niedostępne.' : 'Wczytywanie wyników innych graczy…'));
       return sec;
@@ -952,6 +978,7 @@
       list.append(h('li', { class: 'rrow' + (r.me ? ' me' : ''), style: `animation-delay:${i * 30}ms` },
         h('span', { class: 'rpos' }, String(i + 1)), avatar(r.name),
         h('div', { class: 'rwho' }, h('b', {}, r.name, r.me ? h('span', { class: 'you' }, 'Ty') : '', streakPill(r.streak)), h('small', {}, lv.title + ' · ' + r.solved + '/' + total), h('div', { class: 'bar' }, h('i', { style: `width:${Math.min(100, 100 * r.solved / total)}%` }))),
+        h('div', { class: 'rspark', html: sparkSVG(sparkOf(r)), style: `--d:${i * 60}ms`, title: 'Łącznie rozwiązane przykłady dzień po dniu' }),
         h('div', { class: 'rxp' }, h('b', {}, String(r[key])), h('small', {}, rankMode === 'week' ? 'XP w tym tyg.' : 'XP'))));
     });
     sec.append(list);
@@ -1088,7 +1115,7 @@
     for (const L of LISTS) { const p = listProgress(L); solved += p.solved; total += p.total; stars += p.stars; }
     return { xp: S.xp, level: levelInfo(S.xp).L, solved, total, stars, correct: S.correct, attempts: S.correct, best: 0 };
   }
-  A.ui = { curStreak, weekKey, myWeekXP, myName, h, IC, md, toast, SFX, confetti, levelInfo, summary, getS: () => S, setS: ns => { S = Object.assign(blank(), ns); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } }, render: () => { if (booted) render(); }, isRank: () => V.view === 'rank', closeOverlays, modal };
+  A.ui = { mySeries, curStreak, weekKey, myWeekXP, myName, h, IC, md, toast, SFX, confetti, levelInfo, summary, getS: () => S, setS: ns => { S = Object.assign(blank(), ns); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } }, render: () => { if (booted) render(); }, isRank: () => V.view === 'rank', closeOverlays, modal };
   if (window.AQRank && window.AQRank.init) window.AQRank.init();
   waitMJ();
 })();
