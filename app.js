@@ -958,7 +958,7 @@
       kpi('Doświadczenie', S.xp + ' XP', lv.max ? 'poziom maksymalny' : (lv.need - lv.into) + ' XP do kolejnego'),
       kpi('Zaliczone podpunkty', solved + '/' + totalItems, Math.round(100 * solved / totalItems) + '% wszystkich list'),
       kpi('Rozwiązane przykłady', String(S.correct), 'łącznie z podobnymi'),
-      kpi('Podobne przykłady', String(S.variants), ''),
+      kpi('Podobne przykłady', String(S.variants), (() => { const n = Object.values(S.practice || {}).filter(x => x > 0).length; return n ? 'ćwiczone w ' + n + (n === 1 ? ' podpunkcie' : ' podpunktach') : 'dodatkowe ćwiczenia do podpunktów'; })()),
       kpi('Dni nauki z rzędu', String(curStreak()), (() => { const n = (S.days[today()] || {}).ok || 0, m10 = n % 10, m100 = n % 100; return 'dzisiaj: ' + n + (n === 1 ? ' przykład' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? ' przykłady' : ' przykładów'); })())));
     sec.append(h('h2', { class: 'sec' }, 'Listy'));
     const lp = h('div', { class: 'lp' });
