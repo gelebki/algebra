@@ -451,6 +451,21 @@
     if (V.view === 'list') requestAnimationFrame(drawTrail);
     if (V.view === 'task') requestAnimationFrame(() => { if (T && T.status === 'answering') focusField(T.focus || 0, true); });
   }
+  // szerokie wzory wyświetlane (treść, pytania, wzory) zmniejszamy, by mieściły się w szerokości ekranu
+  function fitMath() {
+    document.querySelectorAll('mjx-container[display="true"], .opt .txt mjx-container, .gq mjx-container, .question mjx-container, .stx mjx-container, .exq mjx-container').forEach(c => {
+      const svg = c.querySelector('svg'); if (!svg || !c.parentElement) return;
+      c.style.fontSize = '';
+      let box = c.getAttribute('display') === 'true' ? c.parentElement : (c.closest('.txt, .gq, .question, .stx, .exq') || c.parentElement);
+      while (box && box.parentElement && getComputedStyle(box).display.startsWith('inline')) box = box.parentElement;
+      const avail = box.clientWidth, nat = svg.getBoundingClientRect().width;
+      if (avail > 0 && nat > avail) c.style.fontSize = (Math.max(0.5, (avail / nat) * 0.97) * 100).toFixed(1) + '%';
+    });
+  }
+  let fitQ = 0;
+  const queueFit = () => { if (fitQ) return; fitQ = requestAnimationFrame(() => { fitQ = 0; fitMath(); }); };
+  try { new MutationObserver(queueFit).observe(document.body, { childList: true, subtree: true }); } catch (e) { /* ignoruj */ }
+  addEventListener('resize', queueFit);
   function renderTop() { const old = $('.top'); if (old) old.replaceWith(topBar()); }
   function renderActionsOnly() { const a = $('#actions'); if (a) a.replaceWith(actionsBar()); }
 
@@ -954,7 +969,7 @@
       lp.append(row);
     });
     sec.append(lp);
-    sec.append(h('h2', { class: 'sec' }, 'Ostatnie 14 dni'), activityChart());
+    sec.append(h('h2', { class: 'sec' }, 'Twoje postępy'), activityChart());
     sec.append(h('h2', { class: 'sec' }, 'Odznaki'));
     sec.append(h('div', { class: 'badges' }, BADGES.map(b => h('div', { class: 'bdg' + (S.badges[b.id] ? '' : ' locked') }, h('span', { class: 'ic', html: IC.trophy }), h('div', {}, h('b', {}, b.name), h('small', {}, b.desc))))));
     const dz = h('div', { class: 'danger' });
@@ -966,23 +981,38 @@
     return sec;
   }
   function activityChart() {
-    const days = []; const d0 = new Date();
-    for (let k = 13; k >= 0; k--) { const d = new Date(d0); d.setDate(d.getDate() - k); const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); days.push({ key, lab: d.getDate() + '.' + String(d.getMonth() + 1).padStart(2, '0'), v: S.days[key] || { ok: 0, bad: 0 } }); }
-    const max = Math.max(4, ...days.map(x => x.v.ok));
-    const nice = Math.ceil(max / 4) * 4;
-    const W = 900, H = 190, padL = 30, padB = 26, padT = 10, bw = (W - padL - 10) / 14;
-    const y = v => padT + (H - padT - padB) * (1 - v / nice);
-    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Poprawne i błędne odpowiedzi w ostatnich 14 dniach">`;
-    for (let g = 0; g <= 4; g++) { const v = nice * g / 4; svg += `<line x1="${padL}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${padL - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Inter">${v}</text>`; }
-    days.forEach((dd, i) => {
-      const x = padL + i * bw + bw * 0.18, w = bw * 0.64;
-      const ok = dd.v.ok, bad = 0;
-      if (ok) svg += `<rect x="${x}" y="${y(ok)}" width="${w}" height="${y(0) - y(ok)}" rx="3" fill="var(--ok)"><title>${dd.lab}: ${ok} dobrze</title></rect>`;
-      if (bad) svg += `<rect x="${x}" y="${y(ok + bad)}" width="${w}" height="${y(ok) - y(ok + bad) - 1}" rx="3" fill="var(--bad)" fill-opacity=".55"><title>${dd.lab}: ${bad} źle</title></rect>`;
-      if (i % 2 === 1 || i === 13) svg += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="Inter">${i === 13 ? 'dziś' : dd.lab}</text>`;
+    // wykres liniowy: łączna liczba rozwiązanych przykładów; 8 dni, a gdy nauka trwa dłużej — cała historia
+    const dk = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const keys = Object.keys(S.days || {}).filter(k => (S.days[k].ok || 0) > 0).sort();
+    const d0 = new Date(); d0.setHours(12, 0, 0, 0);
+    let n = 8;
+    if (keys.length) { const [yy, mm, dd] = keys[0].split('-').map(Number); const f = new Date(yy, mm - 1, dd, 12); n = Math.max(8, Math.round((d0 - f) / 864e5) + 1); }
+    const sumAll = keys.reduce((a, k) => a + (S.days[k].ok || 0), 0);
+    let acc = Math.max(0, (S.correct || 0) - sumAll);
+    const firstShown = new Date(d0); firstShown.setDate(d0.getDate() - (n - 1));
+    keys.filter(k => k < dk(firstShown)).forEach(k => { acc += S.days[k].ok || 0; });
+    const pts = [];
+    for (let k = n - 1; k >= 0; k--) { const d = new Date(d0); d.setDate(d0.getDate() - k); const key = dk(d); const day = (S.days[key] || {}).ok || 0; acc += day; pts.push({ lab: d.getDate() + '.' + String(d.getMonth() + 1).padStart(2, '0'), v: acc, day }); }
+    const max = Math.max(4, ...pts.map(p => p.v)); const step = Math.ceil(max / 4); const top = step * 4;
+    const narrow = innerWidth < 640;
+    const W = narrow ? 360 : 900, H = narrow ? 220 : 210, padL = 34, padR = 14, padB = 28, padT = 30;
+    const x = i => padL + (W - padL - padR) * (n === 1 ? 0.5 : i / (n - 1));
+    const y = v => padT + (H - padT - padB) * (1 - v / top);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Łączna liczba rozwiązanych przykładów"><defs><linearGradient id="cg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".28"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>`;
+    for (let g = 0; g <= 4; g++) { const v = step * g; svg += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="Inter">${v}</text>`; }
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
+    svg += `<path d="${line} L${x(n - 1).toFixed(1)} ${y(0)} L${x(0).toFixed(1)} ${y(0)} Z" fill="url(#cg)"/>`;
+    svg += `<path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const every = Math.max(1, Math.ceil(n / (narrow ? 4 : 8)));
+    pts.forEach((p, i) => {
+      const last = i === n - 1;
+      if (n <= (narrow ? 16 : 45) || last) svg += `<circle cx="${x(i)}" cy="${y(p.v)}" r="${last ? 5 : 3.2}" fill="${last ? 'var(--accent)' : 'var(--surface)'}" stroke="var(--accent)" stroke-width="2"><title>${last ? 'dziś' : p.lab}: łącznie ${p.v}${p.day ? ' (+' + p.day + ')' : ''}</title></circle>`;
+      if (last || ((n - 1 - i) % every === 0 && n - 1 - i >= every * 0.6)) svg += `<text x="${x(i)}" y="${H - 8}" text-anchor="${last ? 'end' : 'middle'}" font-size="11" fill="var(--muted)" font-family="Inter">${last ? 'dziś' : p.lab}</text>`;
     });
+    const lp = pts[n - 1];
+    svg += `<text x="${x(n - 1) - 4}" y="${y(lp.v) - 14}" text-anchor="end" font-size="13" font-weight="700" fill="var(--accent)" font-family="Inter">${lp.v}</text>`;
     svg += '</svg>';
-    const legend = h('div', { style: 'font-size:12.5px;color:var(--muted);margin-top:6px' }, 'Rozwiązane przykłady dziennie');
+    const legend = h('div', { style: 'font-size:12.5px;color:var(--muted);margin-top:6px' }, 'Łącznie rozwiązane przykłady' + (n > 8 ? ' — od pierwszego dnia nauki' : ''));
     return h('div', { class: 'chart' }, h('div', { html: svg }), legend);
   }
 
