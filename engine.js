@@ -493,7 +493,17 @@
   function niceReal(x, allowTiny) {
     if (allowTiny ? x === 0 : Math.abs(x) < 1e-10) return '0';
     const rs = ratSqrt(x); if (rs) return rs;
-    return niceCore(x);
+    return tidySum(niceCore(x));
+  }
+  // „-a + b” zapisujemy jako „b - a” (także w liczniku ułamka), np. \frac{\sqrt2-\sqrt6}{4}
+  function tidySum(t) {
+    let m = t.match(/^\\frac\{-([^{}+-]+(?:\{[^{}]*\})?) \+ ([^{}+-]+(?:\{[^{}]*\})?)\}\{(\d+)\}$/);
+    if (m) return '\\frac{' + m[2] + ' - ' + m[1] + '}{' + m[3] + '}';
+    m = t.match(/^\\frac\{-([^{}+-]+(?:\{[^{}]*\})?) - ([^{}+-]+(?:\{[^{}]*\})?)\}\{(\d+)\}$/);
+    if (m) return '-\\frac{' + m[1] + ' + ' + m[2] + '}{' + m[3] + '}';
+    m = t.match(/^-([^{}+-]+(?:\{[^{}]*\})?) \+ ([^{}+-]+(?:\{[^{}]*\})?)$/);
+    if (m) return m[2] + ' - ' + m[1];
+    return t;
   }
   function niceCore(x) {
     if (Math.abs(x) < 1e-300) return '0';
@@ -556,7 +566,9 @@
     const im = Math.abs(z.im) < 1e-10 * m ? 0 : z.im;
     if (m === 0) return '0';
     if (im === 0) return niceReal(re, tiny);
-    const it = niceReal(Math.abs(im), tiny);
+    let it = niceReal(Math.abs(im), tiny);
+    // \frac{-1+\sqrt3}{2} z minusem przed — czytelniej jako + \frac{1-\sqrt3}{2}
+    if (im < 0 && /^\\frac\{-/.test(it)) { const t2 = niceReal(im, tiny); if (!/^-/.test(t2)) return (re === 0 ? '' : niceReal(re, tiny) + ' + ') + t2 + 'i'; }
     const needPar = !it.startsWith('\\frac') && / [+-] /.test(it) && !it.startsWith('\\left(');
     const imPart = (it === '1' ? '' : (needPar ? '\\left(' + it + '\\right)' : it)) + 'i';
     if (re === 0) return (im < 0 ? '-' : '') + imPart;
