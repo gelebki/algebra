@@ -228,6 +228,15 @@
       add(Cx.mul(v, C(2)), 'Zgubiony czynnik $2$.');
       return out;
     }
+    // stopnie -> radiany: pomyłki w przeliczniku, bez minusów
+    if (f.toRad && Math.abs(v.im) < 1e-9) {
+      const x = v.re;
+      add(C(2 * x), 'Przyjęto $1^\\circ=\\frac{\\pi}{90}$ — a $180^\\circ$ to $\\pi$, więc $1^\\circ=\\frac{\\pi}{180}$.');
+      add(C(x / 2), 'Przyjęto $1^\\circ=\\frac{\\pi}{360}$ — a $360^\\circ$ to $2\\pi$, nie $\\pi$.');
+      if (Math.abs(x - PI / 2) > 1e-9) add(C(PI - x), 'To dopełnienie do $\\pi$ (czyli $180^\\circ$ minus kąt), a nie sam kąt.');
+      add(C(PI / f.toRad), 'Zamiast pomnożyć przez $\\frac{\\pi}{180}$, zapisano $\\frac{\\pi}{' + f.toRad + '}$.');
+      return out;
+    }
     // kąt w stopniach: typowe pomyłki przy zamianie radianów
     if (f.unit === '^\\circ' && Math.abs(v.im) < 1e-9) {
       const x = v.re;
