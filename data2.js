@@ -121,14 +121,31 @@
     const W = Cx.sub(Cx.mul(A11, A22), Cx.mul(A12, A21));
     return [Cx.div(Cx.sub(Cx.mul(B1, A22), Cx.mul(A12, B2)), W), Cx.div(Cx.sub(Cx.mul(A11, B2), Cx.mul(B1, A21)), W)];
   }
+  // Sposób 2: eliminacja — mnożymy równania przez dobrane liczby i odejmujemy, żeby zniknęła jedna niewiadoma
+  function elimSteps(A11, A12, B1, A21, A22, B2) {
+    if (Cx.abs(A11) < 1e-12 || Cx.abs(A21) < 1e-12) return [];
+    const p = z => { const t = nice(z); return / [+-] /.test(t) || /^-/.test(t) ? '\\left(' + t + '\\right)' : t; };
+    const co = (c, v, first) => { const t = nice(c); const body = t === '1' ? v : t === '-1' ? '-' + v : / [+-] /.test(t) ? '\\left(' + t + '\\right)' + v : t + v; return first || /^-/.test(body) ? body : '+' + body; };
+    const L = (c1, c2, r) => co(c1, 'z_1', true) + co(c2, 'z_2') + '=' + nice(r);
+    const q = z => { const t = nice(z); return / [+-] /.test(t) ? '\\left(' + t + '\\right)' : t; };
+    const c12 = Cx.mul(A12, A21), c22 = Cx.mul(A22, A11), r1 = Cx.mul(B1, A21), r2 = Cx.mul(B2, A11), c11 = Cx.mul(A11, A21);
+    const K = Cx.sub(c12, c22), R = Cx.sub(r1, r2), z2 = Cx.div(R, K);
+    const rest = Cx.sub(B1, Cx.mul(A12, z2)), z1 = Cx.div(rest, A11);
+    return [
+      T`<b>Sposób 2 — eliminacja</b> (bez wzorów): pierwsze równanie mnożymy przez $${nice(A21)}$ (współczynnik przy $z_1$ w drugim), a drugie przez $${nice(A11)}$ (współczynnik przy $z_1$ w pierwszym). Wtedy przy $z_1$ w obu stoi to samo.`,
+      T`$$\begin{aligned}&${L(c11, c12, r1)}\\&${L(c11, c22, r2)}\end{aligned}$$`,
+      T`Odejmujemy stronami — $z_1$ znika: $\ ${co(K, 'z_2', true)}=${nice(R)}$, czyli $z_2=\frac{${nice(R)}}{${nice(K)}}=${nice(z2)}$ (dzielenie: mnożymy przez sprzężenie mianownika).`,
+      T`Wstawiamy $z_2$ do pierwszego równania: $\ ${co(A11, 'z_1', true)}=${nice(B1)}-${p(A12)}\cdot${p(z2)}=${nice(rest)}$, więc $z_1=${nice(z1)}$.`,
+    ];
+  }
   const sysItem = (label, c, tex) => ({
     label, gk: 'sys', q: T`Rozwiąż w liczbach zespolonych: $$${tex}$$`,
     fields: [0, 1].map(i => ({ label: T`z_${i + 1}`, ans: () => cramer(...c)[i], restrict: ['alg'] })),
     sol: (() => { const [A11, A12, B1, A21, A22, B2] = c.map(ev); const W = Cx.sub(Cx.mul(A11, A22), Cx.mul(A12, A21)), W1 = Cx.sub(Cx.mul(B1, A22), Cx.mul(A12, B2)), W2 = Cx.sub(Cx.mul(A11, B2), Cx.mul(B1, A21)); const [z1, z2] = cramer(...c);
-      return [T`Wyznacznik główny (współczynniki przy $z_1,z_2$): $W=a_{11}a_{22}-a_{12}a_{21}=${nice(W)}$. Jest różny od zera, więc układ ma dokładnie jedno rozwiązanie.`,
+      return [T`<b>Sposób 1 — wzory Cramera.</b> Wyznacznik główny (współczynniki przy $z_1,z_2$): $W=a_{11}a_{22}-a_{12}a_{21}=${nice(W)}$. Jest różny od zera, więc układ ma dokładnie jedno rozwiązanie.`,
         T`$W_1$ — pierwszą kolumnę zastępujemy prawymi stronami: $W_1=b_1a_{22}-a_{12}b_2=${nice(W1)}$.`,
         T`$W_2$ — drugą kolumnę zastępujemy prawymi stronami: $W_2=a_{11}b_2-b_1a_{21}=${nice(W2)}$.`,
-        T`<b>$z_1=\frac{W_1}{W}=${nice(z1)}$, $\ z_2=\frac{W_2}{W}=${nice(z2)}$</b> (dzielimy, mnożąc przez sprzężenie mianownika).`]; })(),
+        T`<b>$z_1=\frac{W_1}{W}=${nice(z1)}$, $\ z_2=\frac{W_2}{W}=${nice(z2)}$</b> (dzielimy, mnożąc przez sprzężenie mianownika).`, ...elimSteps(A11, A12, B1, A21, A22, B2), T`<b>Odpowiedź:</b> $z_1=${nice(z1)}$, $\ z_2=${nice(z2)}$ — oba sposoby dają to samo.`]; })(),
   });
   function gen25(gk) {
     if (gk === 'sing') {
@@ -147,9 +164,9 @@
       const term = (c, v, first) => { const t = Z.tex(...c); if (c[0] === 0 && c[1] === 0) return ''; const body = (t === '1' ? '' : t === '-1' ? '-' : (c[0] && c[1] ? '(' + t + ')' : t)) + v; return first ? body : (/^-/.test(body) ? body : '+' + body); };
       const tex = T`\begin{cases}${term(a[0], 'z_1', 1)}${term(a[1], 'z_2')}=${Z.tex(...b1)}\\${term(a[2], 'z_1', 1)}${term(a[3], 'z_2')}=${Z.tex(...b2)}\end{cases}`;
       return { q: T`Rozwiąż w liczbach zespolonych: $$${tex}$$`, fields: [{ label: 'z_1', ans: Z.str(...z1), restrict: ['alg'] }, { label: 'z_2', ans: Z.str(...z2), restrict: ['alg'] }],
-        steps: [T`Wyznacznik główny: $W=${Z.ptex(...a[0])}${Z.ptex(...a[3])}-${Z.ptex(...a[1])}${Z.ptex(...a[2])}=${Z.tex(...W)}$.`,
+        steps: [T`<b>Sposób 1 — wzory Cramera.</b> Wyznacznik główny: $W=${Z.ptex(...a[0])}${Z.ptex(...a[3])}-${Z.ptex(...a[1])}${Z.ptex(...a[2])}=${Z.tex(...W)}$.`,
           T`$W_1=b_1a_{22}-a_{12}b_2=${Z.tex(...Z.sub(Z.mul(b1, a[3]), Z.mul(a[1], b2)))}$, $W_2=a_{11}b_2-b_1a_{21}=${Z.tex(...Z.sub(Z.mul(a[0], b2), Z.mul(b1, a[2])))}$.`,
-          T`$z_1=\frac{W_1}{W}=${Z.tex(...z1)}$, $z_2=\frac{W_2}{W}=${Z.tex(...z2)}$.`] };
+          T`$z_1=\frac{W_1}{W}=${Z.tex(...z1)}$, $z_2=\frac{W_2}{W}=${Z.tex(...z2)}$.`, ...elimSteps(...[a[0], a[1], b1, a[2], a[3], b2].map(x => Cx.C(...x))), T`<b>Odpowiedź:</b> $z_1=${Z.tex(...z1)}$, $\ z_2=${Z.tex(...z2)}$.`] };
     }
   }
 
