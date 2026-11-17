@@ -236,6 +236,8 @@
       add(C(x / 2), 'Przyjęto $1^\\circ=\\frac{\\pi}{360}$ — a $360^\\circ$ to $2\\pi$, nie $\\pi$.');
       if (Math.abs(x - PI / 2) > 1e-9) add(C(PI - x), 'To dopełnienie do $\\pi$ (czyli $180^\\circ$ minus kąt), a nie sam kąt.');
       add(C(PI / f.toRad), 'Zamiast pomnożyć przez $\\frac{\\pi}{180}$, zapisano $\\frac{\\pi}{' + f.toRad + '}$.');
+      add(C(x + PI), 'Dodane pół obrotu ($\\pi$) za dużo.');
+      add(C(2 * PI - x), 'To dopełnienie do pełnego kąta $2\\pi$, a nie sam kąt.');
       return out;
     }
     // kąt w stopniach: typowe pomyłki przy zamianie radianów
@@ -315,7 +317,7 @@
   }
   const shuffle = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 
-  const wordy = l => /^[a-ząćęłńóśźż ]{3,}$/i.test(l || '');
+  const wordy = l => /^[a-ząćęłńóśźż ?,.]{3,}$/i.test(l || '');
   const labTex = l => wordy(l) ? '\\text{' + l + '}' : (l || 'x');
   A.mcLabel = l => wordy(l) ? l : '$' + l + '$';
   function shown(f, v, showCorrect) { const t0 = shown0(f, v, showCorrect); return f.unit && t0 !== '\\text{brak}' ? t0 + f.unit : t0; }
@@ -446,6 +448,8 @@
   }
 
   /* gotowe pytanie wielokrotnego wyboru dla podpunktu z polami */
+  const YNQ = { dodawanie: 'Czy dodawanie jest wykonalne?', odejmowanie: 'Czy odejmowanie jest wykonalne?', 'mnożenie': 'Czy mnożenie jest wykonalne?', dzielenie: 'Czy dzielenie jest wykonalne?', przemienne: 'Czy działanie jest przemienne?', 'łączne': 'Czy działanie jest łączne?' };
+  const yesnoQ = f => YNQ[f.label] || f.label;
   A.buildMC = function (item) {
     if (item._mc) return item._mc;
     const F = item.fields;
@@ -456,12 +460,8 @@
     } else if (item.pairs && F.length >= 3) {
       // długie listy niezależnych wartości odpytujemy po dwie — każda wartość w każdej grupie jest „do policzenia”
       groups = [];
-      for (let k = 0; k < F.length; k += 2) {
-        const part = F.slice(k, k + 2), g = groupFor(part, item.gk, item);
-        if (part.length === 1) g.label = part[0].label;
-        groups.push(g);
-      }
-      groups.forEach((g, k) => { g.part = 'Część ' + (k + 1) + ' z ' + groups.length; });
+      // każda wartość osobno — odpytywane po kolei
+      for (const f of F) { const g = groupFor([f], item.gk, item); g.label = f.kind === 'yesno' ? yesnoQ(f) : f.label; if (f.kind === 'yesno') g.short = f.label; groups.push(g); }
     } else if (F.some(f => (f.vars || []).length)) {
       groups = F.map(f => Object.assign(groupFor([f], item.gk, item), { label: f.label }));
     } else {
