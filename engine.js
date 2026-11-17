@@ -465,7 +465,7 @@
       const y = x / Math.sqrt(c);
       const r = ratApprox(y, maxQ);
       if (r && Math.abs(r[0]) < 1e7) cands.push({ p: r[0], q: r[1], c, b: 1, k: 0 });
-      if (Math.abs(y) > 1e6 || Math.abs(y) < 1e-4) {
+      if (Math.abs(y) > 1e6 || Math.abs(y) < 1e-2) {
         for (const b of [2, 5, 3]) {
           const k0 = Math.round(Math.log(Math.abs(y)) / Math.log(b));
           for (let kk = k0 - 4; kk <= k0 + 4; kk++) {
