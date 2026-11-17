@@ -102,8 +102,10 @@
       d: [T`Miara łukowa kąta to długość łuku okręgu o promieniu $1$. Cały okrąg ma długość $2\pi$ i odpowiada $360^\circ$.`, T`Stopnie → radiany: mnożymy przez $\frac{\pi}{180}$. Radiany → stopnie: wstawiamy $180^\circ$ w miejsce $\pi$.`] },
     trigdef: { f: T`Punkt na okręgu jednostkowym dla kąta $\alpha$ to $(\cos\alpha,\ \sin\alpha)$; $\ \operatorname{tg}\alpha=\dfrac{\sin\alpha}{\cos\alpha}$, $\ \operatorname{ctg}\alpha=\dfrac{\cos\alpha}{\sin\alpha}$`,
       d: [T`Kąt odkładamy od dodatniej półosi poziomej, przeciwnie do ruchu wskazówek zegara. Cosinus to współrzędna pozioma punktu, sinus — pionowa.`, T`Z Pitagorasa: $\sin^2\alpha+\cos^2\alpha=1$.`, T`Tangens nie istnieje, gdy $\cos\alpha=0$ (kąty $\frac\pi2,\frac{3\pi}2$); cotangens — gdy $\sin\alpha=0$ (kąty $0,\pi$).`] },
-    trigtable: { f: T`$\begin{array}{c|ccccc}\alpha&0&\frac\pi6&\frac\pi4&\frac\pi3&\frac\pi2\\[2pt]&0^\circ&30^\circ&45^\circ&60^\circ&90^\circ\\\hline\sin\alpha&0&\frac12&\frac{\sqrt2}2&\frac{\sqrt3}2&1\\[3pt]\cos\alpha&1&\frac{\sqrt3}2&\frac{\sqrt2}2&\frac12&0\\[3pt]\operatorname{tg}\alpha&0&\frac{\sqrt3}3&1&\sqrt3&-\\[3pt]\operatorname{ctg}\alpha&-&\sqrt3&1&\frac{\sqrt3}3&0\end{array}$`,
-      d: [T`$\frac\pi4$ ($45^\circ$): połowa kwadratu o boku $1$ — przekątna $\sqrt2$, więc $\sin=\cos=\frac{1}{\sqrt2}=\frac{\sqrt2}2$.`, T`$\frac\pi6$ i $\frac\pi3$ ($30^\circ$, $60^\circ$): połowa trójkąta równobocznego o boku $1$ — boki $\frac12$, $\frac{\sqrt3}2$, $1$.`, T`Łatwo zapamiętać: sinusy to $\frac{\sqrt0}2,\frac{\sqrt1}2,\frac{\sqrt2}2,\frac{\sqrt3}2,\frac{\sqrt4}2$, a cosinusy — w odwrotnej kolejności.`, T`Tangens to $\frac{\sin}{\cos}$, cotangens $\frac{\cos}{\sin}$. Np. $\operatorname{tg}\frac\pi6=\frac{1/2}{\sqrt3/2}=\frac1{\sqrt3}=\frac{\sqrt3}3$. Kreska oznacza, że wartość nie istnieje (dzielenie przez $0$).`, T`Dla kątów od $\frac\pi2$ do $\pi$ i dalej: bierzemy kąt odniesienia z tej tabelki i dobieramy znak według ćwiartki (np. $\sin\frac{5\pi}6=\sin\frac\pi6=\frac12$, $\cos\frac{5\pi}6=-\frac{\sqrt3}2$).`] },
+    trigtable: { f: T`$\begin{array}{c|ccccc}\alpha&0&\frac\pi6&\frac\pi4&\frac\pi3&\frac\pi2\\[2pt]&0^\circ&30^\circ&45^\circ&60^\circ&90^\circ\\\hline\sin\alpha&0&\frac12&\frac{\sqrt2}2&\frac{\sqrt3}2&1\\[3pt]\cos\alpha&1&\frac{\sqrt3}2&\frac{\sqrt2}2&\frac12&0\end{array}$`,
+      d: [T`$\frac\pi4$ ($45^\circ$): połowa kwadratu o boku $1$ — przekątna $\sqrt2$, więc $\sin=\cos=\frac{1}{\sqrt2}=\frac{\sqrt2}2$.`, T`$\frac\pi6$ i $\frac\pi3$ ($30^\circ$, $60^\circ$): połowa trójkąta równobocznego o boku $1$ — boki $\frac12$, $\frac{\sqrt3}2$, $1$.`, T`Łatwo zapamiętać: sinusy to $\frac{\sqrt0}2,\frac{\sqrt1}2,\frac{\sqrt2}2,\frac{\sqrt3}2,\frac{\sqrt4}2$, a cosinusy — w odwrotnej kolejności.`, T`Dla kątów od $\frac\pi2$ do $\pi$ i dalej: bierzemy kąt odniesienia z tej tabelki i dobieramy znak według ćwiartki (np. $\sin\frac{5\pi}6=\sin\frac\pi6=\frac12$, $\cos\frac{5\pi}6=-\frac{\sqrt3}2$).`] },
+    tgctg: { f: T`$\operatorname{tg}\alpha=\dfrac{\sin\alpha}{\cos\alpha}$, $\qquad\operatorname{ctg}\alpha=\dfrac{\cos\alpha}{\sin\alpha}=\dfrac{1}{\operatorname{tg}\alpha}$`,
+      d: [T`Tangensa i cotangensa nie trzeba pamiętać osobno — liczymy je z sinusa i cosinusa.`, T`Np. $\operatorname{tg}\frac\pi6=\frac{\sin\frac\pi6}{\cos\frac\pi6}=\frac{\frac12}{\frac{\sqrt3}2}=\frac{1}{\sqrt3}=\frac{\sqrt3}{3}$ (usuwamy niewymierność z mianownika, mnożąc przez $\frac{\sqrt3}{\sqrt3}$).`, T`Gdy w mianowniku wychodzi $0$, wartość nie istnieje: $\operatorname{tg}\frac\pi2$ (bo $\cos\frac\pi2=0$) i $\operatorname{ctg}0$ (bo $\sin0=0$).`, T`Znak: tangens i cotangens są dodatnie, gdy $\sin$ i $\cos$ mają ten sam znak (ćwiartki I i III), a ujemne, gdy różne (II i IV).`] },
     signs: { f: T`Znaki w ćwiartkach: I — wszystkie $+$; II — tylko $\sin$; III — tylko $\operatorname{tg}$ i $\operatorname{ctg}$; IV — tylko $\cos$. Wartość bezwzględną bierzemy z <b>kąta odniesienia</b>`,
       d: [T`Cosinus to współrzędna pozioma (dodatnia po prawej), sinus — pionowa (dodatnia u góry).`, T`Kąt odniesienia to kąt ostry między ramieniem a osią poziomą: w II ćwiartce $\pi-\alpha$, w III $\alpha-\pi$, w IV $2\pi-\alpha$.`, T`Np. $\frac{5\pi}6$: ćwiartka II, kąt odniesienia $\frac\pi6$, więc $\sin=+\frac12$, $\cos=-\frac{\sqrt3}2$.`] },
     period: { f: T`$\sin$ i $\cos$ nie zmieniają się po dodaniu $2\pi$: kąt można zmniejszać o pełne obroty`,
@@ -217,7 +219,7 @@
     const a = angleOfQ(it); if (!a) return null;
     const [p, q] = a, t = (((p / q) % 2) + 2) % 2, ids = [];
     if (q <= 2) ids.push('trigdef'); // kąty na osiach: odczyt z okręgu jednostkowego
-    ids.push('trigtable');
+    ids.push('trigtable', 'tgctg');
     if (q === 12 || q === 24) ids.push('sumsin', 'sumcos', 'a12');
     if (q === 8 || q === 16) ids.push('cos2', 'half');
     if (q > 2 && t > 0.5) ids.push('signs');
@@ -225,8 +227,8 @@
     if (p / q >= 2) ids.push('period');
     return ids;
   };
-  M['2.12'] = { fn: it => trigIds(it) || ['trigdef', 'trigtable', 'signs'] };
-  M['2.14'] = { fn: it => trigIds(it) || ['cos2', 'half', 'a12', 'signs'] };
+  M['2.12'] = { fn: it => trigIds(it) || ['trigdef', 'trigtable', 'tgctg', 'signs'] };
+  M['2.14'] = { fn: it => trigIds(it) || ['trigtable', 'tgctg', 'cos2', 'half', 'a12', 'signs'] };
   M['3.6'] = { fn: it => ['biq', 'quad', 'roots', ...angleIds(rootsOf(it))] };
   M['3.8'] = { fn: it => ['polar', 'conjpolar', 'polarmuldiv', ...angleIds(rootsOf(it))] };
   AQ.wzoryLib = F; AQ.wzoryMap = M;
