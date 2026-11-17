@@ -33,8 +33,8 @@
     if (gk === 'quot') {
       const d = Z.rnd(3), u = Z.rnd(3), v = Z.rnd(3); const sq = Math.random() < 0.35;
       let expr, w;
-      if (sq) { const N = Z.mul(Z.mul(d, d), u); expr = `${Z.pstr(...N)}/${Z.pstr(...d)}^2`; w = u; }
-      else { const du = Z.mul(d, u); expr = `(${Z.pstr(...du)}${Z.pstr(...v)})/${Z.pstr(...d)}`; w = Z.mul(u, v); }
+      if (sq) { const N = Z.mul(Z.mul(d, d), u); expr = `${Z.pstr(...N)}/(${Z.str(...d)})^2`; w = u; }
+      else { const du = Z.mul(d, u); expr = `(${Z.pstr(...du)}${Z.pstr(...v)})/(${Z.str(...d)})`; w = Z.mul(u, v); }
       const den = sq ? Z.mul(d, d) : d;
       return Object.assign(exprItem('', expr), { steps: [sq ? T`Mianownik: $${Z.ptex(...d)}^2=${Z.tex(...den)}$.` : prodSteps(Z.mul(d, u), v), T`Mnożymy licznik i mianownik przez sprzężenie mianownika $${Z.tex(den[0], -den[1])}$; w mianowniku dostajemy $|${Z.tex(...den)}|^2=${Z.n2(den)}$.`, T`Wynik: $${Z.tex(...w)}$.`] });
     }
@@ -51,7 +51,7 @@
     }
     // mixed
     const x = Z.rnd(3), d = Z.rnd(3), w = Z.rnd(3); const num = Z.mul(d, w);
-    const expr = `${Z.pstr(...x)}i+${Z.pstr(...num)}/${Z.pstr(...d)}`;
+    const expr = `${Z.pstr(...x)}i+(${Z.str(...num)})/(${Z.str(...d)})`;
     return Object.assign(exprItem('', expr), { steps: [T`$${Z.ptex(...x)}i=${Z.tex(-x[1], x[0])}$.`, T`$\frac{${Z.tex(...num)}}{${Z.tex(...d)}}=\frac{(${Z.tex(...num)})(${Z.tex(d[0], -d[1])})}{${Z.n2(d)}}=${Z.tex(...w)}$.`, T`Suma: $${nice(ev(expr))}$.`] });
   }
   const gzToArr = z => [Math.round(z.re), Math.round(z.im)];
@@ -202,7 +202,7 @@
         steps: [T`$z=x+iy$: $2iz=2ix-2y$, więc część urojona: $2x=${c[1]}$, $x=${c[1] / 2}$.`, T`Część rzeczywista: $\sqrt{x^2+y^2}=${c[0]}+2y$. Podnosimy do kwadratu i rozwiązujemy równanie kwadratowe na $y$.`, T`Odrzucamy rozwiązania z $${c[0]}+2y<0$ (pierwiastek jest nieujemny!). Wynik: $${sols.map(nice).join(';\\ ')}$.`] };
     }
     if (gk === 'sq') {
-      const r = Z.rnd(4); const w = Z.mul(r, r);
+      let r; do { r = Z.rnd(4); } while (!r[0] || Math.abs(r[0]) === Math.abs(r[1])); const w = Z.mul(r, r);
       return { q: T`Rozwiąż w $\mathbb C$: $\;z^2=${Z.tex(...w)}$`, fields: [{ label: 'z', kind: 'set', ans: [Z.str(...r), Z.str(-r[0], -r[1])], restrict: ['alg'] }], keys: [';'],
         steps: [sqrtSteps(w, r), T`Rozwiązania: $z=${Z.tex(...r)}$ oraz $z=${Z.tex(-r[0], -r[1])}$.`] };
     }
@@ -210,7 +210,7 @@
       const s1 = Z.rnd(2), s2 = R.pick([[1, 0], [0, 1], [2, 0], [1, 1], [0, 2]]);
       const w1 = Z.mul(s1, s1), w2 = Z.mul(s2, s2); const B = Z.add(w1, w2), Cc = Z.mul(w1, w2);
       if (A.close(gz(w1), gz(w2))) return gen26('biq');
-      const tex = T`z^4-${Z.ptex(...B)}z^2+${Z.ptex(...Cc)}=0`.replace('-(-', '+(').replace(/\+\(-/g, '-(').replace(/\+-/g, '-').replace(/--/g, '+');
+      const tex = T`z^4-${Z.ptex(...B)}z^2+${Z.ptex(...Cc)}=0`.replace('-(-', '+(').replace(/\+\(-/g, '-(').replace(/\+-/g, '-').replace(/--/g, '+').replace(/\(([0-9]+)\)/g, '$1').replace(/-0z\^2/, '').replace(/\+0=/, '=');
       return { q: T`Rozwiąż w $\mathbb C$: $$${tex}$$`, fields: [{ label: 'z', kind: 'set', ans: [Z.str(...s1), Z.str(-s1[0], -s1[1]), Z.str(...s2), Z.str(-s2[0], -s2[1])], restrict: ['alg'] }], keys: [';'],
         steps: [T`Podstawiamy $w=z^2$: $w^2-${Z.ptex(...B)}w+${Z.ptex(...Cc)}=0$, skąd $w_1=${Z.tex(...w1)}$, $w_2=${Z.tex(...w2)}$.`, T`$z^2=${Z.tex(...w1)}\Rightarrow z=\pm(${Z.tex(...s1)})$; $z^2=${Z.tex(...w2)}\Rightarrow z=\pm(${Z.tex(...s2)})$.`] };
     }
@@ -287,9 +287,9 @@
     T`$(a+bi)(c+di)=(ac-bd)+(ad+bc)i$, więc $mn=(ac-bd)^2+(ad+bc)^2$ — suma kwadratów liczb całkowitych. $\blacksquare$`], extra: [T`$mn=(a^2+c^2)(b^2+d^2)$.`] };
   function gen210() {
     const a = R.nz(-4, 4), b = R.nz(-4, 4);
-    return { q: T`Jedną z wartości $\sqrt z$ jest $${Z.tex(a, b)}$. Podaj drugą wartość $\sqrt z$ oraz jedną z wartości $\sqrt{\overline z}$ i $\sqrt{-z}$.`,
-      fields: [{ label: T`\text{druga }\sqrt z`, ans: Z.str(-a, -b), restrict: ['alg'] }, { label: T`\sqrt{\overline z}`, kind: 'pm', ans: Z.str(a, -b), restrict: ['alg'] }, { label: T`\sqrt{-z}`, kind: 'pm', ans: Z.str(-b, a), restrict: ['alg'] }],
-      steps: [T`Jeśli $w^2=z$, to także $(-w)^2=z$: druga wartość to $${Z.tex(-a, -b)}$.`, T`$\overline{w}^2=\overline{w^2}=\overline z$, więc $\sqrt{\overline z}=\pm(${Z.tex(a, -b)})$.`, T`$(iw)^2=-w^2=-z$, więc $\sqrt{-z}=\pm i(${Z.tex(a, b)})=\pm(${Z.tex(-b, a)})$.`] };
+    return { q: T`Jedną z wartości $\sqrt z$ jest $${Z.tex(a, b)}$. Podaj drugą wartość $\sqrt z$ oraz po jednej wartości $\sqrt{\overline z}$, $\sqrt{-z}$ i $\sqrt{-\overline z}$.`,
+      fields: [{ label: T`\text{druga }\sqrt z`, ans: Z.str(-a, -b), restrict: ['alg'] }, { label: T`\sqrt{\overline z}`, kind: 'pm', ans: Z.str(a, -b), restrict: ['alg'] }, { label: T`\sqrt{-z}`, kind: 'pm', ans: Z.str(-b, a), restrict: ['alg'] }, { label: T`\sqrt{-\overline z}`, kind: 'pm', ans: Z.str(b, a), restrict: ['alg'] }],
+      steps: [T`Jeśli $w^2=z$, to także $(-w)^2=z$: druga wartość to $${Z.tex(-a, -b)}$.`, T`$\overline{w}^2=\overline{w^2}=\overline z$, więc $\sqrt{\overline z}=\pm(${Z.tex(a, -b)})$.`, T`$(iw)^2=-w^2=-z$, więc $\sqrt{-z}=\pm i(${Z.tex(a, b)})=\pm(${Z.tex(-b, a)})$.`, T`$(i\overline w)^2=-\overline w^{\,2}=-\overline z$, więc $\sqrt{-\overline z}=\pm i(${Z.tex(a, -b)})=\pm(${Z.tex(b, a)})$.`] };
   }
 
   /* ---------- trygonometria ---------- */
@@ -540,4 +540,140 @@
       },
     ],
   });
+
+  /* ---------- podobne przykłady dopasowane do rodzaju podpunktu (Lista 2) ---------- */
+  {
+    const L2x = A.lists.find(l => l.id === 'l2'); const TK = id => L2x.tasks.find(t => t.id === id);
+    const fx = t => t.replace(/\+ -/g, '- ').replace(/- -/g, '+ ');
+
+    // 2.3 — podpunkt 3.3: długie ułamki ze sprzężeniami
+    const t23 = TK('2.3'), g23 = t23.gen;
+    function genBig() {
+      for (let tries = 0; tries < 400; tries++) {
+        const S0 = Z.rnd(2), h = Z.rnd(2); if (Z.n2(S0) < 2) continue;
+        const k = Z.rnd(2), q = Z.rnd(3), R0 = Z.rnd(2, false);
+        if (Z.n2(R0) < 2 || Z.n2(q) < 2) continue;
+        const Av = Z.mul(k, Z.conj(q)); const Bv = Z.sub(S0, Av); if (!Bv[0] && !Bv[1]) continue;
+        // B = m * conj(t): szukamy dzielnika t (|t|^2 >= 2) liczby B
+        let t = null, m = null;
+        for (const cand of R.shuffle([[1, 1], [1, -1], [2, 1], [1, 2], [2, -1], [1, -2], [0, 2], [2, 0], [3, 1], [1, 3]])) {
+          const ct = Z.conj(cand), n2 = Z.n2(ct), num = Z.mul(Bv, Z.conj(ct));
+          if (num[0] % n2 === 0 && num[1] % n2 === 0) { t = cand; m = [num[0] / n2, num[1] / n2]; break; }
+        }
+        if (!t || (!m[0] && !m[1])) continue;
+        const U = Z.rnd(2, false); if (Z.n2(U) < 2) continue;
+        const P = Z.mul(k, R0), Sn = Z.mul(m, Z.mul(U, U));
+        const X = Z.rnd(2, false); if (Z.n2(X) < 2) continue;
+        const V = Z.mul(h, X), W = S0, c1 = Z.mul(h, S0), Cr = Z.mul(c1, c1), z0 = Z.mul(S0, Z.mul(h, h));
+        if (Math.abs(z0[0]) > 30 || Math.abs(z0[1]) > 30 || Math.abs(P[0]) > 20 || Math.abs(Sn[0]) > 40 || Math.abs(Sn[1]) > 40) continue;
+        const pt = z => Z.ptex(...z), tx = z => Z.tex(...z);
+        const tex = T`\begin{aligned}&\frac{${pt(P)}\overline{${pt(q)}}z}{${tx(R0)}}+\frac{${pt(Sn)}\overline{${pt(t)}}z}{${pt(U)}^2}\\&\qquad=\left(\frac{${pt(V)}${pt(W)}}{${tx(X)}}\right)^2\end{aligned}`;
+        return { gk: 'big', q: T`Wyznacz wszystkie $z\in\mathbb C$: $$${tex}$$`, fields: [{ label: 'z', ans: Z.str(...z0), restrict: ['alg'] }],
+          steps: [
+            T`Upraszczamy pierwszy współczynnik: $\overline{${pt(q)}}=${tx(Z.conj(q))}$, a $${pt(P)}=${pt(k)}\cdot${pt(R0)}$, więc $\frac{${pt(P)}\overline{${pt(q)}}}{${tx(R0)}}=${pt(k)}${pt(Z.conj(q))}=${tx(Av)}$.`,
+            T`Drugi: $${pt(U)}^2=${tx(Z.mul(U, U))}$ i $${pt(Sn)}=${pt(m)}\cdot${pt(Z.mul(U, U))}$, więc $\frac{${pt(Sn)}\overline{${pt(t)}}}{${pt(U)}^2}=${pt(m)}${pt(Z.conj(t))}=${tx(Bv)}$.`,
+            T`Prawa strona: $${pt(V)}=${pt(h)}\cdot${pt(X)}$, więc $\frac{${pt(V)}${pt(W)}}{${tx(X)}}=${pt(h)}${pt(W)}=${tx(c1)}$ i do kwadratu: $${tx(Cr)}$.`,
+            T`Równanie: $\left(\left(${tx(Av)}\right)+\left(${tx(Bv)}\right)\right)z=${tx(Cr)}$, czyli $${pt(S0)}z=${tx(Cr)}$.`,
+            T`$z=\frac{${tx(Cr)}}{${tx(S0)}}=${tx(z0)}$ (dzielimy, mnożąc przez sprzężenie mianownika).`,
+          ] };
+      }
+      return g23('lin');
+    }
+    t23.gen = gk => (gk === 'big' ? genBig() : g23(gk));
+    t23.items.forEach(it => { if (it.label === '3.3') it.gk = 'big'; });
+
+    // 2.4 — współczynniki jako iloczyny/kwadraty (4.3–4.4) i ułamki (4.5)
+    const t24 = TK('2.4'), g24 = t24.gen;
+    function genPairX(gk) {
+      for (let tries = 0; tries < 400; tries++) {
+        const x = R.nz(-4, 4), y = R.nz(-4, 4);
+        let Ps, Qs, Ptex, Qtex;
+        if (gk === 'pairP') {
+          const a = Z.rnd(3, false), b = Z.rnd(3), c = Z.rnd(2, false), k = R.pick([1, 1, 2, 3]);
+          Ps = `${k === 1 ? '' : k}(${Z.str(...a)})(${Z.str(...b)})`; Qs = `(${Z.str(...c)})^2`;
+          Ptex = T`${k === 1 ? '' : k}${Z.ptex(...a)}${Z.ptex(...b)}`; Qtex = T`${Z.ptex(...c)}^2`;
+          if (Math.random() < 0.5) { [Ps, Qs] = [Qs, Ps]; [Ptex, Qtex] = [Qtex, Ptex]; }
+        } else {
+          const P0 = Z.rnd(2), d = Z.rnd(3, false), Q1 = Z.rnd(2), e = Z.rnd(3, false);
+          if (Z.n2(d) < 2 || Z.n2(e) < 2) continue;
+          const Pn = Z.mul(P0, d), Qn = Z.mul(Q1, e);
+          Ps = `(${Z.str(...Pn)})/(${Z.str(...d)})`; Qs = `((${Z.str(...Qn)})/(${Z.str(...e)}))^2`;
+          Ptex = T`\left(\frac{${Z.tex(...Pn)}}{${Z.tex(...d)}}\right)`; Qtex = T`\left(\frac{${Z.tex(...Qn)}}{${Z.tex(...e)}}\right)^2`;
+        }
+        const P = ev(Ps), Q = ev(Qs);
+        if (Math.abs(P.re * Q.im - Q.re * P.im) < 1e-9) continue;
+        const S = Cx.add(Cx.mul(P, Cx.C(x)), Cx.mul(Q, Cx.C(y)));
+        if (Math.abs(S.re - Math.round(S.re)) > 1e-9 || Math.abs(S.im - Math.round(S.im)) > 1e-9) continue;
+        const Ss = Z.str(Math.round(S.re), Math.round(S.im));
+        const it = pairItem('', Ps, Qs, Ss, T`${Ptex}x+${Qtex}y=${Z.tex(Math.round(S.re), Math.round(S.im))}`);
+        it.gk = gk; it.q = it.q.replace('Wyznacz wszystkie pary', 'Wyznacz wszystkie pary');
+        const pre = [...A.autoSol(Ps).slice(0, -1), ...A.autoSol(Qs).slice(0, -1)];
+        it.steps = [...(pre.length ? [T`Najpierw obliczamy współczynniki:`, ...pre] : []), ...it.sol];
+        return it;
+      }
+      return g24();
+    }
+    t24.gen = gk => (gk === 'pairP' || gk === 'pairF' ? genPairX(gk) : g24(gk));
+    t24.items.forEach(it => { if (it.label === '4.3' || it.label === '4.4') it.gk = 'pairP'; if (it.label === '4.5') it.gk = 'pairF'; });
+
+    // 2.11 — kierunek zamiany taki jak w podpunkcie
+    const t211 = TK('2.11'), g211 = t211.gen;
+    t211.gen = gk => { for (let k = 0; k < 60; k++) { const it = g211(); const deg = /stopniach/.test(it.q); if (!gk || (gk === 'todeg') === deg) { it.gk = gk; return it; } } return g211(); };
+    t211.items.forEach(it => { it.gk = it.label === '11.1' ? 'todeg' : 'torad'; });
+
+    // 2.13 — osobno: sinus, cosinus, tangens sumy/różnicy, kąt podwojony, połowa kąta
+    const t213 = TK('2.13'), g213 = t213.gen;
+    const PAIRS = [[1, 3, 1, 4], [1, 4, 1, 6], [1, 2, 1, 6], [2, 3, 1, 4], [3, 4, 1, 6], [1, 3, 1, 6], [1, 2, 1, 4], [3, 4, 1, 3]];
+    const AT = (p, q) => A.angleTex(p, q), nr = x => A.niceReal(Math.abs(x) < 1e-12 ? 0 : x);
+    const par = t => (/^-|[+-]/.test(t) ? '\\left(' + t + '\\right)' : t);
+    function genTrigSum(gk) {
+      for (let tries = 0; tries < 200; tries++) {
+        const [p1, q1, p2, q2] = R.pick(PAIRS), sg = R.pick([1, -1]);
+        const a = p1 * Math.PI / q1, b = p2 * Math.PI / q2, t = a + sg * b;
+        if (t <= 1e-9) continue;
+        const r = A.ratApprox(t / Math.PI, 48); if (!r || r[1] !== 12) continue;
+        const tt = AT(r[0], r[1]), At = AT(p1, q1), Bt = AT(p2, q2), op = sg > 0 ? '+' : '-', opm = sg > 0 ? '-' : '+';
+        const sA = nr(Math.sin(a)), cA = nr(Math.cos(a)), sB = nr(Math.sin(b)), cB = nr(Math.cos(b));
+        let v, fn, formula, subst;
+        if (gk === 'sin') { v = Math.sin(t); fn = '\\sin'; formula = T`\sin(\alpha${op}\beta)=\sin\alpha\cos\beta${op}\cos\alpha\sin\beta`; subst = T`${par(sA)}\cdot${par(cB)}${op}${par(cA)}\cdot${par(sB)}`; }
+        else if (gk === 'cos') { v = Math.cos(t); fn = '\\cos'; formula = T`\cos(\alpha${op}\beta)=\cos\alpha\cos\beta${opm}\sin\alpha\sin\beta`; subst = T`${par(cA)}\cdot${par(cB)}${opm}${par(sA)}\cdot${par(sB)}`; }
+        else {
+          if (Math.abs(Math.cos(a)) < 1e-9 || Math.abs(Math.cos(b)) < 1e-9 || Math.abs(Math.cos(t)) < 1e-9) continue;
+          v = Math.tan(t); fn = '\\operatorname{tg}'; const tA = nr(Math.tan(a)), tB = nr(Math.tan(b));
+          formula = T`\operatorname{tg}(\alpha${op}\beta)=\frac{\operatorname{tg}\alpha${op}\operatorname{tg}\beta}{1${opm}\operatorname{tg}\alpha\operatorname{tg}\beta}`;
+          subst = T`\frac{${tA}${op}${par(tB)}}{1${opm}${par(tA)}\cdot${par(tB)}}`;
+        }
+        if (/\d\.\d/.test(nr(v))) continue;
+        return { gk, q: T`Korzystając ze wzoru na ${gk === 'tg' ? 'tangens' : gk === 'sin' ? 'sinus' : 'cosinus'} ${sg > 0 ? 'sumy' : 'różnicy'}, oblicz $${fn}${tt}$, zapisując $${tt}=${At}${op}${Bt}$.`,
+          fields: [{ label: T`${fn}${tt}`, ans: Cx.C(v), restrict: ['notrig'] }],
+          steps: [T`Wzór: $${formula}$.`, T`Wartości z tabelki: $\sin${At}=${sA}$, $\cos${At}=${cA}$, $\sin${Bt}=${sB}$, $\cos${Bt}=${cB}$${gk === 'tg' ? T`, a $\operatorname{tg}=\frac{\sin}{\cos}$: $\operatorname{tg}${At}=${nr(Math.tan(a))}$, $\operatorname{tg}${Bt}=${nr(Math.tan(b))}$` : ''}.`,
+            T`Podstawiamy: $$${fn}${tt}=${subst}=${nr(v)}$$${gk === 'tg' ? ' (na końcu usuwamy niewymierność z mianownika).' : ''}`] };
+      }
+      return g213();
+    }
+    const TRI = [[3, 4, 5], [4, 3, 5], [5, 12, 13], [12, 5, 13], [8, 15, 17], [15, 8, 17]];
+    const fr = (p, q) => { const g = A.gcd(Math.abs(p), Math.abs(q)) || 1; const s = q < 0 ? -1 : 1; return [s * p / g, s * q / g]; };
+    const ft = ([p, q]) => A.fracTex(p, q), fs = ([p, q]) => (q === 1 ? String(p) : p + '/' + q);
+    function genDbl() {
+      const [a, b, c] = R.pick(TRI), Q2 = Math.random() < 0.5; // sin = b/c, cos = ±a/c
+      const ca = Q2 ? -a : a, s2 = fr(2 * b * ca, c * c), c2 = fr(ca * ca - b * b, c * c), t2 = fr(2 * b * ca, ca * ca - b * b);
+      return { gk: 'dbl', q: T`Wiadomo, że $\sin\alpha=${A.fracTex(b, c)}$ i $\alpha\in${Q2 ? T`\left(\frac\pi2,\pi\right)` : T`\left(0,\frac\pi2\right)`}$. Oblicz $\sin2\alpha$, $\cos2\alpha$ i $\operatorname{tg}2\alpha$.`,
+        fields: [{ label: T`\sin2\alpha`, ans: fs(s2), restrict: ['notrig'] }, { label: T`\cos2\alpha`, ans: fs(c2), restrict: ['notrig'] }, { label: T`\operatorname{tg}2\alpha`, ans: fs(t2), restrict: ['notrig'] }],
+        steps: [T`Z jedynki trygonometrycznej: $\cos^2\alpha=1-\sin^2\alpha=1-\frac{${b * b}}{${c * c}}=\frac{${a * a}}{${c * c}}$, więc $\cos\alpha=\pm${A.fracTex(a, c)}$. W ${Q2 ? 'II' : 'I'} ćwiartce cosinus jest ${Q2 ? 'ujemny' : 'dodatni'}: $\cos\alpha=${A.fracTex(ca, c)}$.`,
+          T`$\sin2\alpha=2\sin\alpha\cos\alpha=2\cdot${A.fracTex(b, c)}\cdot${par(A.fracTex(ca, c))}=${ft(s2)}$.`,
+          T`$\cos2\alpha=\cos^2\alpha-\sin^2\alpha=\frac{${a * a}}{${c * c}}-\frac{${b * b}}{${c * c}}=${ft(c2)}$.`,
+          T`$\operatorname{tg}2\alpha=\frac{\sin2\alpha}{\cos2\alpha}=${ft(t2)}$.`] };
+    }
+    function genHalf() {
+      const [a, b, c] = R.pick(TRI), neg = Math.random() < 0.5, ca = neg ? -a : a; // cos α = ca/c, α ∈ (0, π), sin α = b/c
+      const C2 = fr(c + ca, 2 * c), S2 = fr(c - ca, 2 * c), Th = fr(b, c + ca);
+      return { gk: 'half', q: T`Wiadomo, że $\cos\alpha=${A.fracTex(ca, c)}$ i $\alpha\in(0,\pi)$. Oblicz $\cos^2\frac\alpha2$, $\sin^2\frac\alpha2$ i $\operatorname{tg}\frac\alpha2$.`,
+        fields: [{ label: T`\cos^2\frac\alpha2`, ans: fs(C2), restrict: ['notrig'] }, { label: T`\sin^2\frac\alpha2`, ans: fs(S2), restrict: ['notrig'] }, { label: T`\operatorname{tg}\frac\alpha2`, ans: fs(Th), restrict: ['notrig'] }],
+        steps: [T`Ze wzoru $\cos\alpha=2\cos^2\frac\alpha2-1$: $\cos^2\frac\alpha2=\frac{1+\cos\alpha}{2}=\frac{1${ca < 0 ? '-' : '+'}${A.fracTex(Math.abs(ca), c)}}{2}=${ft(C2)}$.`,
+          T`Ze wzoru $\cos\alpha=1-2\sin^2\frac\alpha2$: $\sin^2\frac\alpha2=\frac{1-\cos\alpha}{2}=\frac{1${ca < 0 ? '+' : '-'}${A.fracTex(Math.abs(ca), c)}}{2}=${ft(S2)}$.`,
+          T`$\sin\alpha=\sqrt{1-\cos^2\alpha}=${A.fracTex(b, c)}$ (dodatni, bo $\alpha\in(0,\pi)$). $\operatorname{tg}\frac\alpha2=\frac{\sin\alpha}{1+\cos\alpha}=\frac{${A.fracTex(b, c)}}{${ft(fr(c + ca, c))}}=${ft(Th)}$ (bo $\frac{\sin\alpha}{1+\cos\alpha}=\frac{2\sin\frac\alpha2\cos\frac\alpha2}{2\cos^2\frac\alpha2}$).`] };
+    }
+    t213.gen = gk => (gk === 'sin' || gk === 'cos' || gk === 'tg' ? genTrigSum(gk) : gk === 'dbl' ? genDbl() : gk === 'half' ? genHalf() : g213());
+    t213.items.forEach(it => { it.gk = { sin: 'sin', cos: 'cos', tg: 'tg', '2α': 'dbl', 'α/2': 'half' }[it.label] || it.gk; });
+  }
 })();
