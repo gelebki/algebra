@@ -263,18 +263,34 @@
   function gen17() { const o = R.pick(OPS6X.filter(o => o.inv && o.inv !== 'all')); const it = item7(o); it.steps = [T`Najpierw element neutralny: $e=${o.e}$.`, T`Szukamy $y$ z $x\circ y=e$ i sprawdzamy, kiedy $y\in X$.`, o.why]; return it; }
 
   /* ---------------- 1.8 ---------------- */
+  // tabelka działania w Z_p: wiersz r; kolumny z ks to pola do uzupełnienia
+  const HL = x => (x === '?' ? T`\boxed{\,?\,}` : T`\boxed{\mathbf{${x}}}`);
+  function rowCols(p, ks) { return p <= 7 ? [...Array(p)].map((_, k) => k) : ks; }
+  function rowTable(p, r, ks, mul, show) {
+    const cols = rowCols(p, ks), op = mul ? T`\cdot` : '+';
+    const cell = k => { const v = mul ? (r * k) % p : (r + k) % p; return ks.includes(k) ? (show ? HL(v) : HL('?')) : String(v); };
+    return T`$$\begin{array}{c|${'c'.repeat(cols.length)}}${op}&${cols.join('&')}\\\hline ${r}&${cols.map(cell).join('&')}\end{array}$$`;
+  }
+  function rowQ(p, r, ks, mul, lead) {
+    return lead + (p <= 7 ? ' Uzupełnij pola ze znakiem zapytania:' : ' Uzupełnij wybrane kolumny:') + rowTable(p, r, ks, mul, false);
+  }
   function rowSol(p, r, ks, mul) {
-    return [T`W $\mathbb{Z}_{${p}}$ liczymy jak zwykle, a potem bierzemy resztę z dzielenia przez $${p}$.`,
-      ...ks.map(k => { const v = mul ? r * k : r + k; return v < p ? T`$${r}${mul ? '\\cdot' : '+'}${k}=${v}$ (mniej niż $${p}$, zostaje bez zmian)` : T`$${r}${mul ? '\\cdot' : '+'}${k}=${v}=${Math.floor(v / p)}\cdot${p}+${v % p}$, więc wynik to $${v % p}$`; })];
+    const cols = rowCols(p, ks), op = mul ? T`\cdot` : '+';
+    const raw = k => (mul ? r * k : r + k);
+    const ex = ks.find(k => raw(k) >= p);
+    return [
+      T`W $\mathbb{Z}_{${p}}$ liczymy zwykły wynik, a potem bierzemy resztę z dzielenia przez $${p}$ (odejmujemy $${p}$ tyle razy, aż wynik będzie mniejszy niż $${p}$). W tabelce poniżej górny wiersz to zwykły wynik $${r}${mul ? '\\cdot' : '+'} k$, a dolny — reszta z dzielenia przez $${p}$.`,
+      T`$$\begin{array}{r|${'c'.repeat(cols.length)}}k&${cols.join('&')}\\\hline ${r}${op} k&${cols.map(k => String(raw(k))).join('&')}\\ \text{reszta}&${cols.map(k => (ks.includes(k) ? HL(raw(k) % p) : String(raw(k) % p))).join('&')}\end{array}$$`,
+      ex != null ? T`Np. $${r}${op}${ex}=${raw(ex)}=${Math.floor(raw(ex) / p)}\cdot${p}+${raw(ex) % p}$, więc w $\mathbb{Z}_{${p}}$ wychodzi $${raw(ex) % p}$.` : T`Wszystkie wyniki są mniejsze niż $${p}$, więc zostają bez zmian.`,
+      T`<b>Wiersz $${r}$ w tabelce:</b>` + rowTable(p, r, ks, mul, true),
+    ];
   }
   function gen18(gk) {
     const p = R.pick([5, 7, 11, 13]);
     if (gk === 'row') {
       const mulOp = Math.random() < 0.7; const r = R.int(2, p - 1);
       const ks = R.shuffle([...Array(p - 1)].map((_, i) => i + 1)).slice(0, Math.min(5, p - 1)).sort((a, b) => a - b);
-      return { q: T`Uzupełnij fragment tabelki ${mulOp ? 'mnożenia' : 'dodawania'} w $\mathbb{Z}_{${p}}$ (wiersz $${r}$).`,
-        fields: ks.map(k => ({ label: T`${r}${mulOp ? '\\cdot' : '+'}${k}`, kind: 'mod', mod: p, ans: String(mulOp ? (r * k) % p : (r + k) % p) })),
-        steps: [T`W $\mathbb{Z}_{${p}}$ liczymy zwykły wynik, a potem bierzemy resztę z dzielenia przez $${p}$.`, ...ks.slice(0, 2).map(k => { const v = mulOp ? r * k : r + k; return T`$${r}${mulOp ? '\\cdot' : '+'}${k}=${v}=${Math.floor(v / p)}\cdot${p}+${v % p}\equiv ${v % p}$`; })] };
+      return { q: rowQ(p, r, ks, mulOp, T`Tabelka ${mulOp ? 'mnożenia' : 'dodawania'} w $\mathbb{Z}_{${p}}$ — wiersz $${r}$.`), fields: ks.map(k => ({ label: T`${r}${mulOp ? '\\cdot' : '+'}${k}`, kind: 'mod', mod: p, ans: String(mulOp ? (r * k) % p : (r + k) % p) })), steps: rowSol(p, r, ks, mulOp) };
     }
     if (gk === 'inv') {
       const a = R.int(2, p - 1); const x = invMod(a, p);
@@ -407,11 +423,11 @@
         wzory: [T`$\mathbb Z_p=\{0,1,\ldots,p-1\}$, działania modulo $p$: wynik to reszta z dzielenia przez $p$.`, T`$-a\equiv p-a$.`, T`$a^{-1}$: taki $x$, że $ax\equiv1\pmod p$. Szukaj wśród $1,\ldots,p-1$ albo algorytmem Euklidesa.`, T`Małe tw. Fermata: $a^{p-1}\equiv1\pmod p$ dla $a\not\equiv0$, więc $a^k=a^{k\bmod(p-1)}$.`, T`$a^{-2}=(a^2)^{-1}=(a^{-1})^2$.`],
         gen: gen18,
         items: [
-          { label: '8.1a', gk: 'row', q: T`Tabelka dodawania w $\mathbb Z_5$ — wiersz $3$.`, fields: [0, 1, 2, 3, 4].map(k => ({ label: '3+' + k, kind: 'mod', mod: 5, ans: String((3 + k) % 5) })), sol: rowSol(5, 3, [0, 1, 2, 3, 4], false) },
-          { label: '8.1b', gk: 'row', q: T`Tabelka mnożenia w $\mathbb Z_5$ — wiersz $3$.`, fields: [1, 2, 3, 4].map(k => ({ label: T`3\cdot${k}`, kind: 'mod', mod: 5, ans: String((3 * k) % 5) })), sol: rowSol(5, 3, [1, 2, 3, 4], true) },
-          { label: '8.1c', gk: 'row', q: T`Tabelka mnożenia w $\mathbb Z_7$ — wiersz $5$.`, fields: [1, 2, 3, 4, 5, 6].map(k => ({ label: T`5\cdot${k}`, kind: 'mod', mod: 7, ans: String((5 * k) % 7) })), sol: rowSol(7, 5, [1, 2, 3, 4, 5, 6], true) },
-          { label: '8.1d', gk: 'row', q: T`Tabelka mnożenia w $\mathbb Z_{11}$ — wiersz $4$ (wybrane kolumny).`, fields: [3, 5, 7, 9, 10].map(k => ({ label: T`4\cdot${k}`, kind: 'mod', mod: 11, ans: String((4 * k) % 11) })), sol: rowSol(11, 4, [3, 5, 7, 9, 10], true) },
-          { label: '8.1e', gk: 'row', q: T`Tabelka mnożenia w $\mathbb Z_{13}$ — wiersz $6$ (wybrane kolumny).`, fields: [2, 5, 8, 11, 12].map(k => ({ label: T`6\cdot${k}`, kind: 'mod', mod: 13, ans: String((6 * k) % 13) })), sol: rowSol(13, 6, [2, 5, 8, 11, 12], true) },
+          { label: '8.1a', gk: 'row', q: rowQ(5, 3, [0, 1, 2, 3, 4], false, T`Tabelka dodawania w $\mathbb Z_5$ — wiersz $3$.`), fields: [0, 1, 2, 3, 4].map(k => ({ label: '3+' + k, kind: 'mod', mod: 5, ans: String((3 + k) % 5) })), sol: rowSol(5, 3, [0, 1, 2, 3, 4], false) },
+          { label: '8.1b', gk: 'row', q: rowQ(5, 3, [1, 2, 3, 4], true, T`Tabelka mnożenia w $\mathbb Z_5$ — wiersz $3$.`), fields: [1, 2, 3, 4].map(k => ({ label: T`3\cdot${k}`, kind: 'mod', mod: 5, ans: String((3 * k) % 5) })), sol: rowSol(5, 3, [1, 2, 3, 4], true) },
+          { label: '8.1c', gk: 'row', q: rowQ(7, 5, [1, 2, 3, 4, 5, 6], true, T`Tabelka mnożenia w $\mathbb Z_7$ — wiersz $5$.`), fields: [1, 2, 3, 4, 5, 6].map(k => ({ label: T`5\cdot${k}`, kind: 'mod', mod: 7, ans: String((5 * k) % 7) })), sol: rowSol(7, 5, [1, 2, 3, 4, 5, 6], true) },
+          { label: '8.1d', gk: 'row', q: rowQ(11, 4, [3, 5, 7, 9, 10], true, T`Tabelka mnożenia w $\mathbb Z_{11}$ — wiersz $4$.`), fields: [3, 5, 7, 9, 10].map(k => ({ label: T`4\cdot${k}`, kind: 'mod', mod: 11, ans: String((4 * k) % 11) })), sol: rowSol(11, 4, [3, 5, 7, 9, 10], true) },
+          { label: '8.1e', gk: 'row', q: rowQ(13, 6, [2, 5, 8, 11, 12], true, T`Tabelka mnożenia w $\mathbb Z_{13}$ — wiersz $6$.`), fields: [2, 5, 8, 11, 12].map(k => ({ label: T`6\cdot${k}`, kind: 'mod', mod: 13, ans: String((6 * k) % 13) })), sol: rowSol(13, 6, [2, 5, 8, 11, 12], true) },
           { label: '8.2', gk: 'ops', q: T`Oblicz $3+4$, $3\cdot4$, $3-4$, $3\cdot2^{-2}$ w ciele $\mathbb Z_5$.`, fields: [['3+4', 2], [T`3\cdot4`, 2], ['3-4', 4], [T`3\cdot2^{-2}`, 2]].map(([l, v]) => ({ label: l, kind: 'mod', mod: 5, ans: String(v) })), sol: [T`$2^2=4$, $4^{-1}=4$ (bo $16\equiv1$), więc $3\cdot2^{-2}=12\equiv2$.`] },
           { label: '8.3', gk: 'inv', q: T`Wyznacz $3^{-1}$ kolejno w ciałach $\mathbb Z_5,\mathbb Z_7,\mathbb Z_{11},\mathbb Z_{13}$.`, fields: [[5, 2], [7, 5], [11, 4], [13, 9]].map(([p, v]) => ({ label: T`\mathbb Z_{${p}}`, kind: 'mod', mod: p, ans: String(v) })), sol: [T`$3\cdot2=6\equiv1\ (5)$, $3\cdot5=15\equiv1\ (7)$, $3\cdot4=12\equiv1\ (11)$, $3\cdot9=27\equiv1\ (13)$.`] },
           { label: '8.4', gk: 'expr', q: T`Oblicz $4^{12}\cdot(5^2-6)\cdot(2\cdot(-3))^{-1}$ w ciele $\mathbb Z_{11}$.`, fields: [{ label: 'wynik', kind: 'mod', mod: 11, ans: '8' }], sol: [T`$4^{10}\equiv1$, więc $4^{12}\equiv16\equiv5$; $5^2-6=19\equiv8$; $2\cdot(-3)=-6\equiv5$, $5^{-1}=9$.`, T`$5\cdot8\cdot9=360\equiv8$.`] },
