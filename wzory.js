@@ -229,8 +229,8 @@
   };
   M['2.12'] = { fn: it => trigIds(it) || ['trigdef', 'trigtable', 'tgctg', 'signs'] };
   M['2.14'] = { fn: it => trigIds(it) || ['trigtable', 'tgctg', 'cos2', 'half', 'a12', 'signs'] };
-  M['3.6'] = { fn: it => ['biq', 'quad', 'roots', ...angleIds(rootsOf(it))] };
-  M['3.8'] = { fn: it => ['polar', 'conjpolar', 'polarmuldiv', ...angleIds(rootsOf(it))] };
+  M['3.6'] = { fn: it => (it && it.gk === 'lin3' ? ['polar', 'demoivre', 'polarmuldiv', 'roots'] : ['biq', 'quad', 'roots']).concat(angleIds(rootsOf(it))) };
+  M['3.8'] = { fn: it => ['polar', 'conjpolar', ...(it && it.gk === 'eqc' ? ['demoivre', 'polarmuldiv'] : []), ...angleIds(rootsOf(it))] };
   AQ.wzoryLib = F; AQ.wzoryMap = M;
   AQ.wzoryFor = function (task, item, gk, cur) {
     const m = M[task.id] || {};
