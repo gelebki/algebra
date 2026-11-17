@@ -38,9 +38,15 @@
     const sgn = x => (x > 1e-12 ? 'dodatni' : x < -1e-12 ? 'ujemny' : 'równy $0$');
     const out = [];
     if (rawTex) out.push(T`Najpierw postać algebraiczna: $${rawTex}=${A.niceC(zz)}$.`);
-    out.push(T`Część rzeczywista $a=${n(a)}$, część urojona $b=${n(b)}$. Moduł: $|z|=\sqrt{a^2+b^2}=\sqrt{${pw(n(a))}^2+${pw(n(b))}^2}=${n(m)}$.`);
+    const s2 = n(a * a + b * b), surd = /\\sqrt/.test(s2);
+    out.push(T`Część rzeczywista $a=${n(a)}$, część urojona $b=${n(b)}$. Moduł: $|z|=\sqrt{a^2+b^2}=\sqrt{${pw(n(a))}^2+${pw(n(b))}^2}=${surd ? T`\sqrt{${s2}}=` : ''}${n(m)}$${surd ? T` (bo $${pw(n(m))}^2=${s2}$)` : ''}.`);
     out.push(T`Argument $\varphi$ spełnia $\cos\varphi=\frac{a}{|z|}=${n(a / m)}$ oraz $\sin\varphi=\frac{b}{|z|}=${n(b / m)}$.`);
-    out.push(T`Cosinus jest ${sgn(a)}, sinus ${sgn(b)} — to wyznacza położenie kąta; z tabelki wartości: $\varphi=${A.argTex(zz)}$.`);
+    const fr0 = A.piFrac(Cx.arg(zz));
+    if (fr0 && (fr0[1] === 12 || fr0[1] === 8)) {
+      out.push(T`Cosinus jest ${sgn(a)}, sinus ${sgn(b)} — to wyznacza ćwiartkę. Takich wartości nie ma w tabelce: to kąt o mianowniku $${fr0[1]}$. Sprawdzamy:`);
+      out.push(...A.trigLines(fr0[0], fr0[1], new Set()));
+      out.push(T`Zatem $\varphi=${A.argTex(zz)}$.`);
+    } else out.push(T`Cosinus jest ${sgn(a)}, sinus ${sgn(b)} — to wyznacza położenie kąta; z tabelki wartości: $\varphi=${A.argTex(zz)}$.`);
     out.push(T`<b>$z=${A.polarTex(zz)}$</b>`);
     return out;
   }
@@ -486,5 +492,100 @@
     }
     t38.gen = gk => (gk === 'eqc' ? genEqC() : genEqS() || gen38());
     t38.items.forEach((it, i) => { it.gk = i < 3 ? 'eq' : 'eqc'; });
+  }
+
+  /* ---------- podobne przykłady dopasowane do rodzaju podpunktu (Lista 3, część 2) ---------- */
+  {
+    const L3 = A.lists.find(l => l.id === 'l3'); const TK = id => L3.tasks.find(t => t.id === id);
+    const PB2 = ['1+i', '1-i', '-1+i', '-1-i', '1+√3i', '1-√3i', '-1+√3i', '-1-√3i', '√3+i', '√3-i', '-√3+i', '-√3-i'];
+    const wrapGen = (t, test) => { const g0 = t.gen; t.gen = gk => { for (let k = 0; k < 80; k++) { const it = g0(gk); if (test(gk, it)) { it.gk = gk; return it; } } const it = g0(gk); it.gk = gk; return it; }; };
+
+    // 3.1 — liczby z kątami o mianowniku 12 (jak 1.13–1.24) i ilorazy (jak 1.27–1.28)
+    const t31 = TK('3.1'), g31 = t31.gen;
+    function genPolarS() {
+      const s1 = R.pick([1, -1]), s2 = R.pick([1, -1]), style = R.int(0, 3);
+      const expr = style === 0 ? `${s1 < 0 ? '-2-√3' : '2+√3'}${s2 < 0 ? '-' : '+'}i`
+        : style === 1 ? `${s1 < 0 ? '-1' : '1'}${s2 < 0 ? '-' : '+'}(2+√3)i`
+        : style === 2 ? `${s1 < 0 ? '-√6-√2' : '√6+√2'}${s2 < 0 ? '-' : '+'}(√6-√2)i`
+        : `${s1 < 0 ? '-√6+√2' : '√6-√2'}${s2 < 0 ? '-' : '+'}(√6+√2)i`;
+      const it = polarItem('', expr, 'polarS'); it.steps = polarSol(ev(expr)); return it;
+    }
+    function genPolarQ() {
+      for (let tries = 0; tries < 200; tries++) {
+        let P, Q;
+        if (Math.random() < 0.5) { [P, Q] = R.shuffle(PB2).slice(0, 2); }
+        else { const w = R.pick([[0, 2], [2, 0], [-2, 0], [0, -2], [1, 1], [2, 2], [-1, 1], [0, 1]]), q = Z.rnd(2); if (Z.n2(q) < 2) continue; P = Z.str(...Z.mul(w, q)); Q = Z.str(...q); }
+        const expr = `(${P})/(${Q})`, z = ev(expr), f = A.piFrac(Cx.arg(z));
+        if (!f || /\d\.\d/.test(A.niceReal(Cx.abs(z))) || /\d\.\d|arctg/.test(A.polarTex(z))) continue;
+        const it = polarItem('', expr, 'polarQ');
+        const Pv = ev(P), Qv = ev(Q), pq = (!A.piFrac(Cx.arg(Pv)) || !A.piFrac(Cx.arg(Qv)));
+        it.steps = pq ? polarSol(z, qtex(expr)) : [
+          T`Licznik: $${qtex(P)}=${A.polarTex(Pv)}$.`, T`Mianownik: $${qtex(Q)}=${A.polarTex(Qv)}$.`,
+          T`Dzielenie w postaci trygonometrycznej — moduły dzielimy, argumenty odejmujemy: moduł $\frac{${A.niceReal(Cx.abs(Pv))}}{${A.niceReal(Cx.abs(Qv))}}=${A.niceReal(Cx.abs(z))}$, argument $${A.argTex(Pv)}-${A.parTex(A.argTex(Qv))}$, czyli $${A.argTex(z)}$ (po dodaniu $2\pi$, jeśli wyjdzie ujemny).`,
+          T`<b>$z=${A.polarTex(z)}$</b>`];
+        return it;
+      }
+      return genPolarS();
+    }
+    t31.gen = gk => (gk === 'polarS' ? genPolarS() : gk === 'polarQ' ? genPolarQ() : g31(gk));
+    t31.items.forEach(it => { const n = +it.label.split('.')[1]; if (n >= 13 && n <= 24) it.gk = 'polarS'; if (n === 27 || n === 28) it.gk = 'polarQ'; });
+
+    // 3.4 — suma „cosinusowa” (1 − C(n,2) + …) albo „sinusowa” (C(n,1) − C(n,3) + …)
+    const t34 = TK('3.4');
+    const nOf = it => +((it.q.match(/n=(\d+)/) || [0, 0])[1]);
+    wrapGen(t34, (gk, it) => gk === 'cos' ? /\$1-\\binom/.test(it.q) && nOf(it) % 2 === 0 && nOf(it) >= 4 : gk === 'sin' ? /\\binom\{\d+\}\{1\}/.test(it.q) && nOf(it) % 2 === 1 && nOf(it) >= 5 : true);
+    t34.items.forEach(it => { if (it.label === 'n=6') it.gk = 'cos'; if (it.label === 'n=5') it.gk = 'sin'; });
+
+    // 3.7 — pierwiastek z potęgi, której wykładnik jest wielokrotnością stopnia (jak (5−i)^12)
+    const t37 = TK('3.7'), g37 = t37.gen;
+    function genWk() {
+      const w = Z.rnd(2, false); if (!w[0] || !w[1]) return genWk();
+      const k = R.pick([2, 3, 4]); let base = [1, 0]; for (let j = 0; j < k; j++) base = Z.mul(base, w);
+      const sols = [0, 1, 2].map(j => Cx.mul(Cx.C(...base), Cx.polar(1, 2 * j * Math.PI / 3)));
+      const it = eqItem('', T`z=\sqrt[3]{(${Z.tex(...w)})^{${3 * k}}}`, sols, 'wk');
+      it.q = T`Wyznacz wszystkie wartości $\sqrt[3]{(${Z.tex(...w)})^{${3 * k}}}$.`;
+      const pw = []; let acc = w; for (let j = 2; j <= k; j++) { acc = Z.mul(acc, w); pw.push(T`(${Z.tex(...w)})^{${j}}=${Z.tex(...acc)}`); }
+      it.steps = [T`Jedna wartość jest od razu widoczna: $\omega=(${Z.tex(...w)})^{${k}}$, bo $\omega^3=(${Z.tex(...w)})^{${3 * k}}$.`, T`Liczymy ją: $${pw.join(',\\ ')}$, więc $\omega=${Z.tex(...base)}$.`,
+        T`Pozostałe wartości to $\omega\varepsilon_1$ i $\omega\varepsilon_2$, gdzie $\varepsilon_{1,2}=-\frac12\pm\frac{\sqrt3}2i$ to pierwiastki trzeciego stopnia z $1$.`, T`<b>Odpowiedź:</b> $\left\{${showSet(sols)}\right\}$`];
+      return it;
+    }
+    t37.gen = gk => (gk === 'wk' ? genWk() : g37(gk));
+    t37.items.forEach(it => { if (it.label === '7.2b') it.gk = 'wk'; });
+
+    // 3.9 — trzy różne pytania: 1+ε^m+ε^{2m}, (1+ε)^m, (1+ε²)^m
+    const t39 = TK('3.9'), g39 = t39.gen;
+    function genSumEps() {
+      const m = R.int(4, 200), r = m % 3;
+      return { gk: 'p0', q: T`Dla $\varepsilon=\cos\frac{2\pi}3+i\sin\frac{2\pi}3$ oblicz $1+\varepsilon^{${m}}+\varepsilon^{${2 * m}}$.`, fields: [{ label: 'wynik', ans: r === 0 ? '3' : '0', restrict: ['plain'] }],
+        steps: [T`$\varepsilon^3=1$, więc potęgi $\varepsilon$ powtarzają się co $3$: liczy się tylko reszta z dzielenia wykładnika przez $3$.`, T`$${m}=3\cdot${Math.floor(m / 3)}+${r}$, więc $\varepsilon^{${m}}=\varepsilon^{${r}}$${r ? T` i $\varepsilon^{${2 * m}}=\varepsilon^{${(2 * r) % 3}}$` : ''}.`,
+          r === 0 ? T`Wszystkie trzy składniki są równe $1$: suma $=3$.` : T`Składniki to $1,\ \varepsilon,\ \varepsilon^2$ (w pewnej kolejności), a $1+\varepsilon+\varepsilon^2=0$. Suma $=0$.`] };
+    }
+    t39.gen = gk => {
+      if (gk === 'p0') return genSumEps();
+      for (let k = 0; k < 60; k++) { const it = g39(gk); const sq = /varepsilon\^2\)/.test(it.q); if (gk === 'p2' ? sq : !sq) { it.gk = gk; return it; } }
+      return g39(gk);
+    };
+    t39.items.forEach(it => { it.gk = { '9.1': 'p0', '9.2': 'p1', '9.3': 'p2' }[it.label] || it.gk; });
+
+    // 3.10 — każde pytanie osobno: suma/iloczyn, potęga 1, 2 albo m
+    const t310 = TK('3.10');
+    function genRoots1(gk) {
+      const n = R.int(3, 10), prod = gk.startsWith('prod'), e = gk.endsWith('1') ? 1 : gk.endsWith('2') ? 2 : R.int(3, 3 * n);
+      const pw = j => (e === 1 ? T`\varepsilon_{${j}}` : T`\varepsilon_{${j}}^{${e}}`);
+      const P1 = (n + 1) % 2 === 0 ? 1 : -1, ans = prod ? (e % 2 === 0 || P1 === 1 ? 1 : -1) : (e % n === 0 ? n : 0);
+      const q = prod ? T`Oblicz $${pw(0)}\cdot${pw(1)}\cdots${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.` : T`Oblicz $${pw(0)}+${pw(1)}+\ldots+${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.`;
+      const steps = prod
+        ? [T`Iloczyn wszystkich pierwiastków wielomianu $z^{${n}}-1$ (wzory Viète’a): $\varepsilon_0\cdots\varepsilon_{${n - 1}}=(-1)^{${n}+1}=${P1}$.`, e === 1 ? T`Wynik: $${P1}$.` : T`Iloczyn potęg to potęga iloczynu: $\left(${P1}\right)^{${e}}=${ans}$.`]
+        : [T`$\varepsilon_k=\varepsilon_1^{\,k}$, więc $\varepsilon_k^{${e}}=q^k$ dla $q=\varepsilon_1^{${e}}$ — to suma ciągu geometrycznego $1+q+\ldots+q^{${n - 1}}$.`,
+          e % n === 0 ? T`$${n}\mid${e}$, więc $q=1$ i każdy składnik to $1$: suma $=${n}$.` : T`$${n}\nmid${e}$, więc $q\neq1$, a $q^{${n}}=1$. Suma $=\frac{q^{${n}}-1}{q-1}=0$.`];
+      return { gk, q, fields: [{ label: prod ? 'iloczyn' : 'suma', ans: String(ans), restrict: ['plain'] }], steps };
+    }
+    t310.gen = gk => genRoots1(['sum1', 'prod1', 'sum2', 'prod2', 'summ', 'prodm'].includes(gk) ? gk : R.pick(['summ', 'prodm']));
+    t310.items.forEach(it => { it.gk = { '10.1': 'sum1', '10.2': 'prod1', '10.3': 'sum2', '10.4': 'prod2', '10.5': 'summ', '10.6': 'prodm' }[it.label] || it.gk; });
+
+    // 3.12 — suma cosinusów albo iloczyn
+    const t312 = TK('3.12');
+    wrapGen(t312, (gk, it) => gk === 'cprod' ? /\\cdot/.test(it.q) : gk === 'csum' ? !/\\cdot/.test(it.q) : true);
+    t312.items.forEach(it => { it.gk = { '12.1': 'csum', '12.2': 'cprod' }[it.label] || it.gk; });
   }
 })();
