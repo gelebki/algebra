@@ -228,7 +228,7 @@
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  function resetAttempt() { if (T) T.gs = null; if (T.mode === 'orig' && T._lastKey !== T.origKey) { T.tried = false; T._lastKey = T.origKey; } T.sel = []; T.vals = []; T.choice = new Set(); T.order = []; T.pool = null; T.status = 'answering'; T.usedW = false; T.usedP = false; T.marks = null; T.msgs = []; T.focus = 0; }
+  function resetAttempt() { if (T) T.gs = null; if (T.mode === 'orig' && T._lastKey !== T.origKey) { T.tried = false; T._lastKey = T.origKey; } T.sel = []; T.mcStep = 0; T.mcRev = null; T.vals = []; T.choice = new Set(); T.order = []; T.pool = null; T.status = 'answering'; T.usedW = false; T.usedP = false; T.marks = null; T.msgs = []; T.focus = 0; }
   function startVariant() {
     const gk = T.task.items[T.idx].gk || T.item.gk;
     let it; for (let k = 0; k < 6; k++) { it = T.task.gen(gk); if (!T.item || it.q !== T.item.q) break; }
@@ -466,10 +466,10 @@
   }
   // szerokie wzory wyświetlane (treść, pytania, wzory) zmniejszamy, by mieściły się w szerokości ekranu
   function fitMath() {
-    document.querySelectorAll('mjx-container[display="true"], .opt .txt mjx-container, .gq mjx-container, .question mjx-container, .stx mjx-container, .exq mjx-container, .ftx mjx-container').forEach(c => {
+    document.querySelectorAll('mjx-container[display="true"], .opt .txt mjx-container, .gq mjx-container, .question mjx-container, .stx mjx-container, .exq mjx-container, .ftx mjx-container, .solsteps mjx-container, .exstep mjx-container, .gl mjx-container, .fwhy mjx-container').forEach(c => {
       const svg = c.querySelector('svg'); if (!svg || !c.parentElement) return;
       c.style.fontSize = '';
-      let box = c.getAttribute('display') === 'true' ? c.parentElement : (c.closest('.txt, .gq, .question, .stx, .exq, .ftx') || c.parentElement);
+      let box = c.getAttribute('display') === 'true' ? c.parentElement : (c.closest('.txt, .gq, .question, .stx, .exq, .ftx, .solsteps li, .exstep > div, .gl, .fwhy li') || c.parentElement);
       while (box && box.parentElement && getComputedStyle(box).display.startsWith('inline')) box = box.parentElement;
       const cs = getComputedStyle(box), avail = box.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0), nat = svg.getBoundingClientRect().width;
       if (avail > 0 && nat > avail) c.style.fontSize = (Math.max(0.5, (avail / nat) * 0.97) * 100).toFixed(1) + '%';
@@ -646,37 +646,77 @@
     out.push(tex.slice(last));
     return out;
   }
+  const optTxt = tex => mdEl('span', topSplit(tex).map((x, k, all) => '<span class="part">$' + x + (k < all.length - 1 ? ',\\quad' : '') + '$</span>').join(''), { class: 'txt' });
   function mcUI(it) {
     const mc = A.buildMC(it);
     const box = h('div', { class: 'mc' });
     const single = mc.groups.length === 1;
-    mc.groups.forEach((g, gi) => {
+    const done = T.status !== 'answering';
+    const grpEl = (g, gi, reveal) => {
       const grp = h('div', { class: 'mcg', role: 'radiogroup' });
-      if (g.part) grp.append(h('div', { class: 'mcpart' }, g.part));
       if (g.label) grp.append(mdEl('div', A.mcLabel(g.label), { class: 'mcl' }));
-      const done = T.status !== 'answering';
       g.opts.forEach((o, oi) => {
         const sel = T.sel[gi] === oi;
         let cls = 'opt mcopt';
-        if (done) cls += o.ok ? ' ok' : sel ? ' chosen' : ' dim'; else if (sel) cls += ' picked';
-        const b = h('button', { class: cls, role: 'radio', 'aria-checked': sel ? 'true' : 'false', disabled: done, onclick: () => {
-          T.sel[gi] = oi; SFX.key();
-          if (single) submit(); else box.replaceWith(mcUI(it));
-        } }, h('span', { class: 'letter' }, 'ABCD'[oi]), mdEl('span', topSplit(o.tex).map((x, k, all) => '<span class="part">$' + x + (k < all.length - 1 ? ',\\quad' : '') + '$</span>').join(''), { class: 'txt' }));
-        if (done && sel) b.classList.add('picked');
+        if (reveal) cls += o.ok ? ' ok' : sel ? ' chosen' : ' dim'; else if (sel) cls += ' picked';
+        const b = h('button', { class: cls, role: 'radio', 'aria-checked': sel ? 'true' : 'false', disabled: reveal, onclick: () => pick(gi, oi) },
+          h('span', { class: 'letter' }, 'ABCD'[oi]), optTxt(o.tex));
+        if (reveal && sel) b.classList.add('picked');
         grp.append(b);
-        if (done && sel && !o.ok && o.why) grp.append(mdEl('div', '<b>Skąd ten wynik:</b> ' + o.why, { class: 'why hit' }));
+        if (reveal && sel && !o.ok && o.why) grp.append(mdEl('div', '<b>Skąd ten wynik:</b> ' + o.why, { class: 'why hit' }));
       });
-      box.append(grp);
-    });
+      return grp;
+    };
+    const pick = (gi, oi) => {
+      if (T.status !== 'answering') return;
+      T.sel[gi] = oi; SFX.key();
+      if (single) { submit(); return; }
+      // odpowiedzi po kolei: każda część osobno, z paskiem postępu
+      const g = mc.groups[gi], ok = g.opts[oi].ok;
+      T.mcRev = gi;
+      if (ok) { SFX.click(); setTimeout(() => { if (T && T.mcRev === gi) advance(); }, 650); }
+      else SFX.wrong();
+      box.replaceWith(mcUI(it));
+    };
+    const advance = () => {
+      T.mcRev = null; T.mcStep = (T.mcStep || 0) + 1;
+      if (T.mcStep >= mc.groups.length) { submit(); return; }
+      const nb = mcUI(it); const old = $('#card .mc'); if (old) old.replaceWith(nb);
+      const cur = nb.querySelector('.mcstep'); if (cur) cur.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
+    };
+    if (single) { box.append(grpEl(mc.groups[0], 0, done)); return box; }
+
+    const n = mc.groups.length, step = done ? n : (T.mcStep || 0);
+    const res = gi => T.sel[gi] != null && mc.groups[gi].opts[T.sel[gi]] && mc.groups[gi].opts[T.sel[gi]].ok;
+    if (!done) box.append(h('div', { class: 'gprog' }, ...mc.groups.map((_, k) => h('i', { class: k < step || (k === step && T.mcRev === k) ? (res(k) ? 'on' : 'miss') : k === step ? 'cur' : '' }))));
+    // zrobione części — krótko, jedna linijka każda
+    const upto = done ? n : step;
+    if (upto) {
+      const list = h('div', { class: 'mcdone' });
+      for (let k = 0; k < upto; k++) {
+        const g = mc.groups[k], good = g.opts.find(o => o.ok), okk = res(k);
+        const lab = (g.short || g.label) ? A.mcLabel(g.short || g.label) + ': ' : '';
+        list.append(h('div', { class: 'mcd' + (okk ? '' : ' miss') }, h('span', { class: 'mi', html: okk ? IC.check : IC.x }),
+          mdEl('span', lab + '$' + good.tex.replace(/,\\quad /g, ',\\ ') + '$' + (okk || T.sel[k] == null ? '' : ' <small>(wybrano: $' + g.opts[T.sel[k]].tex + '$)</small>'), { class: 'mtx' })));
+      }
+      box.append(list);
+    }
+    if (!done && step < n) {
+      const g = mc.groups[step], rev = T.mcRev === step;
+      const cur = h('div', { class: 'mcstep' }, h('div', { class: 'mcpart' }, 'Część ' + (step + 1) + ' z ' + n), grpEl(g, step, rev));
+      if (rev && !res(step)) cur.append(h('div', { class: 'row', style: 'margin-top:10px' }, h('button', { class: 'btn primary', onclick: advance }, step === n - 1 ? 'Zakończ' : 'Dalej', h('span', { html: IC.next }))));
+      box.append(cur);
+    }
     return box;
   }
   document.addEventListener('keydown', e => {
     if (!T || T.status !== 'answering' || (T.item.type || 'fields') !== 'fields' || e.target.tagName === 'INPUT') return;
     const k = e.key.toLowerCase(); const idx = '1234'.indexOf(k) >= 0 ? '1234'.indexOf(k) : 'abcd'.indexOf(k);
     if (idx < 0 || e.metaKey || e.ctrlKey || e.altKey) return;
-    const mc = A.buildMC(T.item); if (mc.groups.length !== 1 || !mc.groups[0].opts[idx]) return;
-    T.sel[0] = idx; submit();
+    const mc = A.buildMC(T.item);
+    if (mc.groups.length === 1) { if (!mc.groups[0].opts[idx]) return; T.sel[0] = idx; submit(); return; }
+    if (T.mcRev != null) return;
+    const b = document.querySelectorAll('#card .mcstep .mcopt')[idx]; if (b) b.click();
   });
   function placeholderFor(f) {
     if (f.kind === 'set') return 'np. 1+2i; -1-2i';
@@ -821,7 +861,7 @@
     const bar = h('div', { class: 'actions', id: 'actions' });
     if (T.status === 'answering') {
       const ty = it.type || 'fields';
-      const needBtn = ty === 'guided' ? false : ty !== 'fields' || A.buildMC(it).groups.length > 1;
+      const needBtn = ty === 'guided' ? false : ty !== 'fields';
       if (needBtn) bar.append(h('button', { class: 'btn primary', id: 'submitBtn', onclick: submit }, h('span', { html: IC.check }), 'Sprawdź'));
       bar.append(h('div', { class: 'spacer' }));
       bar.append(h('div', { class: 'life' },
@@ -836,7 +876,7 @@
     const msgsOk = ['Świetnie!', 'Dokładnie tak!', 'Pięknie policzone!', 'Bezbłędnie!', 'Tak jest!', 'Znakomicie!'];
     if (ok) fb.append(h('h3', {}, h('span', { html: IC.check, style: 'width:22px;height:22px;display:grid' }), type === 'guided' ? 'Dowód kompletny!' : msgsOk[Math.floor(Math.random() * msgsOk.length)]));
     if (ok && type === 'guided') fb.append(h('p', { style: 'margin:6px 0 0' }, 'Powyżej masz cały dowód w czystej postaci. Spróbuj odtworzyć go na kartce bez patrzenia.'));
-    else fb.append(h('h3', {}, h('span', { html: IC.bulb, style: 'width:22px;height:22px;display:grid' }), type === 'guided' ? 'Dowód kompletny' : 'Zobacz, jak to policzyć'));
+    if (!ok) fb.append(h('h3', {}, h('span', { html: IC.bulb, style: 'width:22px;height:22px;display:grid' }), type === 'guided' ? 'Dowód kompletny' : 'Zobacz, jak to policzyć'));
     if (ok && T.redeemed) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' zaliczony.'));
     if (!ok) {
       if (T.mode === 'orig' && T.task.gen && type !== 'guided') fb.append(h('p', { style: 'margin:6px 0 0' }, 'Rozwiąż podobny przykład — wtedy ten podpunkt się zaliczy.'));
