@@ -74,7 +74,7 @@
     const a = W.re, b = W.im;
     const simple = AQ.niceC(W);
     if (Wtex && Wtex.replace(/\s/g, '') !== simple.replace(/\s/g, '')) out.push(T`Najpierw upraszczamy liczbę pod pierwiastkiem: $${Wtex}=${simple}$.`);
-    const pw = t => (/^-|[+-]/.test(t.slice(1)) || /^-/.test(t) ? '\\left(' + t + '\\right)' : t);
+    const pw = t => (/^\d+$/.test(t) ? t : '\\left(' + t + '\\right)');
     out.push(T`Postać trygonometryczna: $|z|=\sqrt{${pw(nr(a))}^2+${pw(nr(b))}^2}=${nr(m)}$, a z $\cos\varphi=\frac{${nr(a)}}{${nr(m)}}$ i $\sin\varphi=\frac{${nr(b)}}{${nr(m)}}$ odczytujemy $\varphi=${aT(p, q)}$. Zatem $z=${AQ.polarTex(W)}$.`);
     const rr = nr(Math.pow(m, 1 / n));
     out.push(T`Pierwiastek stopnia $${n}$ ma $${n}$ wartości: $$w_k=\sqrt[${n}]{|z|}\left(\cos\frac{\varphi+2k\pi}{${n}}+i\sin\frac{\varphi+2k\pi}{${n}}\right),\quad k=0,\ldots,${n - 1}$$ Moduł każdej wartości: $\sqrt[${n}]{${nr(m)}}=${rr}$.`);
