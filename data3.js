@@ -80,7 +80,7 @@
     return {
       label, gk, q: T`Wyznacz wszystkie wartości pierwiastka: $$\sqrt${n === 2 ? '' : '[' + n + ']'}{${qtex(W)}}$$`,
       fields: [{ label: 'wartości', kind: 'set', ans: roots, restrict: ['roots'], show: showSet(roots()) }], keys: [';', 'pi'],
-      sol: (() => { const rs = A.rootSteps(w, n, qtex(W)); if (!rs) return [T`Liczba pod pierwiastkiem w postaci trygonometrycznej: $${qtex(W)}=${A.polarTex(w)}$, czyli moduł $${A.niceReal(Cx.abs(w))}$, argument $\varphi=${A.argTex(w)}$.`, T`Pierwiastek stopnia $${n}$ ma $${n}$ wartości: $w_k=\sqrt[${n}]{|z|}\left(\cos\frac{\varphi+2k\pi}{${n}}+i\sin\frac{\varphi+2k\pi}{${n}}\right)$, $k=0,\ldots,${n - 1}$. Tu $\sqrt[${n}]{|z|}=${A.niceReal(Math.pow(Cx.abs(w), 1 / n))}$.`, ...roots().map((z, k) => T`$k=${k}$: $\ w_${k}=${A.polarTex(z)}${/\d\.\d/.test(A.niceC(z)) ? '' : '=' + A.niceC(z)}$`)]; return [...rs.lines, T`<b>Odpowiedź:</b> $\left\{${showSet(roots())}\right\}$`]; })(),
+      sol: (() => { const pre = /[\^/]/.test(W) ? A.autoSol(W).slice(0, -1) : []; const rs = A.rootSteps(w, n, pre.length ? null : qtex(W)); if (!rs) return [T`Liczba pod pierwiastkiem w postaci trygonometrycznej: $${qtex(W)}=${A.polarTex(w)}$, czyli moduł $${A.niceReal(Cx.abs(w))}$, argument $\varphi=${A.argTex(w)}$.`, T`Pierwiastek stopnia $${n}$ ma $${n}$ wartości: $w_k=\sqrt[${n}]{|z|}\left(\cos\frac{\varphi+2k\pi}{${n}}+i\sin\frac{\varphi+2k\pi}{${n}}\right)$, $k=0,\ldots,${n - 1}$. Tu $\sqrt[${n}]{|z|}=${A.niceReal(Math.pow(Cx.abs(w), 1 / n))}$.`, ...roots().map((z, k) => T`$k=${k}$: $\ w_${k}=${A.polarTex(z)}${/\d\.\d/.test(A.niceC(z)) ? '' : '=' + A.niceC(z)}$`)]; return [...(pre.length ? [T`Najpierw obliczamy liczbę pod pierwiastkiem $${qtex(W)}$:`, ...pre] : []), ...rs.lines, T`<b>Odpowiedź:</b> $\left\{${showSet(roots())}\right\}$`]; })(),
     };
   }
   function gen35() {
@@ -346,4 +346,145 @@
       },
     ],
   });
+
+  /* ---------- podobne przykłady dopasowane do rodzaju podpunktu ---------- */
+  {
+    const L3 = A.lists.find(l => l.id === 'l3'); const TK = id => L3.tasks.find(t => t.id === id);
+    const PB = ['1+i', '1-i', '-1+i', '-1-i', '1+√3i', '1-√3i', '-1+√3i', '-1-√3i', '√3+i', '√3-i', '-√3+i', '-√3-i'];
+    const conjS = s => s.replace(/([+-])([^+-]*i)$/, (m, sg, r) => (sg === '+' ? '-' : '+') + r);
+    const okSet = arr => { const s = showSet(arr); return isNice(s) && !/arctg/.test(s); };
+    const fr = x => A.piFrac(x) || [0, 1];
+    const ang = x => { const [p, q] = fr(x); return A.angleTex(p, q); };
+
+    // 3.5 — pierwiastki
+    function genRoot(gk) {
+      for (let tries = 0; tries < 500; tries++) {
+        let n, W;
+        if (gk === 'sq') {
+          const w0 = Z.rnd(4); if (!w0[0]) continue; n = 2; W = Z.str(...Z.mul(w0, w0));
+        } else if (gk === 'rpolar') {
+          n = R.pick([2, 3, 4, 4]); const B = R.pick([...PB, 'i', '-i', '-1']); const c = R.pick([1, 2, 4, 8, 16, 27, 64, 81, 72]);
+          W = B === '-1' ? '-' + c : B === 'i' ? (c === 1 ? 'i' : c + 'i') : B === '-i' ? (c === 1 ? '-i' : '-' + c + 'i') : c === 1 ? B : `${c}(${B})`;
+        } else if (gk === 'pow') {
+          n = R.pick([2, 3, 4, 6]); W = `(${R.pick(PB)})^${R.int(3, 12)}`;
+        } else if (gk === 'frac') {
+          if (Math.random() < 0.5) {
+            n = 3; const res = R.pick([[0, 8], [8, 0], [0, -8], [-8, 0], [2, 2], [-2, 2], [2, -2], [0, 27], [-27, 0], [0, -27], [27, 0]]);
+            const q = Z.rnd(3); if (!q[0]) continue; W = `(${Z.str(...Z.mul(res, q))})/(${Z.str(...q)})`;
+          } else { n = 4; const [P, Q] = R.shuffle(PB).slice(0, 2); W = `(${P})/(${Q})`; }
+        } else if (gk === 'powfrac') {
+          n = R.pick([2, 4]); const [P, Q] = R.shuffle(PB).slice(0, 2); W = `(${P})^${R.int(6, 30)}/(${Q})^${R.int(4, 24)}`;
+        } else return gen35();
+        const v = ev(W); if (!v || Cx.abs(v) < 1e-9 || Cx.abs(v) > 1e7) continue;
+        if (!okSet(Cx.allRoots(v, n))) continue;
+        if (/[\^/]/.test(W) && /\d\.\d|e[+-]\d/.test(A.autoSol(W).join(" "))) continue;
+        const it = rootItem('', n, W, gk); it.steps = it.sol; return it;
+      }
+      return gen35();
+    }
+    const t35 = TK('3.5'); t35.gen = genRoot;
+    const G35 = { '5.1': 'sq', '5.2': 'rpolar', '5.3': 'rpolar', '5.4': 'rpolar', '5.5': 'rpolar', '5.6': 'rpolar', '5.7': 'pow', '5.8': 'pow', '5.9': 'pow', '5.10': 'frac', '5.11': 'frac', '5.12': 'frac', '5.13': 'frac', '5.14': 'frac', '5.15': 'powfrac' };
+    t35.items.forEach(it => { if (G35[it.label]) it.gk = G35[it.label]; });
+
+    // 3.2 — de Moivre: (P/Q)^k oraz suma liczb sprzężonych
+    const t32 = TK('3.2'), g32 = t32.gen;
+    t32.gen = gk => {
+      for (let tries = 0; tries < 400 && (gk === 'qpow' || gk === 'sum'); tries++) {
+        const [P, Q] = R.shuffle(PB).slice(0, 2);
+        const expr = gk === 'qpow' ? `((${P})/(${Q}))^${R.int(6, 30)}` : (() => { const a = R.int(4, 28), b = R.int(4, 28); return `(${P})^${a}/(${Q})^${b}+(${conjS(P)})^${a}/(${conjS(Q)})^${b}`; })();
+        const v = ev(expr); if (!isNice(A.niceC(v)) || Cx.abs(v) > 1e7 || Cx.abs(v) < 1e-6) continue;
+        const it = powItem('', expr, gk); if (/\d\.\d|e[+-]\d/.test((it.sol || []).join(" "))) continue; it.steps = it.sol; return it;
+      }
+      return g32(gk);
+    };
+    t32.items.forEach(it => { if (['2.4', '2.5', '2.6'].includes(it.label)) it.gk = 'qpow'; if (it.label === '2.9') it.gk = 'sum'; });
+
+    // 3.6 — równanie liniowe w z^3 z liczbami w postaci trygonometrycznej (jak 6.2)
+    const t36 = TK('3.6'), g36 = t36.gen;
+    function genLin3() {
+      for (let tries = 0; tries < 300; tries++) {
+        const U = R.pick([['1-i\\sqrt3', -1, 3], ['1+i\\sqrt3', 1, 3], ['\\sqrt3+i', 1, 6], ['\\sqrt3-i', -1, 6]]);
+        const den = R.pick([8, 6, 4]), ap = R.pick(den === 8 ? [1, 3, 5, 7] : den === 6 ? [1, 5, 7] : [1, 3]), m = R.int(2, 10);
+        const [bp, bq] = R.pick([[1, 4], [3, 4], [5, 4], [1, 2], [1, 3], [2, 3]]), K = R.pick([1, 8, 27]);
+        const num = m * ap * Math.PI / den, beta = bp * Math.PI / bq, gam = U[1] * Math.PI / U[2], th = num - beta - gam;
+        const sols = Cx.allRoots(Cx.polar(K, th), 3); if (!okSet(sols)) continue;
+        const rk = Math.cbrt(K), at = (p, q) => A.angleTex(p, q);
+        const tex = T`\frac{(${U[0]})z^3}{2}=\frac{${K === 1 ? '' : K}\left(\cos${at(ap, den)}+i\sin${at(ap, den)}\right)^{${m}}}{\cos${at(bp, bq)}+i\sin${at(bp, bq)}}`;
+        const it = eqItem('', tex, sols, 'lin3');
+        it._check = z => Cx.abs(Cx.sub(Cx.div(Cx.mul(ev(U[0].replace('i\\sqrt3', '√3i').replace('\\sqrt3', '√3')), Cx.powInt(z, 3)), Cx.C(2)), Cx.div(Cx.mul(Cx.C(K), Cx.powInt(Cx.polar(1, ap * Math.PI / den), m)), Cx.polar(1, beta))));
+        it.steps = [
+          T`Licznik prawej strony — wzór de Moivre’a: $${K === 1 ? '' : K}\left(\cos\left(${m}\cdot${at(ap, den)}\right)+i\sin\left(${m}\cdot${at(ap, den)}\right)\right)$, czyli kąt $${at(m * ap, den)}$${(m * ap / den) >= 2 ? T`, a po odjęciu pełnych obrotów $${ang(num)}$` : ''}.`,
+          T`Dzielenie przez $\cos${at(bp, bq)}+i\sin${at(bp, bq)}$ — argumenty odejmujemy: prawa strona to $${K === 1 ? '' : K}\left(\cos${ang(num - beta)}+i\sin${ang(num - beta)}\right)$.`,
+          T`Lewa strona: $\frac{${U[0]}}{2}=\cos\left(${at(U[1], U[2])}\right)+i\sin\left(${at(U[1], U[2])}\right)$. Dzielimy przez nią: $z^3=${K === 1 ? '' : K}\left(\cos${ang(th)}+i\sin${ang(th)}\right)$.`,
+          T`Pierwiastki trzeciego stopnia: moduł $\sqrt[3]{${K}}=${A.niceReal(rk)}$, kąty $\frac{${ang(th)}+2k\pi}{3}$, $k=0,1,2$.`,
+          T`<b>Odpowiedź:</b> $z\in\left\{${showSet(sols)}\right\}$`,
+        ];
+        return it;
+      }
+      return g36();
+    }
+    t36.gen = gk => (gk === 'lin3' ? genLin3() : g36(gk));
+    t36.items.forEach((it, i) => { it.gk = i === 0 ? 'q3' : 'lin3'; });
+
+    // 3.8 — równania z modułem i sprzężeniem: proste (8.1–8.3) i z liczbą zespoloną (8.4–8.6)
+    const t38 = TK('3.8');
+    const pw = (b, e, sp) => (e === 0 ? '' : e === 1 ? b : `${b}^{${sp ? '\\,' : ''}${e}}`);
+    function genEqS() {
+      for (let tries = 0; tries < 300; tries++) {
+        const a = R.int(1, 4), b = R.int(0, 1), d = R.int(2, 6), r0 = R.pick([1, 2, 2, 0.5]);
+        const e = a + b - d; if (e === 0) continue;
+        const K = Math.pow(r0, e); const Ki = Math.round(K), Kinv = Math.round(1 / K);
+        let left = [pw('\\overline{z}', a, true), pw('|z|', b)].filter(Boolean).join('\\cdot '), right = pw('z', d);
+        if (Math.abs(K - Ki) < 1e-9 && Ki >= 1 && Ki <= 64) right = (Ki === 1 ? '' : Ki) + right;
+        else if (Math.abs(1 / K - Kinv) < 1e-9 && Kinv <= 64) left = Kinv + left;
+        else continue;
+        const sols = [Cx.C(0), ...polarSet(r0, 0, 2 * Math.PI / (a + d), a + d)];
+        const it = eqItem('', `${left}=${right}`, sols, 'eq');
+        { const L = left, Rr = right; it._check = z => { const kL = /^\d+/.test(L) ? +L.match(/^\d+/)[0] : 1, kR = /^\d+/.test(Rr) ? +Rr.match(/^\d+/)[0] : 1; const lhs = Cx.mul(Cx.C(kL * Math.pow(Cx.abs(z), b)), Cx.powInt(Cx.conj(z), a)), rhs = Cx.mul(Cx.C(kR), Cx.powInt(z, d)); return Cx.abs(Cx.sub(lhs, rhs)); }; }
+        it.steps = [
+          T`$z=0$ spełnia równanie (obie strony są zerem).`,
+          T`Dla $z\neq0$ piszemy $z=|z|(\cos\varphi+i\sin\varphi)$. Wtedy $\overline z$ ma ten sam moduł i argument $-\varphi$, a $z^{${d}}$ ma moduł $|z|^{${d}}$ i argument $${d}\varphi$.`,
+          T`Moduły: z porównania obu stron $|z|${Math.abs(e) === 1 ? "" : "^{" + Math.abs(e) + "}"}=${A.niceReal(Math.pow(r0, Math.abs(e)))}$, więc $|z|=${A.niceReal(r0)}$.`,
+          T`Argumenty: $-${a === 1 ? '' : a}\varphi=${d}\varphi+2k\pi$, czyli $${a + d}\varphi=2k\pi$ (znak przy $2k\pi$ nie ma znaczenia), więc $\varphi=\frac{2k\pi}{${a + d}}$, $k=0,\ldots,${a + d - 1}$.`,
+          T`<b>Odpowiedź:</b> $z=0$ oraz $${A.niceReal(r0) === '1' ? '' : A.niceReal(r0)}\left(\cos\frac{2k\pi}{${a + d}}+i\sin\frac{2k\pi}{${a + d}}\right)$, $k=0,\ldots,${a + d - 1}$ — razem $${a + d + 1}$ rozwiązań.`,
+        ];
+        return it;
+      }
+      return null;
+    }
+    function genEqC() {
+      for (let tries = 0; tries < 500; tries++) {
+        const P = R.pick(PB), m = R.pick([1, 2, 3, 4]), C = ev(`(${P})^${m}`);
+        const d = R.int(0, 5), a = R.int(0, 4), b = R.int(0, 3);
+        if (d === a || d + a === 0) continue;
+        const e = d + a - b; if (e === 0) continue;
+        const r = Math.pow(Cx.abs(C), 1 / e); if (/\d\.\d/.test(A.niceReal(r)) || r > 40) continue;
+        const k = Math.abs(d - a), ph = Cx.arg(C);
+        const sols = []; if (b > 0) sols.push(Cx.C(0));
+        for (let j = 0; j < k; j++) sols.push(Cx.polar(r, (ph + 2 * j * Math.PI) / (d - a)));
+        if (!okSet(sols)) continue;
+        const num = [pw('z', d), pw('\\overline{z}', a, true)].filter(Boolean).join('\\cdot ');
+        const Pt = qtex(P), Cden = m === 1 ? Pt : T`\left(${Pt}\right)^{${m}}`;
+        const tex = T`\frac{${num}}{${Cden}}=${b ? pw('|z|', b) : '1'}`;
+        const it = eqItem('', tex, sols, 'eqc');
+        it._check = z => Cx.abs(Cx.sub(Cx.div(Cx.mul(Cx.powInt(z, d), Cx.powInt(Cx.conj(z), a)), C), Cx.C(b ? Math.pow(Cx.abs(z), b) : 1)));
+        const Pv = ev(P), absC = A.niceReal(Cx.abs(C)), argL = [d ? (d === 1 ? '' : d) + '\\varphi' : '', a ? '-' + (a === 1 ? '' : a) + '\\varphi' : ''].join('').replace(/^\+/, '') + '-' + ang(ph);
+        const dm = d - a, phT = ang(ph);
+        it.steps = [
+          m === 1 ? T`$${Pt}=${A.polarTex(Pv)}$: moduł $${absC}$, argument $${phT}$.` : T`$${Pt}=${A.polarTex(Pv)}$, więc z de Moivre’a $${Cden}$ ma moduł $${absC}$ i argument $${m}\cdot${A.parTex(ang(Cx.arg(Pv)))}$${ang(m * Cx.arg(Pv)) === phT && (m * (A.piFrac(Cx.arg(Pv))[0] / A.piFrac(Cx.arg(Pv))[1])) < 2 ? '' : T`, czyli $${phT}$`}.`,
+          b > 0 ? T`$z=0$ spełnia równanie (obie strony są zerem).` : T`$z=0$ nie spełnia równania (prawa strona to $1$).`,
+          T`Dla $z\neq0$: $z=|z|(\cos\varphi+i\sin\varphi)$, $\overline z$ ma argument $-\varphi$. Lewa strona ma moduł $\frac{${pw('|z|', d + a) || '1'}}{${absC}}$ i argument $${argL}$; prawa — moduł $${b ? pw('|z|', b) : '1'}$ i argument $0$.`,
+          T`Moduły: $${pw('|z|', d + a)}=${absC}\cdot${b ? pw('|z|', b) : '1'}$, czyli $${pw('|z|', e)}=${absC}$${e === 1 ? '' : T`, więc $|z|=${A.niceReal(r)}$`}.`,
+          dm > 0
+            ? T`Argumenty: $${dm === 1 ? '' : dm}\varphi-${phT}=2k\pi$, więc $\varphi=${dm === 1 ? T`${phT}+2k\pi` : T`\frac{${phT}+2k\pi}{${dm}}`}$${k > 1 ? T` dla $k=0,\ldots,${k - 1}$` : ''}.`
+            : T`Argumenty: $-${-dm === 1 ? '' : -dm}\varphi-${phT}=2k\pi$, czyli $${-dm === 1 ? '' : -dm}\varphi=-${A.parTex(phT)}-2k\pi$. Ponieważ $k$ przebiega wszystkie liczby całkowite, piszemy $\varphi=${-dm === 1 ? T`-${A.parTex(phT)}+2k\pi` : T`\frac{-${A.parTex(phT)}+2k\pi}{${-dm}}`}$${k > 1 ? T` dla $k=0,\ldots,${k - 1}$` : ''}.`,
+          T`<b>Odpowiedź:</b> $z\in\left\{${showSet(sols)}\right\}$`,
+        ];
+        return it;
+      }
+      return genEqS();
+    }
+    t38.gen = gk => (gk === 'eqc' ? genEqC() : genEqS() || gen38());
+    t38.items.forEach((it, i) => { it.gk = i < 3 ? 'eq' : 'eqc'; });
+  }
 })();
