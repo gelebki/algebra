@@ -471,7 +471,7 @@
       c.style.fontSize = '';
       let box = c.getAttribute('display') === 'true' ? c.parentElement : (c.closest('.txt, .gq, .question, .stx, .exq, .ftx') || c.parentElement);
       while (box && box.parentElement && getComputedStyle(box).display.startsWith('inline')) box = box.parentElement;
-      const avail = box.clientWidth, nat = svg.getBoundingClientRect().width;
+      const cs = getComputedStyle(box), avail = box.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0), nat = svg.getBoundingClientRect().width;
       if (avail > 0 && nat > avail) c.style.fontSize = (Math.max(0.5, (avail / nat) * 0.97) * 100).toFixed(1) + '%';
     });
   }
