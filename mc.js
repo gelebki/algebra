@@ -212,6 +212,7 @@
       add(C((x + p - 1) % p), 'Pomyłka o $1$ przy redukcji modulo $' + p + '$.');
       add(C((2 * x) % p), 'Błąd rachunkowy — policz jeszcze raz i weź resztę z dzielenia.');
       add(C((x * x) % p), 'Błąd przy braniu reszty z dzielenia.');
+      for (let d = 2; d < p; d++) add(C((x + d) % p), 'Błąd przy braniu reszty z dzielenia przez $' + p + '$.'); // zapas, gdy powyższe się pokrywają
       return out.filter(m => md(m.v.re, p) !== x);
     }
     if (f.kind === 'angle') {
