@@ -56,7 +56,7 @@
   // pierwsze 15 progów bez zmian (nikt nie traci poziomu); 16–25 dla drugiego przedmiotu
   const LEVELS = [0, 80, 170, 270, 390, 510, 680, 860, 1050, 1250, 1460, 1700, 1900, 2100, 2300, 2550, 2850, 3200, 3600, 4050, 4550, 5100, 5750, 6500, 7400];
   const TITLES = ['Pierwszak', 'Tropiciel ułamków', 'Pogromca nawiasów', 'Pogromca niewymierności', 'Rachmistrz bez kalkulatora',
-    'Zegarmistrz ℤₚ', 'Tester działań', 'Pogromca teleskopów', 'Architekt ciał', 'Odkrywca liczby i',
+    'Zegarmistrz ℤₚ', 'Tester działań', 'Mistrz skracania', 'Architekt ciał', 'Odkrywca liczby i',
     'Wielomianowy wirtuoz', 'Mistrz sprzężenia', 'Strażnik wzorów redukcyjnych', 'Zaklinacz delty', 'Kartograf płaszczyzny Gaussa',
     'Nawigator kątów', 'Łowca tożsamości', 'Mag de Moivre’a', 'Władca potęg', 'Geniusz dowodów',
     'Legenda okręgu jednostkowego', 'Profesor', 'Dziekan', 'Mistrz matematyki', 'Arcymistrz'];
