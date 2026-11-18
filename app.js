@@ -96,7 +96,8 @@
     if (reduced()) return;
     if (!fxCanvas) { fxCanvas = h('canvas', { class: 'fx' }); document.body.append(fxCanvas); }
     const cs = getComputedStyle(document.documentElement);
-    const cols = pal === 'gold' ? ['#fde68a', '#fbbf24', '#f59e0b', '#d97706', '#fff7d6', cs.getPropertyValue('--xp').trim() || '#fc0'] : ['--xp', '--l1', '--l2', '--l3', '--brand', '--ok'].map(v => cs.getPropertyValue(v).trim() || '#fc0');
+    const bcs = getComputedStyle(document.body);
+    const cols = pal === 'gold' ? ['--g3', '--g2', '--g2', '--g1', '--g4', '--xp'].map(v => bcs.getPropertyValue(v).trim() || '#fc0') : ['--xp', '--l1', '--l2', '--l3', '--brand', '--ok'].map(v => cs.getPropertyValue(v).trim() || '#fc0');
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2, s = (4 + Math.random() * 8) * spread;
       parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 6 * spread, r: 3 + Math.random() * 5, c: cols[i % cols.length], rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, life: 90 + Math.random() * 50, sh: Math.random() < 0.3 ? 1 : 0 });
@@ -154,6 +155,14 @@
   /* ---------------- dane pomocnicze ---------------- */
   const LISTS = A.lists;
   const itemKey = (t, i) => t.id + '#' + i;
+  LISTS.forEach(L => { if (!L.subject) L.subject = 'alg'; });
+  const SUBJ = [{ id: 'alg', name: 'Algebra liniowa', short: 'Algebra', color: '#f0b65a' }, { id: 'pro', name: 'Proseminarium', short: 'Proseminarium', color: '#a594ff' }];
+  const tid = t => String(t.id).replace(/^P/, '');
+  const lhash = i => LISTS[i].id;
+  const subjOf = i => (LISTS[i] && LISTS[i].subject) || 'alg';
+  const subjLists = sid => LISTS.map((L, i) => (L.subject === sid ? i : -1)).filter(i => i >= 0);
+  const subjProgress = sid => subjLists(sid).reduce((a, i) => { const p = listProgress(LISTS[i]); a.solved += p.solved; a.total += p.total; return a; }, { solved: 0, total: 0 });
+  const curSubj = () => (V.view === 'list' || V.view === 'task' ? subjOf(V.list) : (S.subj || subjOf(V.list)));
   function taskProgress(t) {
     let solved = 0, practiced = 0, practicable = 0;
     t.items.forEach((it, i) => { const k = itemKey(t, i); if (S.items[k]) solved++; if (!['order', 'guided'].includes(it.type || 'fields')) { practicable++; if ((S.practice || {})[k] >= 1) practiced++; } });
@@ -186,7 +195,7 @@
       document.body.append(flash, ring);
       for (let k = 0; k < 22; k++) {
         const a = Math.PI * 2 * k / 22 + Math.random() * 0.3, d = 50 + Math.random() * 70;
-        const sp = h('div', { class: 'spark', style: `left:${x}px;top:${y}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;animation-delay:${Math.random() * 80}ms` });
+        const sp = h('div', { class: 'bspark', style: `left:${x}px;top:${y}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;animation-delay:${Math.random() * 80}ms` });
         document.body.append(sp); setTimeout(() => sp.remove(), 1000);
       }
       const lab = h('div', { class: 'komplet', style: `left:${Math.min(innerWidth - 100, Math.max(100, r.left + r.width / 2))}px;top:${r.top - 6}px` }, 'KOMPLET!');
@@ -201,6 +210,8 @@
   }
 
   /* ---------------- odznaki ---------------- */
+  const listDone = id => { const L = LISTS.find(x => x.id === id); if (!L) return false; const p = listProgress(L); return p.solved === p.total; };
+  const ALLN = LISTS.reduce((a, L) => a + L.tasks.reduce((b, t) => b + t.items.length, 0), 0);
   const BADGES = [
     { id: 'first', name: 'Pierwszy krok', desc: 'Pierwsza poprawna odpowiedź', ok: () => S.correct >= 1 },
     { id: 's5', name: 'Rozgrzewka', desc: '10 rozwiązanych przykładów', ok: () => S.correct >= 10 },
@@ -211,20 +222,23 @@
     { id: 'p3', name: 'Opanowane', desc: 'Pełna seria 3 podobnych w 10 podpunktach', ok: () => Object.values(S.practice || {}).filter(x => x >= 3).length >= 10 },
     { id: 'proof', name: 'Dowodziciel', desc: '5 poprawnie ułożonych dowodów', ok: () => S.proofs >= 5 },
     { id: 'star3', name: 'Perfekcjonista', desc: 'Pierwsze zadanie ukończone w całości', ok: () => LISTS.some(L => L.tasks.some(t => taskProgress(t).done)) },
-    { id: 'l1', name: 'Ciało ukończone', desc: 'Wszystkie zadania z Listy 1', ok: () => { const p = listProgress(LISTS[0]); return p.solved === p.total; } },
-    { id: 'l2', name: 'Zespolony umysł', desc: 'Wszystkie zadania z Listy 2', ok: () => { const p = listProgress(LISTS[1]); return p.solved === p.total; } },
-    { id: 'l3', name: 'Pan pierwiastków', desc: 'Wszystkie zadania z Listy 3', ok: () => { const p = listProgress(LISTS[2]); return p.solved === p.total; } },
+    { id: 'l1', name: 'Ciało ukończone', desc: 'Algebra: wszystkie zadania z Listy 1', ok: () => listDone('l1') },
+    { id: 'l2', name: 'Zespolony umysł', desc: 'Algebra: wszystkie zadania z Listy 2', ok: () => listDone('l2') },
+    { id: 'l3', name: 'Pan pierwiastków', desc: 'Algebra: wszystkie zadania z Listy 3', ok: () => listDone('l3') },
+    { id: 'p1', name: 'Mistrz przekształceń', desc: 'Proseminarium: wszystkie zadania z Listy 1', ok: () => listDone('p1') },
+    { id: 'p2', name: 'Wielomianowy wymiatacz', desc: 'Proseminarium: wszystkie zadania z Listy 2', ok: () => listDone('p2') },
+    { id: 'p3', name: 'Trygonometra', desc: 'Proseminarium: wszystkie zadania z Listy 3', ok: () => listDone('p3') },
     { id: 'xp1k', name: 'Tysiąc XP', desc: 'Zdobądź 1000 punktów doświadczenia', ok: () => S.xp >= 1000 },
     { id: 'days3', name: 'Trzy dni z rzędu', desc: 'Ucz się 3 dni pod rząd', ok: () => S.dayStreak >= 3 },
     { id: 'quick', name: 'Błyskawica', desc: '8 przykładów w jednej szybkiej rundzie', ok: () => S.quickBest >= 8 },
     // ukryte — po 100 XP
     { id: 'h_days5', hidden: true, name: 'Kto tak się uczy? 🙈', desc: 'Nauka 5 dni pod rząd', ok: () => S.dayStreak >= 5 },
-    { id: 'h_all', hidden: true, name: 'All in', desc: 'Wszystkie 250 podpunktów zaliczone', ok: () => LISTS.every(L => { const p = listProgress(L); return p.solved === p.total; }) },
+    { id: 'h_all', hidden: true, name: 'All in', desc: 'Wszystkie ' + ALLN + ' podpunktów z obu przedmiotów zaliczone', ok: () => LISTS.every(L => { const p = listProgress(L); return p.solved === p.total; }) },
     { id: 'h_run', hidden: true, name: 'Snajper', desc: '25 poprawnych odpowiedzi z rzędu, bez ani jednej pomyłki', ok: () => (S.bestRun || 0) >= 25 },
     { id: 'h_day', hidden: true, name: 'Maraton', desc: '60 rozwiązanych przykładów jednego dnia', ok: () => Object.values(S.days || {}).some(d => (d.ok || 0) >= 60) },
     { id: 'h_clean', hidden: true, name: 'Czysta robota', desc: '100 podpunktów zaliczonych za pierwszym razem, bez Przykładu i Wzorów', ok: () => (S.clean || 0) >= 100 },
   ];
-  const COOL = { h_all: 100, h_clean: 96, h_run: 92, h_day: 88, h_days5: 84, l3: 62, l2: 61, l1: 60, xp1k: 55, s25: 50, star3: 46, p3: 44, proof: 40, quick: 38, days3: 36, s10: 30, clean: 28, var: 26, s5: 20, first: 10 };
+  const COOL = { p3: 63, p2: 63, p1: 63, h_all: 100, h_clean: 96, h_run: 92, h_day: 88, h_days5: 84, l3: 62, l2: 61, l1: 60, xp1k: 55, s25: 50, star3: 46, p3: 44, proof: 40, quick: 38, days3: 36, s10: 30, clean: 28, var: 26, s5: 20, first: 10 };
   function badgeModal(b) {
     if (b.hidden) { confetti(150, innerWidth / 2, innerHeight / 3, 1.3); } else confetti(90, innerWidth / 2, innerHeight / 3, 1.1);
     SFX.star();
@@ -266,7 +280,7 @@
     T = { li, ti, L, task, idx, mode: 'orig', item: task.items[idx], origKey: itemKey(task, idx) };
     resetAttempt();
     V = { view: 'task', list: li };
-    setHash('t' + task.id.replace('.', '-'));
+    setHash('t' + task.id.replace('.', '-')); S.subj = L.subject; S.subjList = Object.assign(S.subjList || {}, { [L.subject]: li });
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -382,7 +396,7 @@
     const task = T.task; const n = task.items.length;
     let next = -1;
     for (let k = 1; k <= n; k++) { const j = (T.idx + k) % n; if (!S.items[itemKey(task, j)]) { next = j; break; } }
-    if (next < 0) { V = { view: 'list', list: T.li }; T = null; setHash('l' + (V.list + 1)); render(); return; }
+    if (next < 0) { V = { view: 'list', list: T.li }; T = null; setHash(lhash(V.list)); render(); return; }
     T.idx = next; T.mode = 'orig'; T.item = task.items[next]; T.origKey = itemKey(task, next); T.redeemed = false; resetAttempt(); render(); SFX.whoosh();
     window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
   }
@@ -415,7 +429,7 @@
   function taskDone(p, tt) {
     tt = tt || T; if (!tt) return;
     const R = 58, Cc = 2 * Math.PI * R;
-    const ring = h('div', { class: 'finring', html: `<svg viewBox="0 0 140 140"><defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="var(--xp)"/><stop offset="1" stop-color="#d97706"/></linearGradient></defs><circle cx="70" cy="70" r="${R}" class="trk"/><circle cx="70" cy="70" r="${R}" class="arc" stroke-dasharray="${Cc}" stroke-dashoffset="${Cc}"/></svg><span class="rays"></span><span class="wave"></span><span class="wave w2"></span><b class="cnt">0</b><small>/ ${p.total}</small>` });
+    const ring = h('div', { class: 'finring', html: `<svg viewBox="0 0 140 140"><defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--g3)"/><stop offset=".5" stop-color="var(--xp)"/><stop offset="1" stop-color="var(--g1)"/></linearGradient></defs><circle cx="70" cy="70" r="${R}" class="trk"/><circle cx="70" cy="70" r="${R}" class="arc" stroke-dasharray="${Cc}" stroke-dashoffset="${Cc}"/></svg><span class="rays"></span><span class="wave"></span><span class="wave w2"></span><b class="cnt">0</b><small>/ ${p.total}</small>` });
     const num = ring.querySelector('.cnt');
     if (reduced()) { ring.classList.add('boom'); num.textContent = p.total; ring.querySelector('.arc').style.strokeDashoffset = 0; }
     else {
@@ -424,9 +438,9 @@
       const tick = now => { const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3); num.textContent = Math.round(e * p.total); if (k < 1) requestAnimationFrame(tick); else { ring.classList.add('boom'); SFX.level(); confetti(220, innerWidth / 2, innerHeight / 2 - 60, 1.5, 'gold'); setTimeout(() => confetti(120, innerWidth / 2, innerHeight / 2 - 60, 1.1), 260); } };
       requestAnimationFrame(tick);
     }
-    modal([h('div', { class: 'muted' }, 'Zadanie ' + tt.task.id), ring, h('h2', { class: 'fintitle' }, 'Komplet!'),
-      h('p', {}, 'Wszystkie ' + p.total + ' ' + (p.total % 10 >= 2 && p.total % 10 <= 4 && (p.total % 100 < 12 || p.total % 100 > 14) ? 'podpunkty zaliczone' : p.total === 1 ? 'podpunkt zaliczony' : 'podpunktów zaliczonych') + '. Podobne przykłady możesz dalej robić dla treningu i XP.'),
-      h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { closeOverlays(); const li = tt.li; T = null; V = { view: 'list', list: li }; setHash('l' + (li + 1)); render(); } }, 'Wróć do mapy'), h('button', { class: 'btn', onclick: closeOverlays }, 'Zostań'))]);
+    modal([h('div', { class: 'muted' }, 'Zadanie ' + tid(tt.task)), ring, h('h2', { class: 'fintitle' }, 'Komplet!'),
+      h('p', {}, (p.total === 1 ? 'Podpunkt zaliczony' : 'Wszystkie ' + p.total + ' ' + (p.total % 10 >= 2 && p.total % 10 <= 4 && (p.total % 100 < 12 || p.total % 100 > 14) ? 'podpunkty zaliczone' : 'podpunktów zaliczonych')) + '. Podobne przykłady możesz dalej robić dla treningu i XP.'),
+      h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { closeOverlays(); const li = tt.li; T = null; V = { view: 'list', list: li }; setHash(lhash(li)); render(); } }, 'Wróć do mapy'), h('button', { class: 'btn', onclick: closeOverlays }, 'Zostań'))]);
   }
   function quickDone() {
     const q = T.quick; S.quickBest = Math.max(S.quickBest || 0, q.score); checkBadges(); save();
@@ -503,11 +517,11 @@
   function setHash(x) { S.last = x; save(); try { if (location.hash !== '#' + x) history.replaceState(null, '', '#' + x); } catch (e) { /* ignoruj */ } }
   function fromHash() {
     const hs = (location.hash || '').slice(1);
-    if (/^l[123]$/.test(hs)) { V = { view: 'list', list: +hs[1] - 1 }; return; }
+    { const li = LISTS.findIndex(L => L.id === hs); if (li >= 0) { V = { view: 'list', list: li }; return; } }
     if (hs === 'stats') { V = { view: 'stats', list: V.list }; return; }
     if (hs === 'ranking') { V = { view: 'rank', list: V.list }; return; }
-    const m = hs.match(/^t(\d+)-(\d+)$/);
-    if (m) { const li = +m[1] - 1, task = LISTS[li] && LISTS[li].tasks.findIndex(t => t.id === m[1] + '.' + m[2]); if (task >= 0) { startTask(li, task); return 'started'; } }
+    const m = hs.match(/^t(P?\d+)-(\d+)$/);
+    if (m) { const id = m[1] + '.' + m[2]; for (let li = 0; li < LISTS.length; li++) { const task = LISTS[li].tasks.findIndex(t => t.id === id); if (task >= 0) { startTask(li, task); return 'started'; } } }
     V = { view: 'list', list: 0 };
   }
 
@@ -516,8 +530,8 @@
   function render() {
     const root = app(); root.innerHTML = '';
     const hue = (V.view === 'stats' || V.view === 'rank') ? 'st' : LISTS[V.list].hue;
-    document.body.className = 'h-' + hue;
-    root.append(topBar(), h('div', { class: 'wrap' }, tabs(), V.view === 'list' ? listView() : V.view === 'stats' ? statsView() : V.view === 'rank' ? rankView() : taskView()));
+    document.body.className = 'h-' + hue + ((V.view === 'list' || V.view === 'task') && subjOf(V.list) === 'pro' ? ' s-pro' : '');
+    root.append(topBar(), h('div', { class: 'wrap' }, subjBar(), tabs(), V.view === 'list' ? listView() : V.view === 'stats' ? statsView() : V.view === 'rank' ? rankView() : taskView()));
     if (V.view === 'list') requestAnimationFrame(drawTrail);
     if (V.view === 'task') requestAnimationFrame(() => { if (T && T.status === 'answering') focusField(T.focus || 0, true); });
   }
@@ -542,7 +556,7 @@
   function topBar() {
     const lv = levelInfo(S.xp);
     const top = h('header', { class: 'top' }, h('div', { class: 'wrap' },
-      h('button', { class: 'logo', 'aria-label': 'Algebrownia — mapa', onclick: () => { T = null; V = { view: 'list', list: V.list }; setHash('l' + (V.list + 1)); render(); } }, h('span', { html: logoSVG }), h('b', {}, 'Algebrownia')),
+      h('button', { class: 'logo', 'aria-label': 'Matematyka — mapa', onclick: () => { T = null; V = { view: 'list', list: V.list }; setHash(lhash(V.list)); render(); } }, h('span', { html: logoSVG }), h('b', {}, 'Matematyka')),
       h('div', { class: 'spacer' }),
       h('div', { class: 'player' },
         h('div', { class: 'lvl', title: 'Poziom ' + lv.L, html: ringSVG(lv.into / lv.need, 42, 4, 'var(--xp)') + `<span style="position:relative">${lv.L}</span>` }),
@@ -551,12 +565,30 @@
       h('button', { class: 'iconbtn', 'aria-label': S.sound ? 'Wycisz dźwięki' : 'Włącz dźwięki', title: S.sound ? 'Dźwięk włączony' : 'Dźwięk wyłączony', html: S.sound ? IC.sound : IC.mute, onclick: () => { S.sound = !S.sound; save(); renderTop(); if (S.sound) SFX.correct(); } })));
     return top;
   }
+  function goSubject(sid) {
+    S.subj = sid; S.subjList = S.subjList || {};
+    const li = S.subjList[sid] != null && subjOf(S.subjList[sid]) === sid ? S.subjList[sid] : subjLists(sid)[0];
+    T = null; V = { view: 'list', list: li }; save(); setHash(lhash(li)); render();
+  }
+  function subjBar() {
+    const cur = curSubj();
+    const bar = h('nav', { class: 'subjbar', 'aria-label': 'Przedmioty' });
+    SUBJ.forEach(sb => {
+      const p = subjProgress(sb.id), on = sb.id === cur;
+      bar.append(h('button', { class: 'subj' + (on ? ' on' : ''), 'data-s': sb.id, 'aria-pressed': on ? 'true' : 'false', onclick: () => { if (on && (V.view === 'list' || V.view === 'task')) return; SFX.click(); goSubject(sb.id); } },
+        h('span', { class: 'sname' }, h('span', { class: 'full' }, sb.name), h('span', { class: 'short' }, sb.short)),
+        h('span', { class: 'spct' }, Math.round(100 * p.solved / Math.max(1, p.total)) + '%')));
+    });
+    return bar;
+  }
   function tabs() {
     const bar = h('nav', { class: 'tabs', role: 'tablist', 'aria-label': 'Listy zadań' });
+    const cs = curSubj();
     LISTS.forEach((L, i) => {
+      if (L.subject !== cs) return;
       const p = listProgress(L);
       const sel = (V.view !== 'stats') && V.list === i;
-      bar.append(h('button', { class: 'tab h-' + L.hue, role: 'tab', 'aria-selected': sel ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'list', list: i }; S.tab = 'l' + (i + 1); save(); setHash('l' + (i + 1)); render(); } },
+      bar.append(h('button', { class: 'tab h-' + L.hue, role: 'tab', 'aria-selected': sel ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'list', list: i }; S.tab = lhash(i); S.subj = L.subject; S.subjList = Object.assign(S.subjList || {}, { [L.subject]: i }); save(); setHash(lhash(i)); render(); } },
         h('span', { class: 'ring', html: ringSVG(p.solved / p.total, 30, 4, 'var(--hue)') }),
         h('span', { class: 'lbl' }, h('b', {}, L.title), h('small', {}, p.solved + '/' + p.total + ' podpunktów'))));
     });
@@ -571,7 +603,7 @@
     const L = LISTS[V.list]; const p = listProgress(L);
     const wrap = h('section', { class: 'h-' + L.hue });
     const hero = h('div', { class: 'hero' },
-      h('div', {}, h('h1', {}, L.title + ' · ', h('span', {}, L.name)), mdEl('p', L.blurb)),
+      h('div', {}, h('div', { class: 'eyebrow' }, (SUBJ.find(x => x.id === L.subject) || SUBJ[0]).name), h('h1', {}, L.title + ' · ', h('span', {}, L.name)), mdEl('p', L.blurb)),
       h('div', { class: 'acts' },
         h('button', { class: 'btn primary', onclick: () => { const ti = L.tasks.findIndex(t => taskProgress(t).solved < t.items.length); startTask(V.list, ti < 0 ? 0 : ti); } }, h('span', { html: IC.next }), p.solved ? 'Kontynuuj' : 'Zacznij'),
         h('button', { class: 'btn', onclick: () => startQuick(V.list), title: '10 losowych przykładów' }, h('span', { html: IC.bolt }), 'Szybka runda')));
@@ -582,7 +614,7 @@
     L.tasks.forEach((t, i) => {
       const tp = taskProgress(t);
       const node = h('button', { class: 'node ' + pos[i % 4] + (tp.solved === tp.total ? ' done' : ''), style: `animation-delay:${i * 45}ms`, onclick: () => { SFX.click(); startTask(V.list, i); } },
-        h('span', { class: 'disc', html: ringSVG(tp.solved / tp.total, 64, 6, 'var(--hue)') + `<b>${t.id}</b>` }),
+        h('span', { class: 'disc', html: ringSVG(tp.solved / tp.total, 64, 6, 'var(--hue)') + `<b>${tid(t)}</b>` }),
         h('span', { class: 'meta' }, mdEl('h3', t.name), h('small', {}, `${tp.solved}/${tp.total} podpunktów` + (t.proof ? ' · dowód' : '')), pbarEl(tp.solved, tp.total, { cls: 'mini' })));
       path.append(node);
     });
@@ -607,8 +639,8 @@
     const sec = h('section', { class: 'h-' + L.hue });
     const quick = T.mode === 'quick';
     const head = h('div', { class: 'taskhead' },
-      h('button', { class: 'iconbtn', 'aria-label': 'Wróć do mapy', html: IC.back, onclick: () => { SFX.click(); const li = T.li; T = null; V = { view: 'list', list: li }; setHash('l' + (li + 1)); render(); } }),
-      quick ? h('h2', {}, 'Szybka runda · ', h('span', {}, L.title)) : mdEl('h2', `<span>${task.id}</span> ` + task.name),
+      h('button', { class: 'iconbtn', 'aria-label': 'Wróć do mapy', html: IC.back, onclick: () => { SFX.click(); const li = T.li; T = null; V = { view: 'list', list: li }; setHash(lhash(li)); render(); } }),
+      quick ? h('h2', {}, 'Szybka runda · ', h('span', {}, L.title)) : mdEl('h2', `<span>${tid(task)}</span> ` + task.name),
       h('div', { class: 'spacer' }),
       quick ? h('span', { class: 'chip' }, h('span', { html: IC.bolt }), String(T.quick.score)) : (() => {
         const tp = taskProgress(task), f = tp.solved / tp.total, burst = !!T.justDone; T.justDone = false;
@@ -631,13 +663,13 @@
       });
       sec.append(dots);
     }
-    sec.append(h('div', { class: 'statement' }, h('div', { class: 'slabel' }, 'Zadanie ' + task.id + ' · treść z listy'), mdEl('div', task.statement, { class: 'stx' })));
+    sec.append(h('div', { class: 'statement' }, h('div', { class: 'slabel' }, 'Zadanie ' + tid(task) + ' · treść z listy'), mdEl('div', task.statement, { class: 'stx' })));
     // karta
     const card = h('article', { class: 'card', id: 'card' });
     const kick = h('div', { class: 'kicker' });
-    if (quick) kick.append(h('span', { class: 'badge q' }, 'Zad. ' + task.id), mdEl('span', task.name));
-    else if (T.mode === 'var') kick.append(h('span', { class: 'badge var' }, 'Podobny przykład'), md('do ' + (task.items[T.idx].label || task.id)), pdots());
-    else kick.append(h('span', { class: 'badge' }, task.id + (it.label ? ' · ' : '')), it.label ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', !['order', 'guided'].includes(it.type || 'fields') && T.task.gen ? pdots() : '');
+    if (quick) kick.append(h('span', { class: 'badge q' }, 'Zad. ' + tid(task)), mdEl('span', task.name));
+    else if (T.mode === 'var') kick.append(h('span', { class: 'badge var' }, 'Podobny przykład'), md('do ' + (task.items[T.idx].label || tid(task))), pdots());
+    else kick.append(h('span', { class: 'badge' }, tid(task) + (it.label ? ' · ' : '')), it.label ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', !['order', 'guided'].includes(it.type || 'fields') && T.task.gen ? pdots() : '');
     card.append(kick); if (it.q !== task.statement) card.append(mdEl('div', it.q, { class: 'question' }));
     const type = it.type || 'fields';
     if (type === 'fields') card.append(mcUI(it));
@@ -927,7 +959,7 @@
       bar.append(h('div', { class: 'spacer' }));
       bar.append(h('div', { class: 'life' },
         h('button', { class: 'btn small' + (T.usedW ? ' used' : ''), onclick: showWzory, title: 'Koło ratunkowe 1: wzory i definicje' }, h('span', { html: IC.bulb }), 'Wzory'),
-        h('button', { class: 'btn small' + (T.usedP ? ' used' : ''), onclick: showPrzyklad, title: 'Koło ratunkowe 2: podobny przykład z rozwiązaniem' }, h('span', { html: IC.book }), 'Przykład')));
+        T.task.gen ? h('button', { class: 'btn small' + (T.usedP ? ' used' : ''), onclick: showPrzyklad, title: 'Koło ratunkowe 2: podobny przykład z rozwiązaniem' }, h('span', { html: IC.book }), 'Przykład') : ''));
     }
     return bar;
   }
@@ -1041,6 +1073,51 @@
   const avatar = name => { let hs = 0; for (const ch of name) hs = (hs * 31 + ch.charCodeAt(0)) >>> 0; const ini = /^Anon \d+$/.test(name) ? 'A' + name.slice(5) : name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(); return h('span', { class: 'av', style: '--c:' + AV[hs % AV.length] }, ini); };
   let rankMode = 'all';
   const streakPill = n => (n > 1 ? h('span', { class: 'rstreak', title: 'Seria: ' + n + (n === 1 ? ' dzień' : ' dni') + ' nauki z rzędu', html: IC.flame + '<span>' + n + '</span>' }) : '');
+  function bigSparkSVG(series) {
+    if (!series || !series.length) return '';
+    if (series[0] > 0) series = [0, ...series];
+    const W = 340, H = 96, padX = 12, top = 22, bot = 10, n = series.length, max = Math.max(1, ...series);
+    const x = i => (n === 1 ? W - padX : padX + (W - 2 * padX) * i / (n - 1)), y = v => H - bot - (H - top - bot) * v / max;
+    const line = series.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+    const id = 'bg' + Math.random().toString(36).slice(2, 8);
+    // liczby nad kropkami: przy każdym przyroście, bez nachodzenia na siebie; ostatnia zawsze
+    const show = new Set([n - 1]); let lastX = -99;
+    for (let i = 0; i < n - 1; i++) { if (i > 0 && series[i] === series[i - 1]) continue; if (x(i) - lastX < 24 || x(n - 1) - x(i) < 24) continue; show.add(i); lastX = x(i); }
+    const dots = series.map((v, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${i === n - 1 ? 3.6 : 2.4}" class="${i === n - 1 ? 'bd last' : 'bd'}" style="--i:${i}"/>`).join('');
+    const labs = [...show].map(i => `<text x="${x(i).toFixed(1)}" y="${(y(series[i]) - 8).toFixed(1)}" text-anchor="${i === n - 1 ? 'end' : 'middle'}" class="${i === n - 1 ? 'bl last' : 'bl'}" style="--i:${i}">${series[i]}</text>`).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Łącznie rozwiązane przykłady dzień po dniu"><defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".32"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>`
+      + `<path d="${line} L${x(n - 1).toFixed(1)} ${H - bot} L${x(0).toFixed(1)} ${H - bot} Z" fill="url(#${id})"/>`
+      + `<path class="bln" pathLength="1" d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${labs}</svg>`;
+  }
+  // podział zaliczonych podpunktów na przedmioty: wiersz rankingu albo ja
+  function subjCounts(r) {
+    if (r.me) return Object.fromEntries(SUBJ.map(sb => [sb.id, subjProgress(sb.id).solved]));
+    const o = {};
+    if (typeof r.subj === 'string' && r.subj) r.subj.split(',').forEach(kv => { const [k, v] = kv.split(':'); if (k && isFinite(+v)) o[k] = +v; });
+    else o.alg = r.solved || 0; // starsze wpisy: przed proseminarium wszystko było algebrą
+    return o;
+  }
+  const canHover = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches; } catch (e) { return false; } };
+  // wiersz rankingu: po najechaniu (komputer) albo dotknięciu (telefon) pasek dzieli się na przedmioty, a wykres się powiększa
+  function rankRow(r, i, total, valTxt, valSub, extraCls) {
+    const lv = levelInfo(r.xp), series = r.me ? mySeries() : sparkOf(r), sj = subjCounts(r);
+    const segs = SUBJ.map(sb => ({ sb, n: sj[sb.id] || 0 }));
+    const solved = r.me ? summary().solved : r.solved;
+    const split = h('div', { class: 'bar split', 'aria-hidden': 'true' }, ...segs.filter(sg => sg.n).map((sg, k) => h('i', { style: `width:${Math.min(100, 100 * sg.n / total)}%;background:${sg.sb.color};--k:${k}` })));
+    const leg = h('div', { class: 'rsub' }, ...segs.map(sg => h('span', {}, h('i', { style: 'background:' + sg.sb.color }), sg.sb.short + ' ', h('b', {}, String(sg.n)))), h('span', { class: 'rof' }, 'z ' + total));
+    const li = h('li', { class: 'rrow' + (r.me ? ' me' : '') + (extraCls || ''), style: `animation-delay:${i * 30}ms`, tabindex: '0', 'aria-expanded': 'false' },
+      h('span', { class: 'rpos' }, i < 0 ? '–' : String(i + 1)), avatar(r.name),
+      h('div', { class: 'rwho' }, h('b', {}, r.name, r.me ? h('span', { class: 'you' }, 'Ty') : '', streakPill(r.streak)), h('small', {}, lv.title + ' · ' + solved + '/' + total),
+        h('div', { class: 'bar plain' }, h('i', { style: `width:${Math.min(100, 100 * solved / total)}%` })), split, leg),
+      h('div', { class: 'rspark', html: sparkSVG(series), style: `--d:${Math.max(0, i) * 60}ms`, title: 'Łącznie rozwiązane przykłady dzień po dniu' }),
+      h('div', { class: 'rxp' }, h('b', {}, valTxt), h('small', {}, valSub)),
+      h('div', { class: 'rbig', html: series && series.length ? bigSparkSVG(series) : '' }));
+    const set = on => { li.classList.toggle('open', on); li.setAttribute('aria-expanded', String(on)); };
+    if (canHover()) { li.addEventListener('mouseenter', () => set(true)); li.addEventListener('mouseleave', () => set(false)); }
+    else li.addEventListener('click', () => { const on = !li.classList.contains('open'); document.querySelectorAll('.rrow.open').forEach(x => x !== li && (x.classList.remove('open'), x.setAttribute('aria-expanded', 'false'))); set(on); SFX.click(); });
+    li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set(!li.classList.contains('open')); } });
+    return li;
+  }
   function rankView() {
     const sec = h('section', { class: 'h-st' });
     const P = window.AQRank;
@@ -1051,10 +1128,7 @@
         h('button', { class: 'btn small', onclick: renameDialog }, 'Zmień nazwę'),
         h('div', { class: 'mepos' }, h('small', {}, 'XP'), h('b', {}, String(S.xp)))));
       const list = h('ol', { class: 'rlist' });
-      list.append(h('li', { class: 'rrow me' }, h('span', { class: 'rpos' }, '–'), avatar(nm),
-        h('div', { class: 'rwho' }, h('b', {}, nm, h('span', { class: 'you' }, 'Ty')), h('small', {}, lv.title + ' · ' + sm.solved + '/' + sm.total), h('div', { class: 'bar' }, h('i', { style: `width:${100 * sm.solved / sm.total}%` }))),
-        h('div', { class: 'rspark', html: sparkSVG(mySeries()) }),
-        h('div', { class: 'rxp' }, h('b', {}, String(S.xp)), h('small', {}, 'XP'))));
+      list.append(rankRow({ me: true, name: nm, xp: S.xp, streak: 0 }, -1, sm.total, String(S.xp), 'XP'));
       sec.append(list, h('p', { class: 'demo-note' }, P.status === 'error' ? 'Wyniki innych graczy są chwilowo niedostępne.' : 'Wczytywanie wyników innych graczy…'));
       return sec;
     }
@@ -1075,14 +1149,8 @@
     sec.append(seg);
     const list = h('ol', { class: 'rlist' });
     const total = summary().total;
-    rows.forEach((r, i) => {
-      const lv = levelInfo(r.xp);
-      list.append(h('li', { class: 'rrow' + (r.me ? ' me' : ''), style: `animation-delay:${i * 30}ms` },
-        h('span', { class: 'rpos' }, String(i + 1)), avatar(r.name),
-        h('div', { class: 'rwho' }, h('b', {}, r.name, r.me ? h('span', { class: 'you' }, 'Ty') : '', streakPill(r.streak)), h('small', {}, lv.title + ' · ' + r.solved + '/' + total), h('div', { class: 'bar' }, h('i', { style: `width:${Math.min(100, 100 * r.solved / total)}%` }))),
-        h('div', { class: 'rspark', html: sparkSVG(sparkOf(r)), style: `--d:${i * 60}ms`, title: 'Łącznie rozwiązane przykłady dzień po dniu' }),
-        h('div', { class: 'rxp' }, h('b', {}, String(r[key])), h('small', {}, rankMode === 'week' ? 'XP w tym tyg.' : 'XP'))));
-    });
+    rows.forEach((r, i) => list.append(rankRow(r, i, total, String(r[key]), rankMode === 'week' ? 'XP w tym tyg.' : 'XP')));
+    sec.append(h('p', { class: 'rhint' }, canHover() ? 'Najedź na gracza, żeby zobaczyć podział na przedmioty i dokładny wykres.' : 'Dotknij gracza, żeby zobaczyć podział na przedmioty i dokładny wykres.'));
     sec.append(list);
     if (!window.AQRank) sec.append(h('p', { class: 'demo-note' }, 'Podgląd: pozostali gracze to przykładowe dane. Twój wiersz liczy się na żywo.'));
     return sec;
@@ -1098,19 +1166,27 @@
     sec.append(h('div', { class: 'kpis' },
       kpi('Poziom', String(lv.L), lv.title),
       kpi('Doświadczenie', S.xp + ' XP', lv.max ? 'poziom maksymalny' : (lv.need - lv.into) + ' XP do kolejnego'),
-      kpi('Zaliczone podpunkty', solved + '/' + totalItems, Math.round(100 * solved / totalItems) + '% wszystkich list'),
+      kpi('Zaliczone podpunkty', solved + '/' + totalItems, Math.round(100 * solved / totalItems) + '% obu przedmiotów'),
       kpi('Rozwiązane przykłady', String(S.correct), 'łącznie z podobnymi'),
       kpi('Podobne przykłady', String(S.variants), (() => { const n = Object.values(S.practice || {}).filter(x => x > 0).length; return n ? 'ćwiczone w ' + n + (n === 1 ? ' podpunkcie' : ' podpunktach') : 'dodatkowe ćwiczenia do podpunktów'; })()),
       kpi('Dni nauki z rzędu', String(curStreak()), (() => { const n = (S.days[today()] || {}).ok || 0, m10 = n % 10, m100 = n % 100; return 'dzisiaj: ' + n + (n === 1 ? ' przykład' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? ' przykłady' : ' przykładów'); })())));
-    sec.append(h('h2', { class: 'sec' }, 'Listy'));
+    sec.append(h('h2', { class: 'sec' }, 'Przedmioty i listy'));
     const lp = h('div', { class: 'lp' });
-    LISTS.forEach(L => {
+    SUBJ.forEach(sb => {
+      const sp = subjProgress(sb.id), ids = subjLists(sb.id);
+      const stack = h('div', { class: 'stack', role: 'img', 'aria-label': sb.name + ': ' + sp.solved + ' z ' + sp.total + ' podpunktów' });
+      ids.forEach(i => { const p = listProgress(LISTS[i]); const seg = h('i', { class: 'h-' + LISTS[i].hue, title: LISTS[i].title + ': ' + p.solved + '/' + p.total, style: 'width:0' }); stack.append(seg); requestAnimationFrame(() => { seg.style.width = (100 * p.solved / Math.max(1, sp.total)) + '%'; }); });
+      const legend = h('div', { class: 'legend' }, ids.map(i => { const p = listProgress(LISTS[i]); return h('span', { class: 'h-' + LISTS[i].hue }, h('i'), LISTS[i].title + ' ', h('b', {}, p.solved + '/' + p.total)); }));
+      lp.append(h('div', { class: 'subjcard' }, h('div', { class: 'shead' }, h('b', {}, sb.name), h('span', {}, sp.solved + '/' + sp.total + ' podpunktów · ', h('b', {}, Math.round(100 * sp.solved / Math.max(1, sp.total)) + '%'))), stack, legend));
+      ids.forEach(i => lp.append(lrow(LISTS[i])));
+    });
+    function lrow(L) {
       const p = listProgress(L);
       const row = h('div', { class: 'lprow h-' + L.hue }, h('b', {}, L.title + ' · ' + L.name), h('span', { class: 'muted' }, `${p.solved}/${p.total} podpunktów · zadania ${p.done}/${p.tasks}`), h('div', { class: 'bar' }, h('i', { style: 'width:0' })),
-        h('div', { class: 'tasks' }, L.tasks.map(t => { const tp = taskProgress(t); return h('span', { class: 'tpill' + (tp.done ? ' s3' : tp.solved ? ' s1' : ''), title: `${tp.solved}/${tp.total}` }, t.id + (tp.done ? ' ✓' : '')); })));
+        h('div', { class: 'tasks' }, L.tasks.map(t => { const tp = taskProgress(t); return h('span', { class: 'tpill' + (tp.done ? ' s3' : tp.solved ? ' s1' : ''), title: `${tp.solved}/${tp.total}` }, tid(t) + (tp.done ? ' ✓' : '')); })));
       requestAnimationFrame(() => { row.querySelector('.bar i').style.width = (100 * p.solved / p.total) + '%'; });
-      lp.append(row);
-    });
+      return row;
+    }
     sec.append(lp);
     sec.append(h('h2', { class: 'sec' }, 'Twoje postępy'), activityChart());
     sec.append(h('h2', { class: 'sec' }, 'Odznaki'));
@@ -1221,7 +1297,8 @@
   function summary() {
     let solved = 0, total = 0;
     for (const L of LISTS) { const p = listProgress(L); solved += p.solved; total += p.total; }
-    return { xp: S.xp, level: levelInfo(S.xp).L, solved, total, correct: S.correct, attempts: S.correct, best: 0 };
+    const subj = SUBJ.map(sb => sb.id + ':' + subjProgress(sb.id).solved).join(',');
+    return { xp: S.xp, level: levelInfo(S.xp).L, solved, total, subj, correct: S.correct, attempts: S.correct, best: 0 };
   }
   A.ui = { mySeries, curStreak, weekKey, myWeekXP, myName, h, IC, md, toast, SFX, confetti, levelInfo, summary, getS: () => S, setS: ns => { S = Object.assign(blank(), ns); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } }, render: () => { if (booted) render(); }, isRank: () => V.view === 'rank', closeOverlays, modal };
   if (window.AQRank && window.AQRank.init) window.AQRank.init();
