@@ -92,11 +92,11 @@
   /* ---------------- konfetti ---------------- */
   let fxCanvas = null, parts = [], fxRun = false;
   const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function confetti(n = 60, x = innerWidth / 2, y = innerHeight / 2.2, spread = 1) {
+  function confetti(n = 60, x = innerWidth / 2, y = innerHeight / 2.2, spread = 1, pal) {
     if (reduced()) return;
     if (!fxCanvas) { fxCanvas = h('canvas', { class: 'fx' }); document.body.append(fxCanvas); }
     const cs = getComputedStyle(document.documentElement);
-    const cols = ['--xp', '--l1', '--l2', '--l3', '--brand', '--ok'].map(v => cs.getPropertyValue(v).trim() || '#fc0');
+    const cols = pal === 'gold' ? ['#fde68a', '#fbbf24', '#f59e0b', '#d97706', '#fff7d6', cs.getPropertyValue('--xp').trim() || '#fc0'] : ['--xp', '--l1', '--l2', '--l3', '--brand', '--ok'].map(v => cs.getPropertyValue(v).trim() || '#fc0');
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2, s = (4 + Math.random() * 8) * spread;
       parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 6 * spread, r: 3 + Math.random() * 5, c: cols[i % cols.length], rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, life: 90 + Math.random() * 50, sh: Math.random() < 0.3 ? 1 : 0 });
@@ -158,18 +158,43 @@
     let solved = 0, practiced = 0, practicable = 0;
     t.items.forEach((it, i) => { const k = itemKey(t, i); if (S.items[k]) solved++; if (!['order', 'guided'].includes(it.type || 'fields')) { practicable++; if ((S.practice || {})[k] >= 1) practiced++; } });
     const total = t.items.length;
-    let stars = 0;
-    if (solved >= Math.ceil(total / 2)) stars = 1;
-    if (solved === total) stars = 2;
-    if (solved === total && practiced >= practicable) stars = 3;
-    return { solved, total, stars, practiced, practicable };
+    return { solved, total, done: solved === total, practiced, practicable };
   }
   function listProgress(L) {
-    let s = 0, t = 0, stars = 0;
-    for (const task of L.tasks) { const p = taskProgress(task); s += p.solved; t += p.total; stars += p.stars; }
-    return { solved: s, total: t, stars, maxStars: L.tasks.length * 3 };
+    let s = 0, t = 0, done = 0;
+    for (const task of L.tasks) { const p = taskProgress(task); s += p.solved; t += p.total; if (p.done) done++; }
+    return { solved: s, total: t, done, tasks: L.tasks.length };
   }
-  const starsEl = (n, max = 3) => h('span', { class: 'stars', 'aria-label': n + ' z ' + max + ' gwiazdek', html: Array.from({ length: max }, (_, i) => IC.star.replace('<svg', `<svg class="${i < n ? 'on' : 'off'}"`)).join('') });
+  // żółty pasek postępu zadania; prev — poprzedni ułamek (do animacji przyrostu)
+  function pbarEl(solved, total, opts = {}) {
+    const f = total ? solved / total : 0, full = solved >= total && total > 0;
+    const i = h('i', { style: 'width:' + (100 * (opts.from != null ? opts.from : f)) + '%' });
+    const el = h('div', { class: 'pbar' + (full && !opts.burst ? ' full' : '') + (opts.cls ? ' ' + opts.cls : ''), role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(total), 'aria-valuenow': String(solved), 'aria-label': solved + ' z ' + total + ' podpunktów' }, i);
+    if (opts.from != null && opts.from !== f) requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = (100 * f) + '%'; }));
+    if (opts.burst) setTimeout(() => barBurst(el), 950);
+    return el;
+  }
+  function barBurst(el) {
+    if (!el.isConnected) return;
+    el.classList.add('full', 'burst');
+    const r = el.getBoundingClientRect(), x = r.right - 4, y = r.top + r.height / 2;
+    SFX.level();
+    confetti(110, x, y, 1.1, 'gold');
+    if (!reduced()) {
+      const flash = h('div', { class: 'barflash', style: `left:${r.left - 12}px;top:${r.top - 12}px;width:${r.width + 24}px;height:${r.height + 24}px` });
+      const ring = h('div', { class: 'shock', style: `left:${x}px;top:${y}px` });
+      document.body.append(flash, ring);
+      for (let k = 0; k < 22; k++) {
+        const a = Math.PI * 2 * k / 22 + Math.random() * 0.3, d = 50 + Math.random() * 70;
+        const sp = h('div', { class: 'spark', style: `left:${x}px;top:${y}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;animation-delay:${Math.random() * 80}ms` });
+        document.body.append(sp); setTimeout(() => sp.remove(), 1000);
+      }
+      const lab = h('div', { class: 'komplet', style: `left:${Math.min(innerWidth - 100, Math.max(100, r.left + r.width / 2))}px;top:${r.top - 6}px` }, 'KOMPLET!');
+      document.body.append(lab);
+      setTimeout(() => { flash.remove(); ring.remove(); }, 900); setTimeout(() => lab.remove(), 1700);
+    }
+    setTimeout(() => el.classList.remove('burst'), 1200);
+  }
   function ringSVG(frac, size, stroke, color) {
     const r = (size - stroke) / 2, c = 2 * Math.PI * r;
     return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--line)" stroke-width="${stroke}"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - Math.max(0, Math.min(1, frac)))}" style="transition:stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1)"/></svg>`;
@@ -185,7 +210,7 @@
     { id: 'var', name: 'Trening czyni mistrza', desc: '10 poprawnych podobnych przykładów', ok: () => S.variants >= 10 },
     { id: 'p3', name: 'Opanowane', desc: 'Pełna seria 3 podobnych w 10 podpunktach', ok: () => Object.values(S.practice || {}).filter(x => x >= 3).length >= 10 },
     { id: 'proof', name: 'Dowodziciel', desc: '5 poprawnie ułożonych dowodów', ok: () => S.proofs >= 5 },
-    { id: 'star3', name: 'Perfekcjonista', desc: 'Pierwsze zadanie na 3 gwiazdki', ok: () => LISTS.some(L => L.tasks.some(t => taskProgress(t).stars === 3)) },
+    { id: 'star3', name: 'Perfekcjonista', desc: 'Pierwsze zadanie ukończone w całości', ok: () => LISTS.some(L => L.tasks.some(t => taskProgress(t).done)) },
     { id: 'l1', name: 'Ciało ukończone', desc: 'Wszystkie zadania z Listy 1', ok: () => { const p = listProgress(LISTS[0]); return p.solved === p.total; } },
     { id: 'l2', name: 'Zespolony umysł', desc: 'Wszystkie zadania z Listy 2', ok: () => { const p = listProgress(LISTS[1]); return p.solved === p.total; } },
     { id: 'l3', name: 'Pan pierwiastków', desc: 'Wszystkie zadania z Listy 3', ok: () => { const p = listProgress(LISTS[2]); return p.solved === p.total; } },
@@ -197,15 +222,21 @@
     { id: 'h_all', hidden: true, name: 'All in', desc: 'Wszystkie 250 podpunktów zaliczone', ok: () => LISTS.every(L => { const p = listProgress(L); return p.solved === p.total; }) },
     { id: 'h_run', hidden: true, name: 'Snajper', desc: '25 poprawnych odpowiedzi z rzędu, bez ani jednej pomyłki', ok: () => (S.bestRun || 0) >= 25 },
     { id: 'h_day', hidden: true, name: 'Maraton', desc: '60 rozwiązanych przykładów jednego dnia', ok: () => Object.values(S.days || {}).some(d => (d.ok || 0) >= 60) },
-    { id: 'h_gold', hidden: true, name: 'Złota lista', desc: '3 gwiazdki we wszystkich zadaniach jednej listy', ok: () => LISTS.some(L => L.tasks.every(t => taskProgress(t).stars === 3)) },
+    { id: 'h_clean', hidden: true, name: 'Czysta robota', desc: '100 podpunktów zaliczonych za pierwszym razem, bez Przykładu i Wzorów', ok: () => (S.clean || 0) >= 100 },
   ];
+  const COOL = { h_all: 100, h_clean: 96, h_run: 92, h_day: 88, h_days5: 84, l3: 62, l2: 61, l1: 60, xp1k: 55, s25: 50, star3: 46, p3: 44, proof: 40, quick: 38, days3: 36, s10: 30, clean: 28, var: 26, s5: 20, first: 10 };
+  function badgeModal(b) {
+    if (b.hidden) { confetti(150, innerWidth / 2, innerHeight / 3, 1.3); } else confetti(90, innerWidth / 2, innerHeight / 3, 1.1);
+    SFX.star();
+    const more = CQ.length;
+    modal([h('div', { class: 'muted' }, b.hidden ? 'Ukryta odznaka!' : 'Nowa odznaka'), h('div', { class: 'bico' + (b.hidden ? ' gold' : ''), html: b.hidden ? IC.star : IC.trophy }), h('h2', {}, b.name), h('p', {}, b.desc + (b.hidden ? ' · +100 XP' : '')),
+      h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: closeOverlays }, more ? 'Dalej (' + more + ')' : 'Dalej'))]);
+    if (b.hidden) gainXP(100, document.querySelector('.modal h2'));
+    { const bt = document.querySelector('.modal .btn.primary'); if (bt) bt.textContent = CQ.length ? 'Dalej (' + CQ.length + ')' : 'Dalej'; }
+    save(); if (V.view === 'stats') render();
+  }
   function checkBadges() {
-    let d = 0;
-    for (const b of BADGES) if (!S.badges[b.id] && b.ok()) {
-      S.badges[b.id] = today();
-      if (b.hidden) { const w = 700 + (d++) * 1600; setTimeout(() => { toast('Ukryta odznaka: ' + b.name, b.desc + ' · +100 XP', 'star'); SFX.star(); gainXP(100); confetti(70, undefined, undefined, 1); save(); if (V.view === 'stats') render(); }, w); }
-      else setTimeout(() => { toast('Odznaka: ' + b.name, b.desc); SFX.star(); }, 700);
-    }
+    for (const b of BADGES) if (!S.badges[b.id] && b.ok()) { S.badges[b.id] = today(); celebrate(1000 + (COOL[b.id] || 0), () => badgeModal(b)); }
   }
 
   /* ---------------- nagradzanie ---------------- */
@@ -222,7 +253,7 @@
     S.xpDays = S.xpDays || {}; S.xpDays[today()] = (S.xpDays[today()] || 0) + n;
     const before = levelInfo(S.xp).L; S.xp += n; const after = levelInfo(S.xp);
     xpFloat('+' + n + ' XP', anchor);
-    if (after.L > before) setTimeout(() => levelUp(after), 900);
+    if (after.L > before) celebrate(400, () => levelUp(levelInfo(S.xp)));
   }
 
   /* ---------------- sesja zadania ---------------- */
@@ -267,7 +298,7 @@
   }
   function submit() {
     if (T.status !== 'answering') return;
-    T.starsBefore = T.mode === 'quick' ? 0 : taskProgress(T.task).stars;
+    T.doneBefore = T.mode === 'quick' ? true : taskProgress(T.task).done; T.prevFrac = T.mode === 'quick' ? 0 : (p0 => p0.solved / p0.total)(taskProgress(T.task));
     const it = T.item; const type = it.type || 'fields';
     let ok = false;
     if (type === 'fields') {
@@ -333,11 +364,14 @@
       S.run = 0;
       SFX.wrong();
     }
+    const justDone = ok && T.mode !== 'quick' && !T.doneBefore && taskProgress(T.task).done;
+    if (justDone) { T.justDone = true; cqHold = Date.now() + 2300; }
     checkBadges(); save();
     render();
-    const fb = $('#feedback'); if (fb) fb.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
-    if (ok && isOrig) { const p = taskProgress(T.task); if (p.solved === p.total && !T.celebrated) { T.celebrated = true; setTimeout(() => taskDone(p), 900); } }
-    if (ok && T.mode === 'var') { const p = taskProgress(T.task); if (p.stars === 3 && T.starsBefore !== 3) setTimeout(() => taskDone(p), 900); }
+    const fb = $('#feedback'), tpEl = $('.tprog');
+    if (justDone && tpEl) tpEl.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' });
+    else if (fb) fb.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
+    if (justDone) { const p = taskProgress(T.task), tt = T; celebrate(500, () => taskDone(p, tt)); }
   }
   function goNext() {
     if (T.mode === 'quick') {
@@ -348,26 +382,25 @@
     const task = T.task; const n = task.items.length;
     let next = -1;
     for (let k = 1; k <= n; k++) { const j = (T.idx + k) % n; if (!S.items[itemKey(task, j)]) { next = j; break; } }
-    if (next < 0 && task.gen) {
-      // wszystkie podpunkty zaliczone — prowadzimy po trzecią gwiazdkę: podobny przykład w kolejnym podpunkcie bez ćwiczenia
-      for (let k = 1; k <= n; k++) {
-        const j = (T.idx + k) % n, it = task.items[j], key = itemKey(task, j);
-        if (['order', 'guided'].includes(it.type || 'fields') || ((S.practice || {})[key] || 0) >= 1) continue;
-        T.idx = j; T.mode = 'orig'; T.item = it; T.origKey = key; T.redeemed = false;
-        startVariant();
-        toast('Podobny przykład', 'do podpunktu ' + (it.label || j + 1), 'star');
-        return;
-      }
-    }
     if (next < 0) { V = { view: 'list', list: T.li }; T = null; setHash('l' + (V.list + 1)); render(); return; }
     T.idx = next; T.mode = 'orig'; T.item = task.items[next]; T.origKey = itemKey(task, next); T.redeemed = false; resetAttempt(); render(); SFX.whoosh();
     window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
   }
 
   /* ---------------- modale ---------------- */
-  function closeOverlays() { document.querySelectorAll('.scrim,.drawer,.modal').forEach(e => e.remove()); }
+  // kolejka „świętowania”: odznaki (od najfajniejszej) → ukończone zadanie → nowy poziom
+  const CQ = []; let cqBusy = false, cqTimer = null, cqSeq = 0, cqIn = false, cqHold = 0;
+  function celebrate(prio, fn) { if (cqBusy && !cqIn && !document.querySelector('.modal')) cqBusy = false; if (prio === 400 && CQ.some(x => x.prio === 400)) return; CQ.push({ prio, fn, seq: cqSeq++ }); if (!cqBusy) { clearTimeout(cqTimer); cqTimer = setTimeout(cqNext, Math.max(750, cqHold - Date.now())); } }
+  function cqNext() {
+    if (!CQ.length) { cqBusy = false; return; }
+    CQ.sort((a, b) => b.prio - a.prio || a.seq - b.seq);
+    cqBusy = true; const it = CQ.shift();
+    cqIn = true; try { it.fn(); } catch (e) { cqBusy = false; } cqIn = false;
+    if (!document.querySelector('.modal')) setTimeout(cqNext, 300);
+  }
+  function closeOverlays() { const had = !!document.querySelector('.modal'); document.querySelectorAll('.scrim,.drawer,.modal').forEach(e => e.remove()); if (had && cqBusy) setTimeout(cqNext, 280); }
   function modal(content, onClose) {
-    closeOverlays();
+    document.querySelectorAll('.scrim,.drawer,.modal').forEach(e => e.remove());
     const scrim = h('div', { class: 'scrim', onclick: () => { closeOverlays(); onClose && onClose(); } });
     const m = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' }, content);
     document.body.append(scrim, m);
@@ -379,16 +412,28 @@
     modal([h('div', { class: 'muted' }, 'Nowy poziom!'), h('div', { class: 'big' }, String(info.L)), h('h2', {}, info.title), h('p', {}, info.max ? 'Najwyższy poziom. Gratulacje!' : 'Do kolejnego poziomu: ' + info.need + ' XP.'), h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: closeOverlays }, 'Dalej'))]);
     renderTop();
   }
-  function taskDone(p) {
-    SFX.star(); confetti(120, innerWidth / 2, innerHeight / 3, 1.2);
-    modal([h('div', { class: 'muted' }, 'Zadanie ' + T.task.id + ' ukończone'), starsEl(p.stars), h('h2', {}, p.stars === 3 ? 'Perfekcyjnie!' : p.stars === 2 ? 'Komplet!' : 'Brawo!'),
-      h('p', {}, p.stars === 3 ? 'Wszystkie podpunkty i podobne przykłady zrobione.' : 'Trzecia gwiazdka: po jednym podobnym przykładzie w każdym podpunkcie.'),
-      h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { closeOverlays(); const li = T.li; T = null; V = { view: 'list', list: li }; setHash('l' + (li + 1)); render(); } }, 'Wróć do mapy'), h('button', { class: 'btn', onclick: closeOverlays }, 'Zostań'))]);
+  function taskDone(p, tt) {
+    tt = tt || T; if (!tt) return;
+    const R = 58, Cc = 2 * Math.PI * R;
+    const ring = h('div', { class: 'finring', html: `<svg viewBox="0 0 140 140"><defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset=".5" stop-color="var(--xp)"/><stop offset="1" stop-color="#d97706"/></linearGradient></defs><circle cx="70" cy="70" r="${R}" class="trk"/><circle cx="70" cy="70" r="${R}" class="arc" stroke-dasharray="${Cc}" stroke-dashoffset="${Cc}"/></svg><span class="rays"></span><span class="wave"></span><span class="wave w2"></span><b class="cnt">0</b><small>/ ${p.total}</small>` });
+    const num = ring.querySelector('.cnt');
+    if (reduced()) { ring.classList.add('boom'); num.textContent = p.total; ring.querySelector('.arc').style.strokeDashoffset = 0; }
+    else {
+      requestAnimationFrame(() => requestAnimationFrame(() => { ring.querySelector('.arc').style.strokeDashoffset = 0; }));
+      const t0 = performance.now(), D = 1100;
+      const tick = now => { const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3); num.textContent = Math.round(e * p.total); if (k < 1) requestAnimationFrame(tick); else { ring.classList.add('boom'); SFX.level(); confetti(220, innerWidth / 2, innerHeight / 2 - 60, 1.5, 'gold'); setTimeout(() => confetti(120, innerWidth / 2, innerHeight / 2 - 60, 1.1), 260); } };
+      requestAnimationFrame(tick);
+    }
+    modal([h('div', { class: 'muted' }, 'Zadanie ' + tt.task.id), ring, h('h2', { class: 'fintitle' }, 'Komplet!'),
+      h('p', {}, 'Wszystkie ' + p.total + ' ' + (p.total % 10 >= 2 && p.total % 10 <= 4 && (p.total % 100 < 12 || p.total % 100 > 14) ? 'podpunkty zaliczone' : p.total === 1 ? 'podpunkt zaliczony' : 'podpunktów zaliczonych') + '. Podobne przykłady możesz dalej robić dla treningu i XP.'),
+      h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { closeOverlays(); const li = tt.li; T = null; V = { view: 'list', list: li }; setHash('l' + (li + 1)); render(); } }, 'Wróć do mapy'), h('button', { class: 'btn', onclick: closeOverlays }, 'Zostań'))]);
   }
   function quickDone() {
     const q = T.quick; S.quickBest = Math.max(S.quickBest || 0, q.score); checkBadges(); save();
+    const li0 = T.li; celebrate(300, () => quickModal(q, li0));
+  }
+  function quickModal(q, li) {
     SFX.level(); confetti(80 + q.score * 8, innerWidth / 2, innerHeight / 3, 1.1);
-    const li = T.li;
     modal([h('div', { class: 'muted' }, 'Szybka runda — ' + LISTS[li].title), h('div', { class: 'big' }, String(q.score)), h('h2', {}, q.score === 1 ? 'rozwiązany przykład' : q.score >= 2 && q.score <= 4 ? 'rozwiązane przykłady' : 'rozwiązanych przykładów'),
       h('p', {}, 'Rekord: ' + S.quickBest),
       h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { closeOverlays(); startQuick(li); } }, 'Jeszcze raz'), h('button', { class: 'btn', onclick: () => { closeOverlays(); T = null; V = { view: 'list', list: li }; render(); } }, 'Mapa'))]);
@@ -530,7 +575,7 @@
       h('div', { class: 'acts' },
         h('button', { class: 'btn primary', onclick: () => { const ti = L.tasks.findIndex(t => taskProgress(t).solved < t.items.length); startTask(V.list, ti < 0 ? 0 : ti); } }, h('span', { html: IC.next }), p.solved ? 'Kontynuuj' : 'Zacznij'),
         h('button', { class: 'btn', onclick: () => startQuick(V.list), title: '10 losowych przykładów' }, h('span', { html: IC.bolt }), 'Szybka runda')));
-    const lb = h('div', { class: 'listbar' }, h('span', {}, `${p.solved}/${p.total} podpunktów`), h('div', { class: 'bar' }, h('i', { style: 'width:0' })), starsEl(0, 0), h('span', { html: IC.star.replace('<svg', '<svg style="width:15px;height:15px;color:var(--xp);vertical-align:-2px"') + ` ${p.stars}/${p.maxStars}` }));
+    const lb = h('div', { class: 'listbar' }, h('span', {}, `${p.solved}/${p.total} podpunktów`), h('div', { class: 'bar' }, h('i', { style: 'width:0' })), h('span', {}, `ukończone zadania: ${p.done}/${p.tasks}`));
     requestAnimationFrame(() => { const i = lb.querySelector('.bar i'); if (i) i.style.width = (100 * p.solved / p.total) + '%'; });
     const path = h('div', { class: 'path', id: 'path' }, h('svg', { class: 'trail', id: 'trail', 'aria-hidden': 'true' }));
     const pos = ['left', 'mid', 'right', 'mid'];
@@ -538,7 +583,7 @@
       const tp = taskProgress(t);
       const node = h('button', { class: 'node ' + pos[i % 4] + (tp.solved === tp.total ? ' done' : ''), style: `animation-delay:${i * 45}ms`, onclick: () => { SFX.click(); startTask(V.list, i); } },
         h('span', { class: 'disc', html: ringSVG(tp.solved / tp.total, 64, 6, 'var(--hue)') + `<b>${t.id}</b>` }),
-        h('span', { class: 'meta' }, mdEl('h3', t.name), h('small', {}, `${tp.solved}/${tp.total} podpunktów` + (t.proof ? ' · dowód' : '')), starsEl(tp.stars)));
+        h('span', { class: 'meta' }, mdEl('h3', t.name), h('small', {}, `${tp.solved}/${tp.total} podpunktów` + (t.proof ? ' · dowód' : '')), pbarEl(tp.solved, tp.total, { cls: 'mini' })));
       path.append(node);
     });
     wrap.append(hero, lb, path);
@@ -565,7 +610,11 @@
       h('button', { class: 'iconbtn', 'aria-label': 'Wróć do mapy', html: IC.back, onclick: () => { SFX.click(); const li = T.li; T = null; V = { view: 'list', list: li }; setHash('l' + (li + 1)); render(); } }),
       quick ? h('h2', {}, 'Szybka runda · ', h('span', {}, L.title)) : mdEl('h2', `<span>${task.id}</span> ` + task.name),
       h('div', { class: 'spacer' }),
-      quick ? h('span', { class: 'chip' }, h('span', { html: IC.bolt }), String(T.quick.score)) : starsEl(taskProgress(task).stars));
+      quick ? h('span', { class: 'chip' }, h('span', { html: IC.bolt }), String(T.quick.score)) : (() => {
+        const tp = taskProgress(task), f = tp.solved / tp.total, burst = !!T.justDone; T.justDone = false;
+        const from = T.prevFrac != null && T.prevFrac !== f ? T.prevFrac : null; T.prevFrac = f;
+        return h('div', { class: 'tprog' + (tp.done ? ' isdone' : '') }, pbarEl(tp.solved, tp.total, { from, burst }), h('span', { class: 'tcount' }, tp.solved + '/' + tp.total));
+      })());
     sec.append(head);
     if (quick) {
       const q = T.quick; const bar = h('div', { class: 'quickbar' }, h('span', { class: 'muted' }, (q.i + 1) + '/10'), h('div', { class: 'bar' }, h('i', { style: `width:${100 * q.i / 10}%` })));
@@ -1057,8 +1106,8 @@
     const lp = h('div', { class: 'lp' });
     LISTS.forEach(L => {
       const p = listProgress(L);
-      const row = h('div', { class: 'lprow h-' + L.hue }, h('b', {}, L.title + ' · ' + L.name), h('span', { class: 'muted' }, `${p.solved}/${p.total} · ★ ${p.stars}/${p.maxStars}`), h('div', { class: 'bar' }, h('i', { style: 'width:0' })),
-        h('div', { class: 'tasks' }, L.tasks.map(t => { const tp = taskProgress(t); return h('span', { class: 'tpill' + (tp.stars >= 3 ? ' s3' : tp.solved ? ' s1' : ''), title: `${tp.solved}/${tp.total}, ${tp.stars}★` }, t.id + ' ' + '★'.repeat(tp.stars)); })));
+      const row = h('div', { class: 'lprow h-' + L.hue }, h('b', {}, L.title + ' · ' + L.name), h('span', { class: 'muted' }, `${p.solved}/${p.total} podpunktów · zadania ${p.done}/${p.tasks}`), h('div', { class: 'bar' }, h('i', { style: 'width:0' })),
+        h('div', { class: 'tasks' }, L.tasks.map(t => { const tp = taskProgress(t); return h('span', { class: 'tpill' + (tp.done ? ' s3' : tp.solved ? ' s1' : ''), title: `${tp.solved}/${tp.total}` }, t.id + (tp.done ? ' ✓' : '')); })));
       requestAnimationFrame(() => { row.querySelector('.bar i').style.width = (100 * p.solved / p.total) + '%'; });
       lp.append(row);
     });
@@ -1170,9 +1219,9 @@
     tick();
   }
   function summary() {
-    let solved = 0, total = 0, stars = 0;
-    for (const L of LISTS) { const p = listProgress(L); solved += p.solved; total += p.total; stars += p.stars; }
-    return { xp: S.xp, level: levelInfo(S.xp).L, solved, total, stars, correct: S.correct, attempts: S.correct, best: 0 };
+    let solved = 0, total = 0;
+    for (const L of LISTS) { const p = listProgress(L); solved += p.solved; total += p.total; }
+    return { xp: S.xp, level: levelInfo(S.xp).L, solved, total, correct: S.correct, attempts: S.correct, best: 0 };
   }
   A.ui = { mySeries, curStreak, weekKey, myWeekXP, myName, h, IC, md, toast, SFX, confetti, levelInfo, summary, getS: () => S, setS: ns => { S = Object.assign(blank(), ns); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } }, render: () => { if (booted) render(); }, isRank: () => V.view === 'rank', closeOverlays, modal };
   if (window.AQRank && window.AQRank.init) window.AQRank.init();
