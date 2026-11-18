@@ -233,7 +233,8 @@
   M['3.8'] = { fn: it => ['polar', 'conjpolar', ...(it && it.gk === 'eqc' ? ['demoivre', 'polarmuldiv'] : []), ...angleIds(rootsOf(it))] };
   AQ.wzoryLib = F; AQ.wzoryMap = M;
   AQ.wzoryFor = function (task, item, gk, cur) {
-    const m = M[task.id] || {};
+    if (task.wzLib) { const ids = typeof task.wzIds === 'function' ? task.wzIds(cur || item, gk) : (task.wzIds || []); return ids.map(id => task.wzLib[id]).filter(Boolean); }
+    const m = M[task.wzFrom || task.id] || {};
     if (m.fn) { try { return [...new Set(m.fn(cur || item))].map(id => F[id]).filter(Boolean); } catch (e) { /* zwykły zestaw */ } }
     const ids = (item && item.label && m['L:' + item.label]) || (gk && m['G:' + gk]) || m['*'] || Object.values(m)[0] || [];
     return ids.map(id => F[id]).filter(Boolean);
