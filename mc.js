@@ -1,4 +1,4 @@
-/* Algebrownia — odpowiedzi A/B/C/D: błędne opcje to typowe błędy rachunkowe */
+/* Matematyka — odpowiedzi A/B/C/D: błędne opcje to typowe błędy rachunkowe */
 (function (G) {
   'use strict';
   const A = G.AQ, Cx = A.C, C = Cx.C, PI = Math.PI;
