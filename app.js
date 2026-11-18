@@ -414,6 +414,15 @@
     else if (fb) fb.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
     if (justDone) { const p = taskProgress(T.task), tt = T; celebrate(500, () => taskDone(p, tt)); }
   }
+  // następne zadanie z niezaliczonymi podpunktami w tej samej liście; gdy lista zrobiona — powrót do mapy
+  function goNextTask(li, ti) {
+    const L0 = LISTS[li];
+    let hit = -1;
+    for (let k = 1; k <= L0.tasks.length; k++) { const t2 = (ti + k) % L0.tasks.length, p = taskProgress(L0.tasks[t2]); if (p.solved < p.total) { hit = t2; break; } }
+    if (hit < 0) { T = null; V = { view: 'list', list: li }; setHash(lhash(li)); render(); window.scrollTo({ top: 0, behavior: 'auto' }); return; }
+    startTask(li, hit); SFX.whoosh();
+    window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
+  }
   function goNext() {
     if (T.mode === 'quick') {
       const q = T.quick; q.i++;
@@ -423,7 +432,7 @@
     const task = T.task; const n = task.items.length;
     let next = -1;
     for (let k = 1; k <= n; k++) { const j = (T.idx + k) % n; if (!S.items[itemKey(task, j)]) { next = j; break; } }
-    if (next < 0) { V = { view: 'list', list: T.li }; T = null; setHash(lhash(V.list)); render(); return; }
+    if (next < 0) { goNextTask(T.li, T.ti); return; }
     T.idx = next; T.mode = 'orig'; T.item = task.items[next]; T.origKey = itemKey(task, next); T.redeemed = false; resetAttempt(); render(); SFX.whoosh();
     window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
   }
@@ -467,7 +476,7 @@
     }
     modal([h('div', { class: 'muted' }, 'Zadanie ' + tid(tt.task)), ring, h('h2', { class: 'fintitle' }, 'Komplet!'),
       h('p', {}, (p.total === 1 ? 'Podpunkt zaliczony' : 'Wszystkie ' + p.total + ' ' + (p.total % 10 >= 2 && p.total % 10 <= 4 && (p.total % 100 < 12 || p.total % 100 > 14) ? 'podpunkty zaliczone' : 'podpunktów zaliczonych')) + '. Podobne przykłady możesz dalej robić dla treningu i XP.'),
-      h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { closeOverlays(); const li = tt.li; T = null; V = { view: 'list', list: li }; setHash(lhash(li)); render(); } }, 'Wróć do mapy'), h('button', { class: 'btn', onclick: closeOverlays }, 'Zostań'))]);
+      h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { closeOverlays(); goNextTask(tt.li, tt.ti); } }, 'Dalej', h('span', { html: IC.next })), h('button', { class: 'btn', onclick: () => { closeOverlays(); const li = tt.li; T = null; V = { view: 'list', list: li }; setHash(lhash(li)); render(); } }, 'Wróć do mapy'))]);
   }
   function quickDone() {
     const q = T.quick; S.quickBest = Math.max(S.quickBest || 0, q.score); checkBadges(); save();
