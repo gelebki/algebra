@@ -284,7 +284,8 @@
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  function resetAttempt() { if (T) T.gs = null; if (T.mode === 'orig' && T._lastKey !== T.origKey) { T.tried = false; T._lastKey = T.origKey; } T.sel = []; T.mcStep = 0; T.mcRev = null; T.vals = []; T.choice = new Set(); T.order = []; T.pool = null; T.status = 'answering'; T.usedW = false; T.usedP = false; T.marks = null; T.msgs = []; T.focus = 0; }
+  function resetAttempt() { if (T) T.gs = null; if (T && T.item && T.item._again && (T.item.type || 'fields') === 'fields') { delete T.item._mc; T.item._again = false; } // ponowne podejście: odpowiedzi ABCD w nowej kolejności (tak/nie zostaje „tak” → „nie”)
+    if (T.mode === 'orig' && T._lastKey !== T.origKey) { T.tried = false; T._lastKey = T.origKey; } T.sel = []; T.mcStep = 0; T.mcRev = null; T.vals = []; T.choice = new Set(); T.order = []; T.pool = null; T.status = 'answering'; T.usedW = false; T.usedP = false; T.marks = null; T.msgs = []; T.focus = 0; }
   function startVariant() {
     const gk = T.task.items[T.idx].gk || T.item.gk;
     let it; for (let k = 0; k < 6; k++) { it = T.task.gen(gk); if (!T.item || it.q !== T.item.q) break; }
@@ -344,37 +345,60 @@
       ok = T.order.length === n && T.order.every((k, i) => k === i);
     }
     T.status = ok ? 'correct' : 'wrong';
+    if (type === 'fields') it._again = true;
     if (ok) bumpDay(true);
     const isOrig = T.mode === 'orig';
+    // pula XP podpunktu (2–20) i zaliczanie części osobno
+    const origIt = T.mode === 'quick' ? it : (T.task.items[T.idx] || it);
+    const base = A.baseXP(T.task, origIt);
+    const grps = type === 'fields' ? A.buildMC(it).groups : null, nG = grps ? grps.length : 1;
+    const marks = grps ? grps.map((g, i) => !!(g.opts[T.sel[i]] && g.opts[T.sel[i]].ok)) : [ok];
+    S.parts = S.parts || {}; S.tried = S.tried || {};
+    const prevParts = (isOrig && nG > 1 && S.parts[T.origKey]) || [];
+    const fresh = marks.map((m, i) => m && !prevParts[i]);
+    const share = (cnt, triedBefore) => Math.max(1, Math.round(base * cnt / nG * (triedBefore ? 0.6 : 1)));
+    T.partial = null;
     if (ok) {
       S.correct++; S.run = (S.run || 0) + 1; S.bestRun = Math.max(S.bestRun || 0, S.run);
       if (type === 'order' || type === 'guided') S.proofs++;
-      // XP: oryginał za pierwszym razem 10; pierwsze 3 podobne do podpunktu po 6, każdy kolejny 1
+      // XP: oryginał za pierwszym razem — pełna pula (2–20), po pomyłce 60%; części liczone osobno.
+      // Podobne: pierwsze 3 po 60% puli, każdy kolejny 1 XP.
       let xp;
-      S.tried = S.tried || {}; S.pc = S.pc || {};
+      S.pc = S.pc || {};
       if (isOrig) {
         const prev = S.items[T.origKey];
         const first = !prev && !S.tried[T.origKey];
         if (!prev) S.items[T.origKey] = 'done';
         if (first && !T.usedW && !T.usedP) S.clean++;
-        xp = prev ? 1 : first ? 10 : 6;
+        xp = prev ? 1 : share(fresh.filter(Boolean).length, !first);
+        delete S.parts[T.origKey];
       } else {
         S.variants++;
         if (T.mode === 'var') {
           const k = S.pc[T.origKey] || 0;
-          xp = k < 3 ? 6 : 1;
+          xp = k < 3 ? Math.max(1, Math.round(0.6 * base)) : 1;
           S.pc[T.origKey] = k + 1;
           S.practice = S.practice || {}; S.practice[T.origKey] = Math.min(3, k + 1);
           if (k + 1 === 3) setTimeout(() => { toast('Seria podobnych ukończona', 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' opanowany', 'star'); SFX.star(); }, 900);
           if (!S.items[T.origKey]) { S.items[T.origKey] = 'done'; T.redeemed = true; }
-        } else { xp = 3; T.quick.score++; }
+        } else { xp = Math.max(1, Math.round(0.6 * base)); T.quick.score++; }
       }
       gainXP(xp, $('#card .opt.picked') || $('#submitBtn') || $('#card'));
       SFX.correct();
       const r = $('#card') ? $('#card').getBoundingClientRect() : null;
       confetti(T.mode === 'quick' ? 30 : 55, r ? r.left + r.width / 2 : undefined, r ? r.top + 80 : undefined, 0.9);
     } else {
-      if (isOrig) { T.tried = true; S.tried = S.tried || {}; if (!S.items[T.origKey]) S.tried[T.origKey] = true; }
+      // część odpowiedzi dobra: te części zostają zaliczone, przy kolejnym podejściu poprawia się tylko błędne
+      if (isOrig && nG > 1 && !S.items[T.origKey]) {
+        const nf = fresh.filter(Boolean).length;
+        const merged = marks.map((m, i) => m || !!prevParts[i]);
+        if (nf) { gainXP(share(nf, !!S.tried[T.origKey]), $('#card .mc') || $('#card')); S.parts[T.origKey] = merged; }
+        T.partial = { done: merged.filter(Boolean).length, n: nG };
+      } else if (!isOrig && nG > 1) {
+        const nf = marks.filter(Boolean).length; // podobny przykład: XP za dobre części, ale seria się nie liczy
+        if (nf && T.mode === 'var' && (S.pc[T.origKey] || 0) < 3) gainXP(Math.max(1, Math.round(0.6 * base * nf / nG)), $('#card .mc') || $('#card'));
+      }
+      if (isOrig) { T.tried = true; if (!S.items[T.origKey]) S.tried[T.origKey] = true; }
       S.run = 0;
       SFX.wrong();
     }
@@ -806,12 +830,19 @@
     };
     const advance = () => {
       T.mcRev = null; T.mcStep = (T.mcStep || 0) + 1;
+      const pre2 = (T.mode === 'orig' && S.parts && S.parts[T.origKey]) || null;
+      while (pre2 && pre2[T.mcStep] && T.mcStep < mc.groups.length) T.mcStep++;
       if (T.mcStep >= mc.groups.length) { submit(); return; }
       const nb = mcUI(it); const old = $('#card .mc'); if (old) old.replaceWith(nb);
       const cur = nb.querySelector('.mcstep'); if (cur) cur.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
     };
     if (single) { box.append(grpEl(mc.groups[0], 0, done)); return box; }
 
+    const pre = (T.mode === 'orig' && S.parts && S.parts[T.origKey]) || null;
+    if (pre && !done) {
+      mc.groups.forEach((g, k) => { if (pre[k] && T.sel[k] == null) T.sel[k] = g.opts.findIndex(o => o.ok); });
+      while (pre[T.mcStep || 0] && (T.mcStep || 0) < mc.groups.length) T.mcStep = (T.mcStep || 0) + 1;
+    }
     const n = mc.groups.length, step = done ? n : (T.mcStep || 0);
     const res = gi => T.sel[gi] != null && mc.groups[gi].opts[T.sel[gi]] && mc.groups[gi].opts[T.sel[gi]].ok;
     if (!done) box.append(h('div', { class: 'gprog' }, ...mc.groups.map((_, k) => h('i', { class: k < step || (k === step && T.mcRev === k) ? (res(k) ? 'on' : 'miss') : k === step ? 'cur' : '' }))));
@@ -823,7 +854,7 @@
         const g = mc.groups[k], good = g.opts.find(o => o.ok), okk = res(k);
         const lab = (g.short || g.label) ? A.mcLabel(g.short || g.label) + ': ' : '';
         list.append(h('div', { class: 'mcd' + (okk ? '' : ' miss') }, h('span', { class: 'mi', html: okk ? IC.check : IC.x }),
-          mdEl('span', lab + '$' + good.tex.replace(/,\\quad /g, ',\\ ') + '$' + (okk || T.sel[k] == null ? '' : ' <small>(wybrano: $' + g.opts[T.sel[k]].tex + '$)</small>'), { class: 'mtx' })));
+          mdEl('span', lab + '$' + good.tex.replace(/,\\quad /g, ',\\ ') + '$' + (okk || T.sel[k] == null ? '' : ' <small>(wybrano: $' + g.opts[T.sel[k]].tex + '$)</small>') + (pre && pre[k] && !done ? ' <small class="pre">zaliczone wcześniej</small>' : ''), { class: 'mtx' })));
       }
       box.append(list);
     }
@@ -1005,7 +1036,8 @@
     if (!ok) fb.append(h('h3', {}, h('span', { html: IC.bulb, style: 'width:22px;height:22px;display:grid' }), type === 'guided' ? 'Dowód kompletny' : 'Zobacz, jak to policzyć'));
     if (ok && T.redeemed) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' zaliczony.'));
     if (!ok) {
-      if (T.mode === 'orig' && T.task.gen && type !== 'guided') fb.append(h('p', { style: 'margin:6px 0 0' }, 'Rozwiąż podobny przykład — wtedy ten podpunkt się zaliczy.'));
+      if (T.partial) fb.append(h('p', { class: 'partial' }, h('b', {}, 'Zaliczone części: ' + T.partial.done + ' z ' + T.partial.n + '. '), 'Dobre odpowiedzi zostają zapisane — przy kolejnym podejściu odpowiadasz tylko na błędne.'));
+      if (T.mode === 'orig' && T.task.gen && type !== 'guided' && !T.partial) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Rozwiąż podobny przykład — wtedy ten podpunkt się zaliczy.'));
       const ans = h('div', { class: 'ans' }, h('b', {}, 'Poprawna odpowiedź:'));
       if (type === 'fields') { /* zaznaczona na zielono */ } else if (false) {
         if (it.check) ans.append(mdEl('div', it.showAns));
@@ -1027,6 +1059,7 @@
       const nextBtn = cls => h('button', { class: 'btn ' + cls, onclick: goNext }, 'Dalej', h('span', { html: IC.next }));
       if (ok) { row.append(nextBtn('primary')); if (T.task.gen) row.append(pBtn('')); }
       else if (type === 'guided') { row.append(h('button', { class: 'btn primary', onclick: () => { resetAttempt(); render(); } }, 'Spróbuj jeszcze raz')); row.append(nextBtn('')); }
+      else if (T.partial) { row.append(h('button', { class: 'btn primary', onclick: () => { delete T.item._mc; resetAttempt(); render(); window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' }); } }, 'Popraw ' + (T.partial.n - T.partial.done === 1 ? 'błędną część' : 'błędne części'))); if (T.task.gen) row.append(pBtn('')); row.append(nextBtn('')); }
       else { if (T.task.gen) row.append(pBtn('primary')); row.append(nextBtn(T.task.gen ? '' : 'primary')); }
     }
     fb.append(row);
