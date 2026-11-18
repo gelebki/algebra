@@ -1,4 +1,4 @@
-/* Algebrownia — wspólny ranking (Firebase, darmowy plan Spark).
+/* Matematyka — wspólny ranking (Firebase, darmowy plan Spark).
    Postęp zostaje w przeglądarce; do bazy trafia tylko wpis rankingu: nazwa, XP, zaliczone podpunkty. */
 (function () {
   'use strict';
@@ -47,9 +47,10 @@
       P.meNo = await noP;
     }
     const doc = { no: P.meNo, name: ui.myName(), xp: sm.xp, solved: sm.solved, total: sm.total, week: ui.myWeekXP(), weekKey: ui.weekKey() };
-    const lvl = P.rulesLevel == null ? 2 : P.rulesLevel; // 2: seria + wykres, 1: tylko seria, 0: bez nowych pól
+    const lvl = P.rulesLevel == null ? 3 : P.rulesLevel; // 3: + podział na przedmioty, 2: seria + wykres, 1: tylko seria, 0: bez nowych pól
     if (lvl >= 1) { doc.streak = ui.curStreak(); doc.streakDay = ui.getS().lastDay || ''; }
     if (lvl >= 2) doc.spark = ui.mySeries().join(',');
+    if (lvl >= 3) doc.subj = sm.subj;
     const sig = JSON.stringify(doc);
     if (!force && sig === lastSent) return;
     lastSent = sig;
