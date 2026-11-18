@@ -1,4 +1,4 @@
-/* Algebrownia — interfejs gry */
+/* Matematyka — interfejs gry */
 (function () {
   'use strict';
   const A = window.AQ;
@@ -53,10 +53,13 @@
   /* ---------------- poziomy ---------------- */
   // Progi dopasowane do list: Lista 1 = 520 XP, Listy 1–2 = 1650 XP, wszystko = 2500 XP (250 podpunktów × 10).
   // Arcymistrz przy 2300 XP ≈ 92% podstawowego zestawu; podobne przykłady przyspieszają drogę.
-  const LEVELS = [0, 80, 170, 270, 390, 510, 680, 860, 1050, 1250, 1460, 1700, 1900, 2100, 2300];
-  const TITLES = ['Pierwszak', 'Tropiciel ułamków', 'Pogromca niewymierności', 'Zegarmistrz ℤₚ', 'Tester działań', 'Architekt ciał',
-    'Odkrywca liczby i', 'Mistrz sprzężenia', 'Zaklinacz delty', 'Kartograf płaszczyzny Gaussa', 'Nawigator kątów',
-    'Mag de Moivre’a', 'Władca potęg', 'Legenda okręgu jednostkowego', 'Arcymistrz algebry'];
+  // pierwsze 15 progów bez zmian (nikt nie traci poziomu); 16–25 dla drugiego przedmiotu
+  const LEVELS = [0, 80, 170, 270, 390, 510, 680, 860, 1050, 1250, 1460, 1700, 1900, 2100, 2300, 2550, 2850, 3200, 3600, 4050, 4550, 5100, 5750, 6500, 7400];
+  const TITLES = ['Pierwszak', 'Tropiciel ułamków', 'Pogromca nawiasów', 'Pogromca niewymierności', 'Rachmistrz bez kalkulatora',
+    'Zegarmistrz ℤₚ', 'Tester działań', 'Pogromca teleskopów', 'Architekt ciał', 'Odkrywca liczby i',
+    'Wielomianowy wirtuoz', 'Mistrz sprzężenia', 'Strażnik wzorów redukcyjnych', 'Zaklinacz delty', 'Kartograf płaszczyzny Gaussa',
+    'Nawigator kątów', 'Łowca tożsamości', 'Mag de Moivre’a', 'Władca potęg', 'Geniusz dowodów',
+    'Legenda okręgu jednostkowego', 'Profesor', 'Dziekan', 'Mistrz matematyki', 'Arcymistrz'];
   const MAXL = TITLES.length;
   function levelInfo(xp) {
     let L = 1; while (L < MAXL && xp >= LEVELS[L]) L++;
@@ -380,7 +383,7 @@
           S.pc[T.origKey] = k + 1;
           S.practice = S.practice || {}; S.practice[T.origKey] = Math.min(3, k + 1);
           if (k + 1 === 3) setTimeout(() => { toast('Seria podobnych ukończona', 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' opanowany', 'star'); SFX.star(); }, 900);
-          if (!S.items[T.origKey]) { S.items[T.origKey] = 'done'; T.redeemed = true; }
+          if (!S.items[T.origKey]) { S.items[T.origKey] = 'done'; T.redeemed = true; if (S.parts) delete S.parts[T.origKey]; }
         } else { xp = Math.max(1, Math.round(0.6 * base)); T.quick.score++; }
       }
       gainXP(xp, $('#card .opt.picked') || $('#submitBtn') || $('#card'));
@@ -472,7 +475,7 @@
   }
   function quickModal(q, li) {
     SFX.level(); confetti(80 + q.score * 8, innerWidth / 2, innerHeight / 3, 1.1);
-    modal([h('div', { class: 'muted' }, 'Szybka runda — ' + LISTS[li].title), h('div', { class: 'big' }, String(q.score)), h('h2', {}, q.score === 1 ? 'rozwiązany przykład' : q.score >= 2 && q.score <= 4 ? 'rozwiązane przykłady' : 'rozwiązanych przykładów'),
+    modal([h('div', { class: 'muted' }, 'Szybka runda — ' + (SUBJ.find(x => x.id === LISTS[li].subject) || SUBJ[0]).short + ', ' + LISTS[li].title), h('div', { class: 'big' }, String(q.score)), h('h2', {}, q.score === 1 ? 'rozwiązany przykład' : q.score >= 2 && q.score <= 4 ? 'rozwiązane przykłady' : 'rozwiązanych przykładów'),
       h('p', {}, 'Rekord: ' + S.quickBest),
       h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { closeOverlays(); startQuick(li); } }, 'Jeszcze raz'), h('button', { class: 'btn', onclick: () => { closeOverlays(); T = null; V = { view: 'list', list: li }; render(); } }, 'Mapa'))]);
   }
@@ -1384,7 +1387,7 @@
     const subj = SUBJ.map(sb => sb.id + ':' + subjProgress(sb.id).solved).join(',');
     return { xp: S.xp, level: levelInfo(S.xp).L, solved, total, subj, correct: S.correct, attempts: S.correct, best: 0 };
   }
-  A.ui = { mySeries, curStreak, weekKey, myWeekXP, myName, h, IC, md, toast, SFX, confetti, levelInfo, summary, getS: () => S, setS: ns => { S = Object.assign(blank(), ns); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } }, render: () => { if (booted) render(); }, isRank: () => V.view === 'rank', closeOverlays, modal };
+  A.ui = { curItem: () => T && T.item, isDone: () => !!(T && (T.mode !== 'orig' || S.items[T.origKey])), mySeries, curStreak, weekKey, myWeekXP, myName, h, IC, md, toast, SFX, confetti, levelInfo, summary, getS: () => S, setS: ns => { S = Object.assign(blank(), ns); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } }, render: () => { if (booted) render(); }, isRank: () => V.view === 'rank', closeOverlays, modal };
   if (window.AQRank && window.AQRank.init) window.AQRank.init();
   waitMJ();
 })();
