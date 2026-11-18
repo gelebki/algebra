@@ -543,7 +543,7 @@
     const hs = (location.hash || '').slice(1);
     { const li = LISTS.findIndex(L => L.id === hs); if (li >= 0) { V = { view: 'list', list: li }; return; } }
     if (hs === 'home' || hs === '') { V = { view: 'home', list: V.list }; return; }
-    { const sb = SUBJ.find(x => x.id === hs); if (sb) { V = { view: 'subj', subj: sb.id, list: subjLists(sb.id)[0] }; return; } }
+    { const sb = SUBJ.find(x => x.id === hs); if (sb) { V = { view: 'list', list: lastListOf(sb.id) }; return; } }
     if (hs === 'stats') { V = { view: 'stats', list: V.list }; return; }
     if (hs === 'ranking') { V = { view: 'rank', list: V.list }; return; }
     const m = hs.match(/^t(P?\d+)-(\d+)$/);
@@ -598,14 +598,15 @@
     return top;
   }
   function goHome() { SFX.click(); T = null; V = { view: 'home', list: V.list }; setHash('home'); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
-  function goSubject(sid) { SFX.click(); T = null; S.subj = sid; V = { view: 'subj', subj: sid, list: subjLists(sid)[0] }; save(); setHash(sid); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
+  const lastListOf = sid => { const m = S.subjList && S.subjList[sid]; return m != null && subjOf(m) === sid ? m : subjLists(sid)[0]; };
+  function goSubject(sid) { SFX.click(); T = null; S.subj = sid; const li = lastListOf(sid); V = { view: 'list', list: li }; save(); setHash(lhash(li)); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
   function goList(i) { SFX.click(); T = null; V = { view: 'list', list: i }; S.tab = lhash(i); S.subj = LISTS[i].subject; S.subjList = Object.assign(S.subjList || {}, { [LISTS[i].subject]: i }); save(); setHash(lhash(i)); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
   function navBar() {
     const cs = navSubj();
     const main = h('nav', { class: 'tabs main', role: 'tablist', 'aria-label': 'Przedmioty' });
     SUBJ.forEach(sb => {
       const p = subjProgress(sb.id), sel = cs === sb.id;
-      main.append(h('button', { class: 'tab subjtab', 'data-s': sb.id, style: '--hue:' + sb.color, role: 'tab', 'aria-selected': sel ? 'true' : 'false', onclick: () => { if (V.view === 'subj' && V.subj === sb.id) return; goSubject(sb.id); } },
+      main.append(h('button', { class: 'tab subjtab', 'data-s': sb.id, style: '--hue:' + sb.color, role: 'tab', 'aria-selected': sel ? 'true' : 'false', onclick: () => { if (V.view === 'list' && subjOf(V.list) === sb.id) return; goSubject(sb.id); } },
         h('span', { class: 'ring', html: ringSVG(p.solved / Math.max(1, p.total), 30, 4, sb.color) }),
         h('span', { class: 'lbl' }, h('b', {}, h('span', { class: 'full' }, sb.name), h('span', { class: 'short' }, sb.short)), h('small', {}, p.solved + '/' + p.total + ' podpunktów'))));
     });
@@ -660,7 +661,7 @@
     const L = LISTS[V.list]; const p = listProgress(L);
     const wrap = h('section', { class: 'h-' + L.hue });
     const hero = h('div', { class: 'hero' },
-      h('div', {}, h('div', { class: 'crumb' }, h('button', { class: 'iconbtn', 'aria-label': 'Wróć do przedmiotu', html: IC.back, onclick: () => goSubject(L.subject) }), h('button', { class: 'eyebrow link', onclick: () => goSubject(L.subject) }, (SUBJ.find(x => x.id === L.subject) || SUBJ[0]).name)), h('h1', {}, L.title + ' · ', h('span', {}, L.name)), mdEl('p', L.blurb)),
+      h('div', {}, h('div', { class: 'crumb' }, h('button', { class: 'iconbtn', 'aria-label': 'Wszystkie przedmioty', html: IC.back, onclick: () => goHome() }), h('button', { class: 'eyebrow link', onclick: () => goHome() }, (SUBJ.find(x => x.id === L.subject) || SUBJ[0]).name)), h('h1', {}, L.title + ' · ', h('span', {}, L.name)), mdEl('p', L.blurb)),
       h('div', { class: 'acts' },
         h('button', { class: 'btn primary', onclick: () => { const ti = L.tasks.findIndex(t => taskProgress(t).solved < t.items.length); startTask(V.list, ti < 0 ? 0 : ti); } }, h('span', { html: IC.next }), p.solved ? 'Kontynuuj' : 'Zacznij'),
         h('button', { class: 'btn', onclick: () => startQuick(V.list), title: '10 losowych przykładów' }, h('span', { html: IC.bolt }), 'Szybka runda')));
