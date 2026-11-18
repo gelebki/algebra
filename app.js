@@ -1183,8 +1183,7 @@
       h('div', { class: 'rxp' }, h('b', {}, valTxt), h('small', {}, valSub)),
       h('div', { class: 'rbig', html: series && series.length ? bigSparkSVG(series) : '' }));
     const set = on => { li.classList.toggle('open', on); li.setAttribute('aria-expanded', String(on)); };
-    if (canHover()) { li.addEventListener('mouseenter', () => set(true)); li.addEventListener('mouseleave', () => set(false)); }
-    else li.addEventListener('click', () => { const on = !li.classList.contains('open'); document.querySelectorAll('.rrow.open').forEach(x => x !== li && (x.classList.remove('open'), x.setAttribute('aria-expanded', 'false'))); set(on); SFX.click(); });
+    li.addEventListener('click', () => { const on = !li.classList.contains('open'); document.querySelectorAll('.rrow.open').forEach(x => x !== li && (x.classList.remove('open'), x.setAttribute('aria-expanded', 'false'))); set(on); SFX.click(); });
     li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set(!li.classList.contains('open')); } });
     return li;
   }
@@ -1220,7 +1219,7 @@
     const list = h('ol', { class: 'rlist' });
     const total = summary().total;
     rows.forEach((r, i) => list.append(rankRow(r, i, total, String(r[key]), rankMode === 'week' ? 'XP w tym tyg.' : 'XP')));
-    sec.append(h('p', { class: 'rhint' }, canHover() ? 'Najedź na gracza, żeby zobaczyć podział na przedmioty i dokładny wykres.' : 'Dotknij gracza, żeby zobaczyć podział na przedmioty i dokładny wykres.'));
+    sec.append(h('p', { class: 'rhint' }, (canHover() ? 'Kliknij' : 'Dotknij') + ' gracza, żeby zobaczyć podział na przedmioty i dokładny wykres.'));
     sec.append(list);
     if (!window.AQRank) sec.append(h('p', { class: 'demo-note' }, 'Podgląd: pozostali gracze to przykładowe dane. Twój wiersz liczy się na żywo.'));
     return sec;
