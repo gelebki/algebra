@@ -467,6 +467,9 @@
     } else {
       groups = [groupFor(F, item.gk, item)];
     }
+    // pytania tak/nie: zawsze najpierw „tak”, potem „nie”
+    const isYN = o => /\\text\{(tak|nie)\}\s*$/.test(o.tex);
+    for (const g of groups) if (g.opts.length === 2 && g.opts.every(isYN)) g.opts.sort((a, b) => (/tak\}\s*$/.test(b.tex) ? 1 : 0) - (/tak\}\s*$/.test(a.tex) ? 1 : 0));
     item._mc = { groups };
     return item._mc;
   };
