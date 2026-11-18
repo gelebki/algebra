@@ -514,24 +514,32 @@
   }
 
   /* ---------------- routing ---------------- */
-  function setHash(x) { S.last = x; save(); try { if (location.hash !== '#' + x) history.replaceState(null, '', '#' + x); } catch (e) { /* ignoruj */ } }
+  function setHash(x) { S.last = x; save(); try { if (location.hash !== '#' + x) history.pushState(null, '', '#' + x); } catch (e) { /* ignoruj */ } }
   function fromHash() {
     const hs = (location.hash || '').slice(1);
     { const li = LISTS.findIndex(L => L.id === hs); if (li >= 0) { V = { view: 'list', list: li }; return; } }
+    if (hs === 'home' || hs === '') { V = { view: 'home', list: V.list }; return; }
+    { const sb = SUBJ.find(x => x.id === hs); if (sb) { V = { view: 'subj', subj: sb.id, list: subjLists(sb.id)[0] }; return; } }
     if (hs === 'stats') { V = { view: 'stats', list: V.list }; return; }
     if (hs === 'ranking') { V = { view: 'rank', list: V.list }; return; }
     const m = hs.match(/^t(P?\d+)-(\d+)$/);
     if (m) { const id = m[1] + '.' + m[2]; for (let li = 0; li < LISTS.length; li++) { const task = LISTS[li].tasks.findIndex(t => t.id === id); if (task >= 0) { startTask(li, task); return 'started'; } } }
-    V = { view: 'list', list: 0 };
+    V = { view: 'home', list: 0 };
   }
 
   /* ---------------- renderowanie ---------------- */
   const app = () => $('#app');
+  let lastPage = '', lastSub = null;
+  const navSubj = () => (V.view === 'list' || V.view === 'task' ? subjOf(V.list) : V.view === 'subj' ? V.subj : null);
   function render() {
     const root = app(); root.innerHTML = '';
-    const hue = (V.view === 'stats' || V.view === 'rank') ? 'st' : LISTS[V.list].hue;
-    document.body.className = 'h-' + hue + ((V.view === 'list' || V.view === 'task') && subjOf(V.list) === 'pro' ? ' s-pro' : '');
-    root.append(topBar(), h('div', { class: 'wrap' }, subjBar(), tabs(), V.view === 'list' ? listView() : V.view === 'stats' ? statsView() : V.view === 'rank' ? rankView() : taskView()));
+    const hue = ['stats', 'rank', 'home', 'subj'].includes(V.view) ? 'st' : LISTS[V.list].hue;
+    document.body.className = 'h-' + hue + (navSubj() === 'pro' ? ' s-pro' : '');
+    const pageKey = V.view + ':' + (V.view === 'subj' ? V.subj : V.view === 'list' ? V.list : V.view === 'task' && T ? T.ti : '');
+    const page = V.view === 'home' ? homeView() : V.view === 'subj' ? subjView(V.subj) : V.view === 'list' ? listView() : V.view === 'stats' ? statsView() : V.view === 'rank' ? rankView() : taskView();
+    if (pageKey !== lastPage) page.classList.add('pagein');
+    lastPage = pageKey;
+    root.append(topBar(), h('div', { class: 'wrap' }, navBar(), page));
     if (V.view === 'list') requestAnimationFrame(drawTrail);
     if (V.view === 'task') requestAnimationFrame(() => { if (T && T.status === 'answering') focusField(T.focus || 0, true); });
   }
@@ -556,7 +564,7 @@
   function topBar() {
     const lv = levelInfo(S.xp);
     const top = h('header', { class: 'top' }, h('div', { class: 'wrap' },
-      h('button', { class: 'logo', 'aria-label': 'Matematyka — mapa', onclick: () => { T = null; V = { view: 'list', list: V.list }; setHash(lhash(V.list)); render(); } }, h('span', { html: logoSVG }), h('b', {}, 'Matematyka')),
+      h('button', { class: 'logo', 'aria-label': 'Matematyka — strona główna', onclick: () => goHome() }, h('span', { html: logoSVG }), h('b', {}, 'Matematyka')),
       h('div', { class: 'spacer' }),
       h('div', { class: 'player' },
         h('div', { class: 'lvl', title: 'Poziom ' + lv.L, html: ringSVG(lv.into / lv.need, 42, 4, 'var(--xp)') + `<span style="position:relative">${lv.L}</span>` }),
@@ -565,45 +573,70 @@
       h('button', { class: 'iconbtn', 'aria-label': S.sound ? 'Wycisz dźwięki' : 'Włącz dźwięki', title: S.sound ? 'Dźwięk włączony' : 'Dźwięk wyłączony', html: S.sound ? IC.sound : IC.mute, onclick: () => { S.sound = !S.sound; save(); renderTop(); if (S.sound) SFX.correct(); } })));
     return top;
   }
-  function goSubject(sid) {
-    S.subj = sid; S.subjList = S.subjList || {};
-    const li = S.subjList[sid] != null && subjOf(S.subjList[sid]) === sid ? S.subjList[sid] : subjLists(sid)[0];
-    T = null; V = { view: 'list', list: li }; save(); setHash(lhash(li)); render();
-  }
-  function subjBar() {
-    const cur = curSubj();
-    const bar = h('nav', { class: 'subjbar', 'aria-label': 'Przedmioty' });
+  function goHome() { SFX.click(); T = null; V = { view: 'home', list: V.list }; setHash('home'); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
+  function goSubject(sid) { SFX.click(); T = null; S.subj = sid; V = { view: 'subj', subj: sid, list: subjLists(sid)[0] }; save(); setHash(sid); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
+  function goList(i) { SFX.click(); T = null; V = { view: 'list', list: i }; S.tab = lhash(i); S.subj = LISTS[i].subject; S.subjList = Object.assign(S.subjList || {}, { [LISTS[i].subject]: i }); save(); setHash(lhash(i)); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
+  function navBar() {
+    const cs = navSubj();
+    const main = h('nav', { class: 'tabs main', role: 'tablist', 'aria-label': 'Przedmioty' });
     SUBJ.forEach(sb => {
-      const p = subjProgress(sb.id), on = sb.id === cur;
-      bar.append(h('button', { class: 'subj' + (on ? ' on' : ''), 'data-s': sb.id, 'aria-pressed': on ? 'true' : 'false', onclick: () => { if (on && (V.view === 'list' || V.view === 'task')) return; SFX.click(); goSubject(sb.id); } },
-        h('span', { class: 'sname' }, h('span', { class: 'full' }, sb.name), h('span', { class: 'short' }, sb.short)),
-        h('span', { class: 'spct' }, Math.round(100 * p.solved / Math.max(1, p.total)) + '%')));
+      const p = subjProgress(sb.id), sel = cs === sb.id;
+      main.append(h('button', { class: 'tab subjtab', 'data-s': sb.id, style: '--hue:' + sb.color, role: 'tab', 'aria-selected': sel ? 'true' : 'false', onclick: () => { if (V.view === 'subj' && V.subj === sb.id) return; goSubject(sb.id); } },
+        h('span', { class: 'ring', html: ringSVG(p.solved / Math.max(1, p.total), 30, 4, sb.color) }),
+        h('span', { class: 'lbl' }, h('b', {}, h('span', { class: 'full' }, sb.name), h('span', { class: 'short' }, sb.short)), h('small', {}, p.solved + '/' + p.total + ' podpunktów'))));
     });
-    return bar;
-  }
-  function tabs() {
-    const bar = h('nav', { class: 'tabs', role: 'tablist', 'aria-label': 'Listy zadań' });
-    const cs = curSubj();
-    LISTS.forEach((L, i) => {
-      if (L.subject !== cs) return;
-      const p = listProgress(L);
-      const sel = (V.view !== 'stats') && V.list === i;
-      bar.append(h('button', { class: 'tab h-' + L.hue, role: 'tab', 'aria-selected': sel ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'list', list: i }; S.tab = lhash(i); S.subj = L.subject; S.subjList = Object.assign(S.subjList || {}, { [L.subject]: i }); save(); setHash(lhash(i)); render(); } },
-        h('span', { class: 'ring', html: ringSVG(p.solved / p.total, 30, 4, 'var(--hue)') }),
-        h('span', { class: 'lbl' }, h('b', {}, L.title), h('small', {}, p.solved + '/' + p.total + ' podpunktów'))));
-    });
-    bar.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'stats' ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'stats', list: V.list }; S.tab = 'stats'; save(); setHash('stats'); render(); } },
+    main.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'stats' ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'stats', list: V.list }; S.tab = 'stats'; save(); setHash('stats'); render(); window.scrollTo({ top: 0, behavior: 'auto' }); } },
       h('span', { class: 'ring', html: IC.chart, style: 'color:var(--xp);display:grid;place-items:center' }), h('span', { class: 'lbl' }, h('b', {}, h('span', { class: 'full' }, 'Statystyki'), h('span', { class: 'short' }, 'Postęp')), h('small', {}, 'postępy i odznaki'))));
-    bar.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'rank' ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'rank', list: V.list }; setHash('ranking'); render(); } },
+    main.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'rank' ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'rank', list: V.list }; setHash('ranking'); render(); window.scrollTo({ top: 0, behavior: 'auto' }); } },
       h('span', { class: 'ring', html: IC.trophy, style: 'color:var(--xp);display:grid;place-items:center' }), h('span', { class: 'lbl' }, h('b', {}, 'Ranking'), h('small', {}, 'ze znajomymi'))));
-    return bar;
+    const box = h('div', { class: 'navbox' }, main);
+    if (cs) {
+      const sub = h('nav', { class: 'tabs sub' + (lastSub !== cs ? ' enter' : ''), role: 'tablist', 'aria-label': 'Listy przedmiotu' });
+      subjLists(cs).forEach((i, k) => {
+        const L = LISTS[i], p = listProgress(L), sel = (V.view === 'list' || V.view === 'task') && V.list === i;
+        sub.append(h('button', { class: 'tab lt h-' + L.hue, style: `--k:${k}`, role: 'tab', 'aria-selected': sel ? 'true' : 'false', onclick: () => { if (V.view === 'list' && V.list === i) return; goList(i); } },
+          h('span', { class: 'ring', html: ringSVG(p.solved / p.total, 26, 3.5, 'var(--hue)') }),
+          h('span', { class: 'lbl' }, h('b', {}, L.title), h('small', {}, L.name))));
+      });
+      box.append(sub);
+    }
+    lastSub = cs;
+    return box;
+  }
+  // karta listy (strona główna i strona przedmiotu)
+  function listCard(i, k) {
+    const L = LISTS[i], p = listProgress(L);
+    return h('button', { class: 'lcard h-' + L.hue, style: `--k:${k}`, onclick: () => goList(i) },
+      h('span', { class: 'ring', html: ringSVG(p.solved / p.total, 52, 5, 'var(--hue)') + `<b>${Math.round(100 * p.solved / p.total)}%</b>` }),
+      h('span', { class: 'lmeta' }, h('small', {}, L.title), mdEl('b', L.name), h('span', {}, `${p.solved}/${p.total} podpunktów · zadania ${p.done}/${p.tasks}`)),
+      h('span', { class: 'chev', html: IC.next }));
+  }
+  function subjSection(sb, k0) {
+    const p = subjProgress(sb.id);
+    return h('div', { class: 'ssec', style: '--hue:' + sb.color },
+      h('button', { class: 'shead2', onclick: () => goSubject(sb.id) }, h('b', {}, sb.name), h('span', {}, p.solved + '/' + p.total + ' · ', h('em', {}, Math.round(100 * p.solved / Math.max(1, p.total)) + '%')), h('span', { class: 'chev', html: IC.next })),
+      h('div', { class: 'lcards' }, subjLists(sb.id).map((i, k) => listCard(i, k0 + k))));
+  }
+  function homeView() {
+    const sec = h('section', { class: 'h-st home' });
+    const sm = summary();
+    sec.append(h('div', { class: 'hero' }, h('div', {}, h('h1', {}, 'Matematyka'), h('p', {}, 'Wybierz przedmiot i listę. Postęp: ' + sm.solved + '/' + sm.total + ' podpunktów.'))));
+    let k = 0; SUBJ.forEach(sb => { sec.append(subjSection(sb, k)); k += subjLists(sb.id).length; });
+    return sec;
+  }
+  function subjView(sid) {
+    const sb = SUBJ.find(x => x.id === sid) || SUBJ[0];
+    const sec = h('section', { class: 'h-st home' });
+    sec.append(h('div', { class: 'hero' }, h('div', {}, h('div', { class: 'crumb' }, h('button', { class: 'iconbtn', 'aria-label': 'Strona główna', html: IC.back, onclick: () => goHome() }), h('span', {}, 'Matematyka')), h('h1', {}, h('span', { style: 'color:' + sb.color }, sb.name)), h('p', {}, 'Wybierz listę zadań.'))));
+    sec.append(h('div', { class: 'lcards big' }, subjLists(sid).map((i, k) => listCard(i, k))));
+    return sec;
   }
 
   function listView() {
     const L = LISTS[V.list]; const p = listProgress(L);
     const wrap = h('section', { class: 'h-' + L.hue });
     const hero = h('div', { class: 'hero' },
-      h('div', {}, h('div', { class: 'eyebrow' }, (SUBJ.find(x => x.id === L.subject) || SUBJ[0]).name), h('h1', {}, L.title + ' · ', h('span', {}, L.name)), mdEl('p', L.blurb)),
+      h('div', {}, h('div', { class: 'crumb' }, h('button', { class: 'iconbtn', 'aria-label': 'Wróć do przedmiotu', html: IC.back, onclick: () => goSubject(L.subject) }), h('button', { class: 'eyebrow link', onclick: () => goSubject(L.subject) }, (SUBJ.find(x => x.id === L.subject) || SUBJ[0]).name)), h('h1', {}, L.title + ' · ', h('span', {}, L.name)), mdEl('p', L.blurb)),
       h('div', { class: 'acts' },
         h('button', { class: 'btn primary', onclick: () => { const ti = L.tasks.findIndex(t => taskProgress(t).solved < t.items.length); startTask(V.list, ti < 0 ? 0 : ti); } }, h('span', { html: IC.next }), p.solved ? 'Kontynuuj' : 'Zacznij'),
         h('button', { class: 'btn', onclick: () => startQuick(V.list), title: '10 losowych przykładów' }, h('span', { html: IC.bolt }), 'Szybka runda')));
@@ -1170,6 +1203,7 @@
       kpi('Rozwiązane przykłady', String(S.correct), 'łącznie z podobnymi'),
       kpi('Podobne przykłady', String(S.variants), (() => { const n = Object.values(S.practice || {}).filter(x => x > 0).length; return n ? 'ćwiczone w ' + n + (n === 1 ? ' podpunkcie' : ' podpunktach') : 'dodatkowe ćwiczenia do podpunktów'; })()),
       kpi('Dni nauki z rzędu', String(curStreak()), (() => { const n = (S.days[today()] || {}).ok || 0, m10 = n % 10, m100 = n % 100; return 'dzisiaj: ' + n + (n === 1 ? ' przykład' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? ' przykłady' : ' przykładów'); })())));
+    sec.append(h('h2', { class: 'sec' }, 'Rozwiązane przykłady'), activityChart());
     sec.append(h('h2', { class: 'sec' }, 'Przedmioty i listy'));
     const lp = h('div', { class: 'lp' });
     SUBJ.forEach(sb => {
@@ -1177,18 +1211,34 @@
       const stack = h('div', { class: 'stack', role: 'img', 'aria-label': sb.name + ': ' + sp.solved + ' z ' + sp.total + ' podpunktów' });
       ids.forEach(i => { const p = listProgress(LISTS[i]); const seg = h('i', { class: 'h-' + LISTS[i].hue, title: LISTS[i].title + ': ' + p.solved + '/' + p.total, style: 'width:0' }); stack.append(seg); requestAnimationFrame(() => { seg.style.width = (100 * p.solved / Math.max(1, sp.total)) + '%'; }); });
       const legend = h('div', { class: 'legend' }, ids.map(i => { const p = listProgress(LISTS[i]); return h('span', { class: 'h-' + LISTS[i].hue }, h('i'), LISTS[i].title + ' ', h('b', {}, p.solved + '/' + p.total)); }));
-      lp.append(h('div', { class: 'subjcard' }, h('div', { class: 'shead' }, h('b', {}, sb.name), h('span', {}, sp.solved + '/' + sp.total + ' podpunktów · ', h('b', {}, Math.round(100 * sp.solved / Math.max(1, sp.total)) + '%'))), stack, legend));
-      ids.forEach(i => lp.append(lrow(LISTS[i])));
+      // listy przedmiotu chowają się pod kartą — rozwijane kliknięciem
+      S.statOpen = S.statOpen || {};
+      const open = !!S.statOpen[sb.id];
+      const inner = h('div', { class: 'sdin' }); ids.forEach(i => inner.append(lrow(LISTS[i])));
+      const det = h('div', { class: 'sdetail', id: 'sd-' + sb.id }, inner);
+      const more = h('span', { class: 'smore' }, h('span', { class: 'mtxt' }, open ? 'Zwiń listy' : 'Pokaż ' + ids.length + (ids.length === 1 ? ' listę' : ids.length < 5 ? ' listy' : ' list')), h('span', { class: 'chev', html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' }));
+      const card = h('div', { class: 'subjcard toggle' + (open ? ' open' : ''), role: 'button', tabindex: '0', 'aria-expanded': String(open), 'aria-controls': 'sd-' + sb.id },
+        h('div', { class: 'shead' }, h('b', {}, sb.name), h('span', {}, sp.solved + '/' + sp.total + ' podpunktów · ', h('b', {}, Math.round(100 * sp.solved / Math.max(1, sp.total)) + '%'))), stack, h('div', { class: 'sfoot' }, legend, more));
+      const flip = () => {
+        const on = !card.classList.contains('open'); S.statOpen[sb.id] = on; save(); SFX.click();
+        card.classList.toggle('open', on); det.classList.toggle('open', on); card.setAttribute('aria-expanded', String(on));
+        more.querySelector('.mtxt').textContent = on ? 'Zwiń listy' : 'Pokaż ' + ids.length + (ids.length < 5 ? ' listy' : ' list');
+        if (on) det.querySelectorAll('.lprow .bar i').forEach(i => { const w = i.dataset.w; i.style.width = '0'; requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = w; })); });
+      };
+      card.addEventListener('click', flip);
+      card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+      if (open) det.classList.add('open');
+      lp.append(h('div', { class: 'sgroup' }, card, det));
     });
     function lrow(L) {
       const p = listProgress(L);
       const row = h('div', { class: 'lprow h-' + L.hue }, h('b', {}, L.title + ' · ' + L.name), h('span', { class: 'muted' }, `${p.solved}/${p.total} podpunktów · zadania ${p.done}/${p.tasks}`), h('div', { class: 'bar' }, h('i', { style: 'width:0' })),
         h('div', { class: 'tasks' }, L.tasks.map(t => { const tp = taskProgress(t); return h('span', { class: 'tpill' + (tp.done ? ' s3' : tp.solved ? ' s1' : ''), title: `${tp.solved}/${tp.total}` }, tid(t) + (tp.done ? ' ✓' : '')); })));
-      requestAnimationFrame(() => { row.querySelector('.bar i').style.width = (100 * p.solved / p.total) + '%'; });
+      const bi = row.querySelector('.bar i'); bi.dataset.w = (100 * p.solved / p.total) + '%';
+      requestAnimationFrame(() => { bi.style.width = bi.dataset.w; });
       return row;
     }
     sec.append(lp);
-    sec.append(h('h2', { class: 'sec' }, 'Twoje postępy'), activityChart());
     sec.append(h('h2', { class: 'sec' }, 'Odznaki'));
     sec.append(h('div', { class: 'badges' }, BADGES.filter(b => !b.hidden).map(b => h('div', { class: 'bdg' + (S.badges[b.id] ? '' : ' locked') }, h('span', { class: 'ic', html: IC.trophy }), h('div', {}, h('b', {}, b.name), h('small', {}, b.desc))))));
     const HID = BADGES.filter(b => b.hidden), hidN = HID.filter(b => S.badges[b.id]).length;
@@ -1279,7 +1329,7 @@
     if (booted) return; booted = true;
     if (window.MathJax && MathJax.svgStylesheet) { try { document.head.appendChild(MathJax.svgStylesheet()); } catch (e) { /* ignoruj */ } }
     // ostatnio otwarty widok; przy pierwszym uruchomieniu — Lista 1
-    const want = (location.hash || '').slice(1) || S.last || 'l1';
+    const want = (location.hash || '').slice(1) || S.last || 'home';
     try { history.replaceState(null, '', '#' + want); } catch (e) { /* ignoruj */ }
     V = { view: 'list', list: 0 };
     const r = fromHash(); if (r !== 'started') render();
