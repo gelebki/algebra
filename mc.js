@@ -470,11 +470,11 @@
     if (item.mc) {
       const correctTex = item.mcCorrect || tupleTex(F, F.map(f => { try { return correctVal(f); } catch (e) { return null; } }), true, item);
       groups = [{ opts: shuffle([{ tex: correctTex, ok: true }, ...item.mc.map(d => ({ tex: d.tex, ok: false, why: d.why }))]) }];
-    } else if (item.pairs && F.length >= 3) {
+    } else if (item.pairs && (F.length >= 3 || F.some(f => f.mc))) {
       // długie listy niezależnych wartości odpytujemy po dwie — każda wartość w każdej grupie jest „do policzenia”
       groups = [];
       // każda wartość osobno — odpytywane po kolei
-      for (const f of F) { const g = groupFor([f], item.gk, item); g.label = f.kind === 'yesno' ? yesnoQ(f) : f.label; if (f.kind === 'yesno') g.short = f.label; groups.push(g); }
+      for (const f of F) { const g = f.mc ? { opts: shuffle([{ tex: f.mcCorrect, ok: true }, ...f.mc.map(d => ({ tex: d.tex, ok: false, why: d.why }))]) } : groupFor([f], item.gk, item); g.label = f.kind === 'yesno' ? yesnoQ(f) : f.label; if (f.kind === 'yesno') g.short = f.label; groups.push(g); }
     } else if (F.some(f => (f.vars || []).length)) {
       groups = F.map(f => Object.assign(groupFor([f], item.gk, item), { label: f.label }));
     } else {
