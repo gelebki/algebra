@@ -216,10 +216,23 @@
       return out.filter(m => md(m.v.re, p) !== x);
     }
     if (f.kind === 'angle') {
-      add(C(PI - v.re), 'Zła ćwiartka: $\\pi-\\varphi$ zamiast $\\varphi$.');
-      add(C(-v.re), 'Zły znak argumentu.');
-      add(C(v.re + PI), 'Kąt przesunięty o $\\pi$ — to punkt po przeciwnej stronie zera. Sprawdź znaki $\\cos\\varphi$ i $\\sin\\varphi$.');
-      add(C(PI / 2 - v.re), 'Pomylone $\\sin$ i $\\cos$.');
+      // konkretne wyjaśnienie: jakie znaki ma sin i cos dla błędnego kąta, a jakie powinny być
+      const nrm = x => ((x % (2 * PI)) + 2 * PI) % (2 * PI);
+      const sg = x => (Math.abs(x) < 1e-9 ? 0 : x > 0 ? 1 : -1);
+      const sgw = (k, fn) => (k > 0 ? '$\\' + fn + '>0$' : k < 0 ? '$\\' + fn + '<0$' : '$\\' + fn + '=0$');
+      const QN = x => { const c = sg(Math.cos(x)), si = sg(Math.sin(x)); if (!c || !si) return null; return si > 0 ? (c > 0 ? 'I' : 'II') : (c < 0 ? 'III' : 'IV'); };
+      const ang = x => { const r = A.piFrac(x); return r ? A.angleTex(r[0], r[1]) : realTex(nrm(x)); };
+      const why = (d, extra) => {
+        const ds = sg(Math.sin(d)), dc = sg(Math.cos(d)), vs = sg(Math.sin(v.re)), vc = sg(Math.cos(v.re));
+        const qd = QN(d), qv = QN(v.re);
+        if (ds === vs && dc === vc) return 'Znaki się zgadzają, ale to inny kąt' + (extra ? ' — ' + extra : '') + '. Porównaj wartości: dla $' + ang(d) + '$ sinus i cosinus mają inne wartości bezwzględne niż w treści.';
+        const bad = [ds !== vs ? 'sinus' : null, dc !== vc ? 'cosinus' : null].filter(Boolean).join(' i ');
+        return 'Dla $' + ang(d) + '$ jest ' + sgw(ds, 'sin') + ' i ' + sgw(dc, 'cos') + (qd ? ' (' + qd + ' ćwiartka)' : '') + ', a szukany kąt ma ' + sgw(vs, 'sin') + ' i ' + sgw(vc, 'cos') + (qv ? ' (' + qv + ' ćwiartka)' : '') + ' — ' + (bad.includes(' i ') ? 'nie zgadzają się ' : 'nie zgadza się ') + bad + '.';
+      };
+      add(C(PI - v.re), why(PI - v.re));
+      add(C(-v.re), why(-v.re));
+      add(C(v.re + PI), why(v.re + PI));
+      add(C(PI / 2 - v.re), why(PI / 2 - v.re, 'pomylone $\\sin$ i $\\cos$'));
       return out;
     }
     if (f.kind === 'pm') {
