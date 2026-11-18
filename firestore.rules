@@ -6,16 +6,17 @@ service cloud.firestore {
     match /board/{uid} {
       allow read: if true;
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['no', 'name', 'xp', 'solved', 'total', 'week', 'weekKey', 'streak', 'streakDay', 'spark', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['no', 'name', 'xp', 'solved', 'total', 'week', 'weekKey', 'streak', 'streakDay', 'spark', 'subj', 'updatedAt'])
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 24
         && request.resource.data.no is int
         && request.resource.data.xp is int && request.resource.data.xp >= 0 && request.resource.data.xp <= 100000
-        && request.resource.data.solved is int && request.resource.data.solved >= 0 && request.resource.data.solved <= 250
+        && request.resource.data.solved is int && request.resource.data.solved >= 0 && request.resource.data.solved <= 5000
         && request.resource.data.week is int && request.resource.data.week >= 0 && request.resource.data.week <= 100000
         && (!('streak' in request.resource.data) || (request.resource.data.streak is int && request.resource.data.streak >= 0 && request.resource.data.streak <= 3650))
         && (!('streakDay' in request.resource.data) || (request.resource.data.streakDay is string && request.resource.data.streakDay.size() <= 10))
-        && (!('spark' in request.resource.data) || (request.resource.data.spark is string && request.resource.data.spark.size() <= 400));
+        && (!('spark' in request.resource.data) || (request.resource.data.spark is string && request.resource.data.spark.size() <= 400))
+        && (!('subj' in request.resource.data) || (request.resource.data.subj is string && request.resource.data.subj.size() <= 300));
     }
 
     // Licznik do nazw „Anon N” — tylko +1.
