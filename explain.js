@@ -1,4 +1,4 @@
-/* Algebrownia — automatyczne rozwiązania „krok po kroku” dla działań na liczbach zespolonych */
+/* Matematyka — automatyczne rozwiązania „krok po kroku” dla działań na liczbach zespolonych */
 (function (G) {
   'use strict';
   const AQ = G.AQ, Cx = AQ.C;
