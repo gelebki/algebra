@@ -192,9 +192,20 @@
     { id: 'xp1k', name: 'Tysiąc XP', desc: 'Zdobądź 1000 punktów doświadczenia', ok: () => S.xp >= 1000 },
     { id: 'days3', name: 'Trzy dni z rzędu', desc: 'Ucz się 3 dni pod rząd', ok: () => S.dayStreak >= 3 },
     { id: 'quick', name: 'Błyskawica', desc: '8 przykładów w jednej szybkiej rundzie', ok: () => S.quickBest >= 8 },
+    // ukryte — po 100 XP
+    { id: 'h_days5', hidden: true, name: 'Kto tak się uczy? 🙈', desc: 'Nauka 5 dni pod rząd', ok: () => S.dayStreak >= 5 },
+    { id: 'h_all', hidden: true, name: 'All in', desc: 'Wszystkie 250 podpunktów zaliczone', ok: () => LISTS.every(L => { const p = listProgress(L); return p.solved === p.total; }) },
+    { id: 'h_run', hidden: true, name: 'Snajper', desc: '25 poprawnych odpowiedzi z rzędu, bez ani jednej pomyłki', ok: () => (S.bestRun || 0) >= 25 },
+    { id: 'h_day', hidden: true, name: 'Maraton', desc: '60 rozwiązanych przykładów jednego dnia', ok: () => Object.values(S.days || {}).some(d => (d.ok || 0) >= 60) },
+    { id: 'h_gold', hidden: true, name: 'Złota lista', desc: '3 gwiazdki we wszystkich zadaniach jednej listy', ok: () => LISTS.some(L => L.tasks.every(t => taskProgress(t).stars === 3)) },
   ];
   function checkBadges() {
-    for (const b of BADGES) if (!S.badges[b.id] && b.ok()) { S.badges[b.id] = today(); setTimeout(() => { toast('Odznaka: ' + b.name, b.desc); SFX.star(); }, 700); }
+    let d = 0;
+    for (const b of BADGES) if (!S.badges[b.id] && b.ok()) {
+      S.badges[b.id] = today();
+      if (b.hidden) { const w = 700 + (d++) * 1600; setTimeout(() => { toast('Ukryta odznaka: ' + b.name, b.desc + ' · +100 XP', 'star'); SFX.star(); gainXP(100); confetti(70, undefined, undefined, 1); save(); if (V.view === 'stats') render(); }, w); }
+      else setTimeout(() => { toast('Odznaka: ' + b.name, b.desc); SFX.star(); }, 700);
+    }
   }
 
   /* ---------------- nagradzanie ---------------- */
@@ -291,7 +302,7 @@
     if (ok) bumpDay(true);
     const isOrig = T.mode === 'orig';
     if (ok) {
-      S.correct++;
+      S.correct++; S.run = (S.run || 0) + 1; S.bestRun = Math.max(S.bestRun || 0, S.run);
       if (type === 'order' || type === 'guided') S.proofs++;
       // XP: oryginał za pierwszym razem 10; pierwsze 3 podobne do podpunktu po 6, każdy kolejny 1
       let xp;
@@ -319,6 +330,7 @@
       confetti(T.mode === 'quick' ? 30 : 55, r ? r.left + r.width / 2 : undefined, r ? r.top + 80 : undefined, 0.9);
     } else {
       if (isOrig) { T.tried = true; S.tried = S.tried || {}; if (!S.items[T.origKey]) S.tried[T.origKey] = true; }
+      S.run = 0;
       SFX.wrong();
     }
     checkBadges(); save();
@@ -1053,7 +1065,12 @@
     sec.append(lp);
     sec.append(h('h2', { class: 'sec' }, 'Twoje postępy'), activityChart());
     sec.append(h('h2', { class: 'sec' }, 'Odznaki'));
-    sec.append(h('div', { class: 'badges' }, BADGES.map(b => h('div', { class: 'bdg' + (S.badges[b.id] ? '' : ' locked') }, h('span', { class: 'ic', html: IC.trophy }), h('div', {}, h('b', {}, b.name), h('small', {}, b.desc))))));
+    sec.append(h('div', { class: 'badges' }, BADGES.filter(b => !b.hidden).map(b => h('div', { class: 'bdg' + (S.badges[b.id] ? '' : ' locked') }, h('span', { class: 'ic', html: IC.trophy }), h('div', {}, h('b', {}, b.name), h('small', {}, b.desc))))));
+    const HID = BADGES.filter(b => b.hidden), hidN = HID.filter(b => S.badges[b.id]).length;
+    sec.append(h('h3', { class: 'sec hid' }, 'Ukryte odznaki', h('small', {}, ' ' + hidN + ' / ' + HID.length + ' · po 100 XP')));
+    sec.append(h('div', { class: 'badges' }, HID.map(b => S.badges[b.id]
+      ? h('div', { class: 'bdg hidden-on' }, h('span', { class: 'ic', html: IC.star }), h('div', {}, h('b', {}, b.name), h('small', {}, b.desc + ' · +100 XP')))
+      : h('div', { class: 'bdg mystery' }, h('span', { class: 'ic q' }, '?'), h('div', {}, h('b', {}, '???'), h('small', {}, 'Ukryta — tylko dla wytrwałych'))))));
     const dz = h('div', { class: 'danger' });
     const resetBtn = h('button', { class: 'btn small ghost', onclick: () => {
       dz.innerHTML = ''; dz.append(h('span', {}, 'Na pewno wyzerować cały postęp? Tego nie da się cofnąć.'), h('button', { class: 'btn small', style: 'border-color:var(--bad);color:var(--bad)', onclick: () => { const snd = S.sound; S = blank(); S.sound = snd; save(); render(); toast('Postęp wyzerowany', 'Zaczynasz od nowa', 'flag'); } }, 'Tak, wyzeruj'), h('button', { class: 'btn small', onclick: () => render() }, 'Anuluj'));
@@ -1141,6 +1158,7 @@
     try { history.replaceState(null, '', '#' + want); } catch (e) { /* ignoruj */ }
     V = { view: 'list', list: 0 };
     const r = fromHash(); if (r !== 'started') render();
+    setTimeout(() => { checkBadges(); save(); }, 1200);
   }
   function waitMJ() {
     const t0 = Date.now();
