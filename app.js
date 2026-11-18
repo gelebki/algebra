@@ -183,15 +183,16 @@
     const i = h('i', { style: 'width:' + (100 * (opts.from != null ? opts.from : f)) + '%' });
     const el = h('div', { class: 'pbar' + (full && !opts.burst ? ' full' : '') + (opts.cls ? ' ' + opts.cls : ''), role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(total), 'aria-valuenow': String(solved), 'aria-label': solved + ' z ' + total + ' podpunktów' }, i);
     if (opts.from != null && opts.from !== f) requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = (100 * f) + '%'; }));
-    if (opts.burst) setTimeout(() => barBurst(el, total === 1 ? 'GOTOWE!' : 'KOMPLET!'), 950);
+    if (opts.burst) setTimeout(() => barBurst(el, total === 1 ? 'GOTOWE!' : 'KOMPLET!'), total === 1 ? 250 : 550);
     return el;
   }
   function barBurst(el, label = 'KOMPLET!') {
     if (!el.isConnected) return;
     el.classList.add('full', 'burst');
     const r = el.getBoundingClientRect(), x = r.right - 4, y = r.top + r.height / 2;
-    SFX.level();
-    confetti(110, x, y, 1.1, 'gold');
+    const small = label !== 'KOMPLET!';
+    if (small) SFX.star(); else SFX.level();
+    confetti(small ? 45 : 110, x, y, small ? 0.8 : 1.1, 'gold');
     if (!reduced()) {
       const flash = h('div', { class: 'barflash', style: `left:${r.left - 12}px;top:${r.top - 12}px;width:${r.width + 24}px;height:${r.height + 24}px` });
       const ring = h('div', { class: 'shock', style: `left:${x}px;top:${y}px` });
@@ -406,13 +407,15 @@
       SFX.wrong();
     }
     const justDone = ok && T.mode !== 'quick' && !T.doneBefore && taskProgress(T.task).done;
-    if (justDone) { T.justDone = true; cqHold = Date.now() + 2300; }
+    const bigTask = T.task.items.length > 1; // zadania z jednym podpunktem: bez okienka i bez przewijania
+    if (justDone) { T.justDone = true; if (bigTask) cqHold = Date.now() + 1300; }
     checkBadges(); save();
     render();
     const fb = $('#feedback'), tpEl = $('.tprog');
-    if (justDone && tpEl) tpEl.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' });
+    if (justDone && bigTask && tpEl) tpEl.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' });
     else if (fb) fb.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
-    if (justDone) { const p = taskProgress(T.task), tt = T; celebrate(500, () => taskDone(p, tt)); }
+    if (justDone && bigTask) { const p = taskProgress(T.task), tt = T; celebrate(500, () => taskDone(p, tt)); }
+    else if (justDone) toast('Zadanie ' + tid(T.task) + ' zaliczone', 'Dalej prowadzi do następnego zadania', 'star');
   }
   // następne zadanie z niezaliczonymi podpunktami w tej samej liście; gdy lista zrobiona — powrót do mapy
   function goNextTask(li, ti) {
@@ -470,7 +473,7 @@
     if (reduced()) { ring.classList.add('boom'); num.textContent = p.total; ring.querySelector('.arc').style.strokeDashoffset = 0; }
     else {
       requestAnimationFrame(() => requestAnimationFrame(() => { ring.querySelector('.arc').style.strokeDashoffset = 0; }));
-      const t0 = performance.now(), D = 1100;
+      const t0 = performance.now(), D = 700;
       const tick = now => { const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3); num.textContent = Math.round(e * p.total); if (k < 1) requestAnimationFrame(tick); else { ring.classList.add('boom'); SFX.level(); confetti(220, innerWidth / 2, innerHeight / 2 - 60, 1.5, 'gold'); setTimeout(() => confetti(120, innerWidth / 2, innerHeight / 2 - 60, 1.1), 260); } };
       requestAnimationFrame(tick);
     }
