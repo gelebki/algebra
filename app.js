@@ -183,10 +183,10 @@
     const i = h('i', { style: 'width:' + (100 * (opts.from != null ? opts.from : f)) + '%' });
     const el = h('div', { class: 'pbar' + (full && !opts.burst ? ' full' : '') + (opts.cls ? ' ' + opts.cls : ''), role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(total), 'aria-valuenow': String(solved), 'aria-label': solved + ' z ' + total + ' podpunktów' }, i);
     if (opts.from != null && opts.from !== f) requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = (100 * f) + '%'; }));
-    if (opts.burst) setTimeout(() => barBurst(el), 950);
+    if (opts.burst) setTimeout(() => barBurst(el, total === 1 ? 'GOTOWE!' : 'KOMPLET!'), 950);
     return el;
   }
-  function barBurst(el) {
+  function barBurst(el, label = 'KOMPLET!') {
     if (!el.isConnected) return;
     el.classList.add('full', 'burst');
     const r = el.getBoundingClientRect(), x = r.right - 4, y = r.top + r.height / 2;
@@ -201,7 +201,7 @@
         const sp = h('div', { class: 'bspark', style: `left:${x}px;top:${y}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;animation-delay:${Math.random() * 80}ms` });
         document.body.append(sp); setTimeout(() => sp.remove(), 1000);
       }
-      const lab = h('div', { class: 'komplet', style: `left:${Math.min(innerWidth - 100, Math.max(100, r.left + r.width / 2))}px;top:${r.top - 6}px` }, 'KOMPLET!');
+      const lab = h('div', { class: 'komplet', style: `left:${Math.min(innerWidth - 100, Math.max(100, r.left + r.width / 2))}px;top:${r.top - 6}px` }, label);
       document.body.append(lab);
       setTimeout(() => { flash.remove(); ring.remove(); }, 900); setTimeout(() => lab.remove(), 1700);
     }
@@ -474,8 +474,8 @@
       const tick = now => { const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3); num.textContent = Math.round(e * p.total); if (k < 1) requestAnimationFrame(tick); else { ring.classList.add('boom'); SFX.level(); confetti(220, innerWidth / 2, innerHeight / 2 - 60, 1.5, 'gold'); setTimeout(() => confetti(120, innerWidth / 2, innerHeight / 2 - 60, 1.1), 260); } };
       requestAnimationFrame(tick);
     }
-    modal([h('div', { class: 'muted' }, 'Zadanie ' + tid(tt.task)), ring, h('h2', { class: 'fintitle' }, 'Komplet!'),
-      h('p', {}, (p.total === 1 ? 'Podpunkt zaliczony' : 'Wszystkie ' + p.total + ' ' + (p.total % 10 >= 2 && p.total % 10 <= 4 && (p.total % 100 < 12 || p.total % 100 > 14) ? 'podpunkty zaliczone' : 'podpunktów zaliczonych')) + '. Podobne przykłady możesz dalej robić dla treningu i XP.'),
+    modal([h('div', { class: 'muted' }, 'Zadanie ' + tid(tt.task)), ring, h('h2', { class: 'fintitle' }, p.total === 1 ? 'Gotowe!' : 'Komplet!'),
+      h('p', {}, (p.total === 1 ? 'Zadanie zaliczone' : 'Wszystkie ' + p.total + ' ' + (p.total % 10 >= 2 && p.total % 10 <= 4 && (p.total % 100 < 12 || p.total % 100 > 14) ? 'podpunkty zaliczone' : 'podpunktów zaliczonych')) + '. Podobne przykłady możesz dalej robić dla treningu i XP.'),
       h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { closeOverlays(); goNextTask(tt.li, tt.ti); } }, 'Dalej', h('span', { html: IC.next })), h('button', { class: 'btn', onclick: () => { closeOverlays(); const li = tt.li; T = null; V = { view: 'list', list: li }; setHash(lhash(li)); render(); } }, 'Wróć do mapy'))]);
   }
   function quickDone() {
