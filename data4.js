@@ -29,14 +29,14 @@
     const f = o.field || { label: o.flabel || 'wynik', ans: String(o.ans), restrict: ['plain'] };
     if (o.vars) f.vars = o.vars;
     const seen = new Set([norm(o.tex)]), mc = [];
-    for (const [tex, why] of o.wrong) { const k = norm(tex); if (!tex || seen.has(k) || mc.length >= 3) continue; seen.add(k); mc.push({ tex, why }); }
+    for (const [tex, why] of o.wrong) { const k = norm(tex); if (!tex || seen.has(k) || mc.length >= 6) continue; seen.add(k); mc.push({ tex, why }); }
     fill(o.tex, mc, seen);
     const it = { label: o.label, gk: o.gk, q: o.q, fields: [f], mcCorrect: o.tex, mc, sol: o.steps, steps: o.steps };
     if (o.extra) Object.assign(it, o.extra);
     return it;
   }
   // długie sumy łamiemy na wiersze (telefon): parts = kolejne składniki z własnym znakiem
-  const wrapSum = (parts, per) => (parts.length <= per ? parts.join('') : '\\begin{aligned}&' + Array.from({ length: Math.ceil(parts.length / per) }, (_, i) => parts.slice(i * per, i * per + per).join('')).join('\\\\&') + '\\end{aligned}');
+  const wrapSum = (parts, per) => (parts.length <= per ? parts.join('') : '\\begin{wrap}&' + Array.from({ length: Math.ceil(parts.length / per) }, (_, i) => parts.slice(i * per, i * per + per).join('')).join('\\\\&') + '\\end{wrap}');
   const txtField = () => ({ label: 'odpowiedź', kind: 'yesno', ans: true });
   // opracowanie: biblioteka wzorów z wyprowadzeniem (pokazywane w „Wzorach”)
   const W = (f, ...d) => ({ f, d });
@@ -266,7 +266,7 @@
   /* ---------- 1.17 ---------- */
   function e117(N) {
     const v = qsub(Q(1, N), Q(1, 2));
-    return mk({ q: T`Oblicz $$\begin{aligned}&\left(\tfrac13+\ldots+\tfrac1{${N}}\right)\left(1+\tfrac12+\ldots+\tfrac1{${N - 1}}\right)\\-&\left(1+\tfrac13+\ldots+\tfrac1{${N}}\right)\left(\tfrac12+\tfrac13+\ldots+\tfrac1{${N - 1}}\right)\end{aligned}$$`, ans: qs(v), tex: qt(v),
+    return mk({ q: T`Oblicz $$\begin{wrap}&\left(\tfrac13+\ldots+\tfrac1{${N}}\right)\left(1+\tfrac12+\ldots+\tfrac1{${N - 1}}\right)\\-&\left(1+\tfrac13+\ldots+\tfrac1{${N}}\right)\left(\tfrac12+\tfrac13+\ldots+\tfrac1{${N - 1}}\right)\end{wrap}$$`, ans: qs(v), tex: qt(v),
       steps: [T`Oznacz $S=\frac13+\frac14+\ldots+\frac1{${N - 1}}$ i $c=\frac1{${N}}$.`, T`Wyrażenie: $(S+c)\left(\frac32+S\right)-(1+S+c)\left(\frac12+S\right)$.`, T`Pierwszy iloczyn: $S^2+\frac32S+cS+\frac32c$. Drugi: $S^2+\frac32S+cS+\frac12+\frac12c$.`, T`Różnica: $\frac32c-\frac12c-\frac12=c-\frac12=\frac1{${N}}-\frac12=${qt(v)}$.`],
       wrong: [[qt(Q(-v[0], v[1])), 'Zły znak — sprawdź, który iloczyn ma dodatkowe $\\frac12$.'], [qt(Q(1, N)), T`Zgubione $-\frac12$ z drugiego iloczynu.`], [T`-\frac12`, T`Zgubione $c=\frac1{${N}}$.`]] });
   }
@@ -283,12 +283,12 @@
   const gen118 = () => e118(R.int(10, 99));
 
   /* ---------- 1.19 ---------- */
-  const e119gen = () => mk({ gk: 'gen', vars: ['n'], q: T`Niech $n$ będzie dodatnią liczbą całkowitą. Znajdź wartość sumy $$\begin{aligned}&1+\left(\frac12+\frac22+\frac12\right)\\&+\left(\frac13+\frac23+\frac33+\frac23+\frac13\right)\\&+\ldots+\left(\frac1n+\ldots+\frac nn+\ldots+\frac1n\right)\end{aligned}$$`, ans: 'n(n+1)/2', tex: T`\frac{n(n+1)}{2}`,
+  const e119gen = () => mk({ gk: 'gen', vars: ['n'], q: T`Niech $n$ będzie dodatnią liczbą całkowitą. Znajdź wartość sumy $$\begin{wrap}&1+\left(\frac12+\frac22+\frac12\right)\\&+\left(\frac13+\frac23+\frac33+\frac23+\frac13\right)\\&+\ldots+\left(\frac1n+\ldots+\frac nn+\ldots+\frac1n\right)\end{wrap}$$`, ans: 'n(n+1)/2', tex: T`\frac{n(n+1)}{2}`,
     steps: [T`Grupa dla $k$: $\frac{1+2+\ldots+k+\ldots+2+1}{k}$.`, T`Licznik: $(1+\ldots+k)+(1+\ldots+(k-1))=\frac{k(k+1)}2+\frac{(k-1)k}2=k^2$.`, T`Grupa $=\frac{k^2}{k}=k$. Suma wszystkich grup: $1+2+\ldots+n=\frac{n(n+1)}2$.`],
     wrong: [['n^2', T`Każda grupa daje $k$, a nie wszystkie $n$.`], ['n(n+1)', T`$1+2+\ldots+n=\frac{n(n+1)}{2}$ — zgubiona dwójka.`], [T`\frac{n^2+1}{2}`, T`Licznik grupy to $k^2$, więc grupa to $k$.`]] });
   function e119(n) {
     const v = n * (n + 1) / 2;
-    return mk({ gk: 'num', q: T`Oblicz $$\begin{aligned}&1+\left(\frac12+\frac22+\frac12\right)\\&+\left(\frac13+\frac23+\frac33+\frac23+\frac13\right)\\&+\ldots+\left(\frac1{${n}}+\ldots+\frac{${n}}{${n}}+\ldots+\frac1{${n}}\right)\end{aligned}$$`, ans: String(v), tex: String(v),
+    return mk({ gk: 'num', q: T`Oblicz $$\begin{wrap}&1+\left(\frac12+\frac22+\frac12\right)\\&+\left(\frac13+\frac23+\frac33+\frac23+\frac13\right)\\&+\ldots+\left(\frac1{${n}}+\ldots+\frac{${n}}{${n}}+\ldots+\frac1{${n}}\right)\end{wrap}$$`, ans: String(v), tex: String(v),
       steps: [T`Grupa dla $k$: $\frac{1+2+\ldots+k+\ldots+2+1}{k}=\frac{k^2}{k}=k$.`, T`Suma: $1+2+\ldots+${n}=\frac{${n}\cdot${n + 1}}2=${v}$.`],
       wrong: [[String(n * n), T`Każda grupa daje $k$, a nie $${n}$.`], [String(2 * v), 'Zgubiona dwójka we wzorze na sumę.'], [String(v - n), 'Pominięta ostatnia grupa.']] });
   }
@@ -326,7 +326,7 @@
   /* ---------- 1.23 ---------- */
   function e123(N, gk) {
     const TN = N * (N + 1) / 2;
-    const core = T`\begin{aligned}&1-\frac{2}{1\cdot(1+2)}-\frac{3}{(1+2)(1+2+3)}\\&-\ldots-\frac{${N}}{(1+\ldots+${N - 1})(1+\ldots+${N})}\end{aligned}`;
+    const core = T`\begin{wrap}&1-\frac{2}{1\cdot(1+2)}-\frac{3}{(1+2)(1+2+3)}\\&-\ldots-\frac{${N}}{(1+\ldots+${N - 1})(1+\ldots+${N})}\end{wrap}`;
     const base = [T`Oznacz $T_k=1+2+\ldots+k$. Wtedy $T_k-T_{k-1}=k$.`, T`$\frac{k}{T_{k-1}T_k}=\frac{T_k-T_{k-1}}{T_{k-1}T_k}=\frac1{T_{k-1}}-\frac1{T_k}$.`, T`Suma odejmowanych ułamków: $\frac1{T_1}-\frac1{T_{${N}}}=1-\frac1{${TN}}$, więc wyrażenie $=\frac1{${TN}}$ (bo $T_{${N}}=\frac{${N}\cdot${N + 1}}2=${TN}$).`];
     if (gk === 'diff') return mk({ gk, q: T`Wyrażenie $$${core}$$ po uproszczeniu jest ułamkiem nieskracalnym. Znajdź różnicę między jego mianownikiem a licznikiem.`, ans: String(TN - 1), tex: String(TN - 1),
       steps: [...base, T`Różnica: $${TN}-1=${TN - 1}$.`], wrong: [[String(TN), 'To sam mianownik — trzeba odjąć licznik $1$.'], [String(TN + 1), 'Licznik odejmujemy, a nie dodajemy.'], [String(N * (N - 1) / 2 - 1), T`Ostatnia suma to $1+\ldots+${N}$, nie $1+\ldots+${N - 1}$.`]] });
