@@ -22,7 +22,7 @@
   // część pytania wieloczęściowego z własnymi błędnymi odpowiedziami
   function part(label, ans, tex, wrong) {
     const seen = new Set([norm(tex)]), mc = [];
-    for (const [t, why] of wrong) { const k = norm(t); if (!t || seen.has(k) || mc.length >= 3) continue; seen.add(k); mc.push({ tex: t, why }); }
+    for (const [t, why] of wrong) { const k = norm(t); if (!t || seen.has(k) || mc.length >= 6) continue; seen.add(k); mc.push({ tex: t, why }); }
     fill(tex, mc, seen);
     return { label, ans: String(ans), restrict: ['plain'], mcCorrect: tex, mc };
   }
@@ -104,7 +104,7 @@
   /* ---------- 2.4 ---------- */
   function e24(p, q, r) {
     const steps = [T`Przenosimy wszystko na lewą stronę: $${p}x^2y+(a+${r})xy^2+(${q}+d)xy-bx^cy=0$.`, T`$x^2y$ musi się zredukować z $bx^cy$: więc $c=2$ i $b=${p}$.`, T`Przy $xy^2$: $a+${r}=0\Rightarrow a=${-r}$. Przy $xy$: $${q}+d=0\Rightarrow d=${-q}$.`];
-    return multi({ gk: 'id', q: T`Dla wszystkich $x,y$ zachodzi $$\begin{aligned}&x^3+${p}x^2y+axy^2+${q}xy-bx^cy\\&+${r}xy^2+dxy+y^2=x^3+y^2.\end{aligned}$$ Wyznacz $a,b,c,d$.`, steps, parts: [
+    return multi({ gk: 'id', q: T`Dla wszystkich $x,y$ zachodzi $$\begin{wrap}&x^3+${p}x^2y+axy^2+${q}xy-bx^cy\\&+${r}xy^2+dxy+y^2=x^3+y^2.\end{wrap}$$ Wyznacz $a,b,c,d$.`, steps, parts: [
       part('a', -r, String(-r), [[String(r), T`$a+${r}=0$, więc $a=-${r}$.`], [String(-r + 1), 'Pomyłka o 1.'], ['0', T`Wyraz $${r}xy^2$ też trzeba zredukować.`]]),
       part('b', p, String(p), [[String(-p), T`Przed $bx^cy$ jest minus: $${p}x^2y-bx^2y=0\Rightarrow b=${p}$.`], ['0', T`Wyrazu $${p}x^2y$ nie ma po prawej, więc musi się zredukować.`], [String(p + 1), 'Pomyłka o 1.']]),
       part('c', 2, '2', [['1', T`Redukujemy $x^2y$, więc potęga $x$ musi być $2$.`], ['3', T`$x^3$ jest po obu stronach — nie trzeba go redukować.`], ['0', T`Dla $c=0$ powstałby wyraz $by$, którego nie ma w równości.`]]),
@@ -116,7 +116,7 @@
   function e25(x0, yv, s, k) { // (2/3)(x-x0)^2 + k m^2 = 0;  a^2 b^{y+s} ~ a^2 b^{yv+s}
     const val = x0 * x0 * yv + 10 * x0 * yv * yv;
     const steps = [T`Suma nieujemnych składników $\frac23(x-${x0})^2+${k}m^2$ jest zerem tylko gdy oba są zerami: $x=${x0}$, $m=0$.`, T`Wyrazy podobne mają te same potęgi: $b^{y+${s}}$ i $b^{${yv + s}}$, więc $y=${yv}$.`, T`Upraszczamy klamrę: $-\frac7{16}x^2y-\frac14xy^2-\frac3{16}x^2y-3{,}475xy^2-6{,}275xy^2=-\frac58x^2y-10xy^2$.`, T`Wyrażenie: $\frac38x^2y+${k}m^2+\frac58x^2y+10xy^2=x^2y+10xy^2+${k}m^2$.`, T`Podstawiamy: $${x0}^2\cdot${yv}+10\cdot${x0}\cdot${yv}^2+0=${val}$.`];
-    const q = T`Liczby $m,x,y$ spełniają: $\frac23(x-${x0})^2+${k}m^2=0$ oraz $-2a^2b^{y+${s}}$ i $3a^2b^{${yv + s}}$ są wyrazami podobnymi. Oblicz $$\begin{aligned}&\tfrac38x^2y+${k}m^2-\Big\{-\tfrac7{16}x^2y\\&+\left[-\tfrac14xy^2-\tfrac3{16}x^2y-3{,}475xy^2\right]-6{,}275xy^2\Big\}\end{aligned}$$`;
+    const q = T`Liczby $m,x,y$ spełniają: $\frac23(x-${x0})^2+${k}m^2=0$ oraz $-2a^2b^{y+${s}}$ i $3a^2b^{${yv + s}}$ są wyrazami podobnymi. Oblicz $$\begin{wrap}&\tfrac38x^2y+${k}m^2-\Big\{-\tfrac7{16}x^2y\\&+\left[-\tfrac14xy^2-\tfrac3{16}x^2y-3{,}475xy^2\right]-6{,}275xy^2\Big\}\end{wrap}$$`;
     return multi({ gk: 'val', q, steps, parts: [
       part('x', x0, String(x0), [[String(-x0), T`$(x-${x0})^2=0\iff x=${x0}$.`], ['0', T`To $m$ jest zerem; $x$ zeruje nawias $(x-${x0})$.`], [String(x0 * x0), 'Nie podnosimy do kwadratu — rozwiązujemy $x-' + x0 + '=0$.']]),
       part('m', 0, '0', [[String(k), T`$${k}m^2=0$ tylko dla $m=0$.`], ['1', T`Dla $m=1$ suma byłaby dodatnia.`], [String(x0), 'Pomylone $m$ z $x$.']]),
@@ -200,7 +200,7 @@
     const good = Rr.map((r, i) => r + 2 * B[i]);
     return mk({ vars: ['x'], q: T`Podczas dodawania dwóch wielomianów Adam pomylił się i zamiast dodać wielomian $${P(B).tex}$, odjął go, otrzymując $${P(Rr).tex}$. Wyznacz poprawny wynik.`, ans: P(good).str, tex: P(good).tex,
       steps: [T`Adam policzył $A-B=${P(Rr).tex}$, gdzie $B=${P(B).tex}$.`, T`Pierwszy składnik: $A=(A-B)+B$; a poprawny wynik to $A+B=(A-B)+2B$.`, T`$${P(Rr).tex}+2(${P(B).tex})=${P(good).tex}$.`],
-      wrong: [[P(Rr.map((r, i) => r + B[i])).tex, 'To tylko $A$ — trzeba jeszcze dodać $B$.'], [P(Rr.map((r, i) => r - 2 * B[i])).tex, 'Trzeba dodać $2B$, nie odjąć.'], [P(Rr.map((r, i) => -r + 2 * B[i])).tex, 'Zły znak przy wyniku Adama.']] });
+      wrong: [[P(Rr.map((r, i) => r + B[i])).tex, 'To tylko $A$ — trzeba jeszcze dodać $B$.'], [P(Rr.map((r, i) => r - 2 * B[i])).tex, 'Trzeba dodać $2B$, nie odjąć.'], [P(Rr.map((r, i) => -r + 2 * B[i])).tex, 'Zły znak przy wyniku Adama.'], [P(Rr.map((r, i) => r + 3 * B[i])).tex, T`Trzeba dodać $2B$, a nie $3B$: $A=(A-B)+B$, potem jeszcze $+B$.`], [P(Rr.map((r, i) => 2 * r + 2 * B[i])).tex, T`Wynik Adama liczymy raz: $(A-B)+2B$.`]] });
   }
   const gen212 = () => e212([R.int(1, 5), R.nz(-4, 4), R.nz(-5, 5)], [R.int(1, 7), R.nz(-6, 6), R.nz(-6, 6)]);
 
