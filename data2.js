@@ -396,7 +396,7 @@
         items: [
           { label: '3.1', gk: 'lin', q: T`$$(1+2i)(i-z)+(3-4i)(1-iz)=1+7i$$`, fields: [{ label: 'z', ans: '-1-i', restrict: ['alg'] }], sol: [T`Współczynnik przy $z$: $-(1+2i)-i(3-4i)=-5-5i$; wyraz wolny: $(1+2i)i+3-4i=1-3i$.`, T`$(-5-5i)z=10i\Rightarrow z=-1-i$.`] },
           { label: '3.2', gk: 'conj', q: T`$$(1-2i)\overline{z}-(3+2i)(1+iz)=5-2i$$`, fields: [{ label: 'z', ans: '1+5i', restrict: ['alg'] }], sol: [T`$(1-2i)\overline z+(2-3i)z=8$. Dla $z=x+iy$: $3x+y=8$, $-5x+y=0$.`, T`$x=1$, $y=5$: $z=1+5i$.`] },
-          { label: '3.3', gk: 'lin', q: T`$$\begin{aligned}&\frac{(5-i)\overline{(7-6i)}z}{3-i}+\frac{-(1+3i)\overline{(8+i)}z}{(2+i)^2}\\&\qquad=\left(\frac{(8+i)(1-2i)}{2-3i}\right)^2\end{aligned}$$`, fields: [{ label: 'z', ans: () => { const a = ev('(5-i)(7+6i)/(3-i)'), b = ev('-(1+3i)(8-i)/(2+i)^2'), c = ev('((8+i)(1-2i)/(2-3i))^2'); return Cx.div(c, Cx.add(a, b)); }, restrict: ['alg'] }], sol: [T`Upraszczamy każdy współczynnik osobno: $\frac{(5-i)(7+6i)}{3-i}$, $\frac{-(1+3i)(8-i)}{(2+i)^2}$ oraz prawą stronę; potem $z=\frac{\text{prawa}}{\text{suma współczynników}}$.`] },
+          { label: '3.3', gk: 'lin', q: T`$$\begin{wrap}&\frac{(5-i)\overline{(7-6i)}z}{3-i}+\frac{-(1+3i)\overline{(8+i)}z}{(2+i)^2}\\&\qquad=\left(\frac{(8+i)(1-2i)}{2-3i}\right)^2\end{wrap}$$`, fields: [{ label: 'z', ans: () => { const a = ev('(5-i)(7+6i)/(3-i)'), b = ev('-(1+3i)(8-i)/(2+i)^2'), c = ev('((8+i)(1-2i)/(2-3i))^2'); return Cx.div(c, Cx.add(a, b)); }, restrict: ['alg'] }], sol: [T`Upraszczamy każdy współczynnik osobno: $\frac{(5-i)(7+6i)}{3-i}$, $\frac{-(1+3i)(8-i)}{(2+i)^2}$ oraz prawą stronę; potem $z=\frac{\text{prawa}}{\text{suma współczynników}}$.`] },
         ],
       },
       {
@@ -453,14 +453,14 @@
         ],
       },
       {
-        id: '2.7', name: 'Tożsamości z modułem', statement: T`Udowodnić, że dla dowolnych liczb zespolonych $z_1,z_2,z_3$: $$|z_1+z_2|^2+|z_1-z_2|^2=2\left(|z_1|^2+|z_2|^2\right)\quad(7.1)$$ $$|1+z_1\overline{z_2}|^2+|z_1-z_2|^2=\left(1+|z_1|^2\right)\left(1+|z_2|^2\right)\quad(7.2)$$ $$\begin{aligned}&|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2\\&+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2\\&=4\left(|z_1|^2+|z_2|^2+|z_3|^2\right)\qquad(7.3)\end{aligned}$$`,
+        id: '2.7', name: 'Tożsamości z modułem', statement: T`Udowodnić, że dla dowolnych liczb zespolonych $z_1,z_2,z_3$: $$|z_1+z_2|^2+|z_1-z_2|^2=2\left(|z_1|^2+|z_2|^2\right)\quad(7.1)$$ $$|1+z_1\overline{z_2}|^2+|z_1-z_2|^2=\left(1+|z_1|^2\right)\left(1+|z_2|^2\right)\quad(7.2)$$ $$\begin{wrap}&|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2\\&+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2\\&=4\left(|z_1|^2+|z_2|^2+|z_3|^2\right)\qquad(7.3)\end{wrap}$$`,
         wzory: [T`$|w|^2=w\overline w$.`, T`$\overline{z_1\pm z_2}=\overline{z_1}\pm\overline{z_2}$, $\overline{z_1z_2}=\overline{z_1}\,\overline{z_2}$, $\overline{\overline z}=z$.`, T`$z\overline w+\overline zw=2\operatorname{Re}(z\overline w)$ — wyrazy mieszane.`],
         gen: gen27, proof: true,
         items: [
           { label: '7.1', type: 'order', gk: 'num', q: T`Ułóż dowód tożsamości równoległoboku $|z_1+z_2|^2+|z_1-z_2|^2=2(|z_1|^2+|z_2|^2)$.`, order: proof71 },
           { label: '7.2', type: 'order', gk: 'num', q: T`Ułóż dowód: $|1+z_1\overline{z_2}|^2+|z_1-z_2|^2=(1+|z_1|^2)(1+|z_2|^2)$.`, order: proof72 },
-          { label: '7.3 liczbowo', gk: 'num', q: T`Sprawdź tożsamość 7.3 liczbowo: dla $z_1=1$, $z_2=i$, $z_3=1+i$ oblicz $$\begin{aligned}&|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2\\&+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2\end{aligned}$$`, fields: [{ label: 'wynik', ans: '16', restrict: ['plain'] }], sol: [T`$\overline{z_3}=1-i$: składniki to $|2|^2=4$, $|-2i|^2=4$, $|2-2i|^2=8$, $|0|^2=0$.`, T`Suma $16=4(1+1+2)$ ✓.`] },
-          { label: '7.3', type: 'order', gk: 'num', q: T`Ułóż dowód tożsamości 7.3: $$\begin{aligned}&|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2\\&+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2\\&=4\left(|z_1|^2+|z_2|^2+|z_3|^2\right)\end{aligned}$$`, order: proof73 },
+          { label: '7.3 liczbowo', gk: 'num', q: T`Sprawdź tożsamość 7.3 liczbowo: dla $z_1=1$, $z_2=i$, $z_3=1+i$ oblicz $$\begin{wrap}&|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2\\&+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2\end{wrap}$$`, fields: [{ label: 'wynik', ans: '16', restrict: ['plain'] }], sol: [T`$\overline{z_3}=1-i$: składniki to $|2|^2=4$, $|-2i|^2=4$, $|2-2i|^2=8$, $|0|^2=0$.`, T`Suma $16=4(1+1+2)$ ✓.`] },
+          { label: '7.3', type: 'order', gk: 'num', q: T`Ułóż dowód tożsamości 7.3: $$\begin{wrap}&|z_1+z_2+\overline{z_3}|^2+|\overline{z_1}+\overline{z_2}-z_3|^2\\&+|z_1-z_2+\overline{z_3}|^2+|\overline{z_1}-\overline{z_2}-z_3|^2\\&=4\left(|z_1|^2+|z_2|^2+|z_3|^2\right)\end{wrap}$$`, order: proof73 },
           { label: '7.1 liczbowo', gk: 'num', q: T`Dla $z_1=2+i$, $z_2=1-3i$ oblicz $|z_1+z_2|^2+|z_1-z_2|^2$.`, fields: [{ label: 'wynik', ans: '30', restrict: ['plain'] }], sol: [T`$|3-2i|^2+|1+4i|^2=13+17=30=2(5+10)$.`] },
         ],
       },
@@ -567,7 +567,7 @@
         const V = Z.mul(h, X), W = S0, c1 = Z.mul(h, S0), Cr = Z.mul(c1, c1), z0 = Z.mul(S0, Z.mul(h, h));
         if (Math.abs(z0[0]) > 30 || Math.abs(z0[1]) > 30 || Math.abs(P[0]) > 20 || Math.abs(Sn[0]) > 40 || Math.abs(Sn[1]) > 40) continue;
         const pt = z => Z.ptex(...z), tx = z => Z.tex(...z);
-        const tex = T`\begin{aligned}&\frac{${pt(P)}\overline{${pt(q)}}z}{${tx(R0)}}+\frac{${pt(Sn)}\overline{${pt(t)}}z}{${pt(U)}^2}\\&\qquad=\left(\frac{${pt(V)}${pt(W)}}{${tx(X)}}\right)^2\end{aligned}`;
+        const tex = T`\begin{wrap}&\frac{${pt(P)}\overline{${pt(q)}}z}{${tx(R0)}}+\frac{${pt(Sn)}\overline{${pt(t)}}z}{${pt(U)}^2}\\&\qquad=\left(\frac{${pt(V)}${pt(W)}}{${tx(X)}}\right)^2\end{wrap}`;
         return { gk: 'big', q: T`Wyznacz wszystkie $z\in\mathbb C$: $$${tex}$$`, fields: [{ label: 'z', ans: Z.str(...z0), restrict: ['alg'] }],
           steps: [
             T`Upraszczamy pierwszy współczynnik: $\overline{${pt(q)}}=${tx(Z.conj(q))}$, a $${pt(P)}=${pt(k)}\cdot${pt(R0)}$, więc $\frac{${pt(P)}\overline{${pt(q)}}}{${tx(R0)}}=${pt(k)}${pt(Z.conj(q))}=${tx(Av)}$.`,
