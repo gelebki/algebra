@@ -145,11 +145,19 @@
     }
     return h('span', { class: 'tex-fallback' }, tex);
   }
+  // \begin{wrap}…\end{wrap}: długi wzór łamany na telefonie w wiersze, na szerokim ekranie w jednej linijce
+  const wideScreen = () => { try { return innerWidth >= 760; } catch (e) { return true; } };
+  function wrapTex(tex) {
+    if (!/\\begin\{wrap\}/.test(tex)) return tex;
+    return tex.replace(/\\begin\{wrap\}([\s\S]*?)\\end\{wrap\}/g, (m, inner) => wideScreen()
+      ? inner.split(/\\\\/).map(l => l.replace(/^(\s*[-+=]?)\s*&/, '$1').replace(/^\\qquad/, '').replace(/&/g, '')).join(' ')
+      : '\\begin{aligned}' + inner + '\\end{aligned}');
+  }
   function md(markup) {
     const frag = document.createDocumentFragment();
     for (const p of A.mdToTexParts(String(markup))) {
       if (p.text !== undefined) { const s = h('span', { html: p.text }); frag.append(s); }
-      else frag.append(texNode(p.tex, p.display));
+      else frag.append(texNode(wrapTex(p.tex), p.display));
     }
     return frag;
   }
