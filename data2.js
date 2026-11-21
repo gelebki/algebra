@@ -135,7 +135,7 @@
       T`<b>Sposób 2 — eliminacja</b> (bez wzorów): pierwsze równanie mnożymy przez $${nice(A21)}$ (współczynnik przy $z_1$ w drugim), a drugie przez $${nice(A11)}$ (współczynnik przy $z_1$ w pierwszym). Wtedy przy $z_1$ w obu stoi to samo.`,
       T`$$\begin{aligned}&${L(c11, c12, r1)}\\&${L(c11, c22, r2)}\end{aligned}$$`,
       T`Odejmujemy stronami — $z_1$ znika: $\ ${co(K, 'z_2', true)}=${nice(R)}$, czyli $z_2=\frac{${nice(R)}}{${nice(K)}}=${nice(z2)}$ (dzielenie: mnożymy przez sprzężenie mianownika).`,
-      T`Wstawiamy $z_2$ do pierwszego równania: $\ ${co(A11, 'z_1', true)}=${nice(B1)}-${p(A12)}\cdot${p(z2)}=${nice(rest)}$, więc $z_1=${nice(z1)}$.`,
+      T`Wstawiamy $z_2$ do pierwszego równania: $\ ${co(A11, 'z_1', true)}=${nice(B1)}-${p(A12)}\cdot ${p(z2)}=${nice(rest)}$, więc $z_1=${nice(z1)}$.`,
     ];
   }
   const sysItem = (label, c, tex) => ({
@@ -154,7 +154,7 @@
       const r2 = [Z.mul(c, a1), Z.mul(c, a2)];
       const tm = (x, v, f) => { const t = Z.tex(...x); const body = (t === '1' ? '' : t === '-1' ? '-' : (x[0] && x[1] ? '(' + t + ')' : t)) + v; return f ? body : (/^-/.test(body) ? body : '+' + body); };
       return { type: 'choice', q: T`Ile rozwiązań ma układ $$\begin{cases}${tm(a1, 'z_1', 1)}${tm(a2, 'z_2')}=${Z.tex(...b1)}\\${tm(r2[0], 'z_1', 1)}${tm(r2[1], 'z_2')}=${Z.tex(...b2)}\end{cases}$$`, choice: { multi: false, opts: ['dokładnie jedno', 'brak rozwiązań (układ sprzeczny)', 'nieskończenie wiele'], correct: [kind === 0 ? 1 : 2] },
-        steps: [T`$W=a_{11}a_{22}-a_{12}a_{21}=0$ — lewa strona drugiego równania to pierwsze pomnożone przez $${Z.tex(...c)}$.`, kind === 0 ? T`Prawa strona: $${Z.ptex(...c)}\cdot${Z.ptex(...b1)}=${Z.tex(...Z.mul(c, b1))}\neq${Z.tex(...b2)}$ — układ sprzeczny.` : T`Prawa strona też: $${Z.ptex(...c)}\cdot${Z.ptex(...b1)}=${Z.tex(...b2)}$ — równania są równoważne, nieskończenie wiele rozwiązań.`] };
+        steps: [T`$W=a_{11}a_{22}-a_{12}a_{21}=0$ — lewa strona drugiego równania to pierwsze pomnożone przez $${Z.tex(...c)}$.`, kind === 0 ? T`Prawa strona: $${Z.ptex(...c)}\cdot ${Z.ptex(...b1)}=${Z.tex(...Z.mul(c, b1))}\neq${Z.tex(...b2)}$ — układ sprzeczny.` : T`Prawa strona też: $${Z.ptex(...c)}\cdot ${Z.ptex(...b1)}=${Z.tex(...b2)}$ — równania są równoważne, nieskończenie wiele rozwiązań.`] };
     }
     for (;;) {
       const a = [Z.rnd(2, false), Z.rnd(2, false), Z.rnd(2, false), Z.rnd(2, false)];
@@ -570,9 +570,9 @@
         const tex = T`\begin{wrap}&\frac{${pt(P)}\overline{${pt(q)}}z}{${tx(R0)}}+\frac{${pt(Sn)}\overline{${pt(t)}}z}{${pt(U)}^2}\\&\qquad=\left(\frac{${pt(V)}${pt(W)}}{${tx(X)}}\right)^2\end{wrap}`;
         return { gk: 'big', q: T`Wyznacz wszystkie $z\in\mathbb C$: $$${tex}$$`, fields: [{ label: 'z', ans: Z.str(...z0), restrict: ['alg'] }],
           steps: [
-            T`Upraszczamy pierwszy współczynnik: $\overline{${pt(q)}}=${tx(Z.conj(q))}$, a $${pt(P)}=${pt(k)}\cdot${pt(R0)}$, więc $\frac{${pt(P)}\overline{${pt(q)}}}{${tx(R0)}}=${pt(k)}${pt(Z.conj(q))}=${tx(Av)}$.`,
-            T`Drugi: $${pt(U)}^2=${tx(Z.mul(U, U))}$ i $${pt(Sn)}=${pt(m)}\cdot${pt(Z.mul(U, U))}$, więc $\frac{${pt(Sn)}\overline{${pt(t)}}}{${pt(U)}^2}=${pt(m)}${pt(Z.conj(t))}=${tx(Bv)}$.`,
-            T`Prawa strona: $${pt(V)}=${pt(h)}\cdot${pt(X)}$, więc $\frac{${pt(V)}${pt(W)}}{${tx(X)}}=${pt(h)}${pt(W)}=${tx(c1)}$ i do kwadratu: $${tx(Cr)}$.`,
+            T`Upraszczamy pierwszy współczynnik: $\overline{${pt(q)}}=${tx(Z.conj(q))}$, a $${pt(P)}=${pt(k)}\cdot ${pt(R0)}$, więc $\frac{${pt(P)}\overline{${pt(q)}}}{${tx(R0)}}=${pt(k)}${pt(Z.conj(q))}=${tx(Av)}$.`,
+            T`Drugi: $${pt(U)}^2=${tx(Z.mul(U, U))}$ i $${pt(Sn)}=${pt(m)}\cdot ${pt(Z.mul(U, U))}$, więc $\frac{${pt(Sn)}\overline{${pt(t)}}}{${pt(U)}^2}=${pt(m)}${pt(Z.conj(t))}=${tx(Bv)}$.`,
+            T`Prawa strona: $${pt(V)}=${pt(h)}\cdot ${pt(X)}$, więc $\frac{${pt(V)}${pt(W)}}{${tx(X)}}=${pt(h)}${pt(W)}=${tx(c1)}$ i do kwadratu: $${tx(Cr)}$.`,
             T`Równanie: $\left(\left(${tx(Av)}\right)+\left(${tx(Bv)}\right)\right)z=${tx(Cr)}$, czyli $${pt(S0)}z=${tx(Cr)}$.`,
             T`$z=\frac{${tx(Cr)}}{${tx(S0)}}=${tx(z0)}$ (dzielimy, mnożąc przez sprzężenie mianownika).`,
           ] };
@@ -635,13 +635,13 @@
         const tt = AT(r[0], r[1]), At = AT(p1, q1), Bt = AT(p2, q2), op = sg > 0 ? '+' : '-', opm = sg > 0 ? '-' : '+';
         const sA = nr(Math.sin(a)), cA = nr(Math.cos(a)), sB = nr(Math.sin(b)), cB = nr(Math.cos(b));
         let v, fn, formula, subst;
-        if (gk === 'sin') { v = Math.sin(t); fn = '\\sin'; formula = T`\sin(\alpha${op}\beta)=\sin\alpha\cos\beta${op}\cos\alpha\sin\beta`; subst = T`${par(sA)}\cdot${par(cB)}${op}${par(cA)}\cdot${par(sB)}`; }
-        else if (gk === 'cos') { v = Math.cos(t); fn = '\\cos'; formula = T`\cos(\alpha${op}\beta)=\cos\alpha\cos\beta${opm}\sin\alpha\sin\beta`; subst = T`${par(cA)}\cdot${par(cB)}${opm}${par(sA)}\cdot${par(sB)}`; }
+        if (gk === 'sin') { v = Math.sin(t); fn = '\\sin'; formula = T`\sin(\alpha${op}\beta)=\sin\alpha\cos\beta${op}\cos\alpha\sin\beta`; subst = T`${par(sA)}\cdot ${par(cB)}${op}${par(cA)}\cdot ${par(sB)}`; }
+        else if (gk === 'cos') { v = Math.cos(t); fn = '\\cos'; formula = T`\cos(\alpha${op}\beta)=\cos\alpha\cos\beta${opm}\sin\alpha\sin\beta`; subst = T`${par(cA)}\cdot ${par(cB)}${opm}${par(sA)}\cdot ${par(sB)}`; }
         else {
           if (Math.abs(Math.cos(a)) < 1e-9 || Math.abs(Math.cos(b)) < 1e-9 || Math.abs(Math.cos(t)) < 1e-9) continue;
           v = Math.tan(t); fn = '\\operatorname{tg}'; const tA = nr(Math.tan(a)), tB = nr(Math.tan(b));
           formula = T`\operatorname{tg}(\alpha${op}\beta)=\frac{\operatorname{tg}\alpha${op}\operatorname{tg}\beta}{1${opm}\operatorname{tg}\alpha\operatorname{tg}\beta}`;
-          subst = T`\frac{${tA}${op}${par(tB)}}{1${opm}${par(tA)}\cdot${par(tB)}}`;
+          subst = T`\frac{${tA}${op}${par(tB)}}{1${opm}${par(tA)}\cdot ${par(tB)}}`;
         }
         if (/\d\.\d/.test(nr(v))) continue;
         return { gk, q: T`Korzystając ze wzoru na ${gk === 'tg' ? 'tangens' : gk === 'sin' ? 'sinus' : 'cosinus'} ${sg > 0 ? 'sumy' : 'różnicy'}, oblicz $${fn}${tt}$, zapisując $${tt}=${At}${op}${Bt}$.`,
@@ -659,8 +659,8 @@
       const ca = Q2 ? -a : a, s2 = fr(2 * b * ca, c * c), c2 = fr(ca * ca - b * b, c * c), t2 = fr(2 * b * ca, ca * ca - b * b);
       return { gk: 'dbl', q: T`Wiadomo, że $\sin\alpha=${A.fracTex(b, c)}$ i $\alpha\in${Q2 ? T`\left(\frac\pi2,\pi\right)` : T`\left(0,\frac\pi2\right)`}$. Oblicz $\sin2\alpha$, $\cos2\alpha$ i $\operatorname{tg}2\alpha$.`,
         fields: [{ label: T`\sin2\alpha`, ans: fs(s2), restrict: ['notrig'] }, { label: T`\cos2\alpha`, ans: fs(c2), restrict: ['notrig'] }, { label: T`\operatorname{tg}2\alpha`, ans: fs(t2), restrict: ['notrig'] }],
-        steps: [T`Z jedynki trygonometrycznej: $\cos^2\alpha=1-\sin^2\alpha=1-\frac{${b * b}}{${c * c}}=\frac{${a * a}}{${c * c}}$, więc $\cos\alpha=\pm${A.fracTex(a, c)}$. W ${Q2 ? 'II' : 'I'} ćwiartce cosinus jest ${Q2 ? 'ujemny' : 'dodatni'}: $\cos\alpha=${A.fracTex(ca, c)}$.`,
-          T`$\sin2\alpha=2\sin\alpha\cos\alpha=2\cdot${A.fracTex(b, c)}\cdot${par(A.fracTex(ca, c))}=${ft(s2)}$.`,
+        steps: [T`Z jedynki trygonometrycznej: $\cos^2\alpha=1-\sin^2\alpha=1-\frac{${b * b}}{${c * c}}=\frac{${a * a}}{${c * c}}$, więc $\cos\alpha=\pm ${A.fracTex(a, c)}$. W ${Q2 ? 'II' : 'I'} ćwiartce cosinus jest ${Q2 ? 'ujemny' : 'dodatni'}: $\cos\alpha=${A.fracTex(ca, c)}$.`,
+          T`$\sin2\alpha=2\sin\alpha\cos\alpha=2\cdot ${A.fracTex(b, c)}\cdot ${par(A.fracTex(ca, c))}=${ft(s2)}$.`,
           T`$\cos2\alpha=\cos^2\alpha-\sin^2\alpha=\frac{${a * a}}{${c * c}}-\frac{${b * b}}{${c * c}}=${ft(c2)}$.`,
           T`$\operatorname{tg}2\alpha=\frac{\sin2\alpha}{\cos2\alpha}=${ft(t2)}$.`] };
     }
