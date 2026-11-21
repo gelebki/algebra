@@ -312,7 +312,7 @@
         id: '3.10', name: 'Sumy i iloczyny pierwiastków z jedynki', statement: T`$\varepsilon_k=\cos\frac{2k\pi}n+i\sin\frac{2k\pi}n$, $k=0,\ldots,n-1$, $n\ge2$. Obliczyć sumy i iloczyny $\varepsilon_k$, $\varepsilon_k^2$, $\varepsilon_k^m$.`,
         wzory: [T`$\varepsilon_k$ to wszystkie pierwiastki wielomianu $z^n-1$.`, T`Wzory Viète’a: suma pierwiastków $z^n-1$ to $0$ (dla $n\ge2$), iloczyn to $(-1)^{n+1}$.`, T`$\varepsilon_k=\varepsilon_1^k$ — suma to ciąg geometryczny: $\sum_{k=0}^{n-1}q^k=\frac{q^n-1}{q-1}$ dla $q\neq1$.`, T`$\varepsilon_k^m=\varepsilon_1^{km}$: gdy $n\mid m$, wszystkie są równe $1$.`],
         gen: () => { const n = R.int(3, 9), m = R.int(1, 3 * n); const sum = n % (n / A.gcd(n, m)) === 0 && m % n === 0 ? n : 0; const kind = R.int(0, 1);
-          if (kind === 0) return { q: T`Oblicz $\varepsilon_0^{${m}}+\varepsilon_1^{${m}}+\ldots+\varepsilon_{${n - 1}}^{${m}}$ dla pierwiastków stopnia $n=${n}$ z jedynki.`, fields: [{ label: 'suma', ans: String(m % n === 0 ? n : 0), restrict: ['plain'] }], steps: [T`$\varepsilon_k^{${m}}=q^k$ dla $q=\varepsilon_1^{${m}}$.`, m % n === 0 ? T`$${n}\mid${m}$, więc $q=1$ i suma $=${n}$.` : T`$${n}\nmid${m}$, więc $q\neq1$, $q^{${n}}=1$, suma $=\frac{q^{${n}}-1}{q-1}=0$.`] };
+          if (kind === 0) return { q: T`Oblicz $\varepsilon_0^{${m}}+\varepsilon_1^{${m}}+\ldots+\varepsilon_{${n - 1}}^{${m}}$ dla pierwiastków stopnia $n=${n}$ z jedynki.`, fields: [{ label: 'suma', ans: String(m % n === 0 ? n : 0), restrict: ['plain'] }], steps: [T`$\varepsilon_k^{${m}}=q^k$ dla $q=\varepsilon_1^{${m}}$.`, m % n === 0 ? T`$${n}\mid ${m}$, więc $q=1$ i suma $=${n}$.` : T`$${n}\nmid${m}$, więc $q\neq1$, $q^{${n}}=1$, suma $=\frac{q^{${n}}-1}{q-1}=0$.`] };
           const prod = ((n + 1) * m) % 2 === 0 ? 1 : -1;
           return { q: T`Oblicz $\varepsilon_0^{${m}}\cdot\varepsilon_1^{${m}}\cdots\varepsilon_{${n - 1}}^{${m}}$ dla $n=${n}$.`, fields: [{ label: 'iloczyn', ans: String(prod), restrict: ['plain'] }], steps: [T`$\varepsilon_0\varepsilon_1\cdots\varepsilon_{n-1}=(-1)^{n+1}$ (Viète dla $z^n-1$).`, T`Iloczyn potęg $=\left((-1)^{${n + 1}}\right)^{${m}}=${prod}$.`] }; },
         items: [
@@ -419,7 +419,7 @@
         const it = eqItem('', tex, sols, 'lin3');
         it._check = z => Cx.abs(Cx.sub(Cx.div(Cx.mul(ev(U[0].replace('i\\sqrt3', '√3i').replace('\\sqrt3', '√3')), Cx.powInt(z, 3)), Cx.C(2)), Cx.div(Cx.mul(Cx.C(K), Cx.powInt(Cx.polar(1, ap * Math.PI / den), m)), Cx.polar(1, beta))));
         it.steps = [
-          T`Licznik prawej strony — wzór de Moivre’a: $${K === 1 ? '' : K}\left(\cos\left(${m}\cdot${at(ap, den)}\right)+i\sin\left(${m}\cdot${at(ap, den)}\right)\right)$, czyli kąt $${at(m * ap, den)}$${(m * ap / den) >= 2 ? T`, a po odjęciu pełnych obrotów $${ang(num)}$` : ''}.`,
+          T`Licznik prawej strony — wzór de Moivre’a: $${K === 1 ? '' : K}\left(\cos\left(${m}\cdot ${at(ap, den)}\right)+i\sin\left(${m}\cdot ${at(ap, den)}\right)\right)$, czyli kąt $${at(m * ap, den)}$${(m * ap / den) >= 2 ? T`, a po odjęciu pełnych obrotów $${ang(num)}$` : ''}.`,
           T`Dzielenie przez $\cos${at(bp, bq)}+i\sin${at(bp, bq)}$ — argumenty odejmujemy: prawa strona to $${K === 1 ? '' : K}\left(\cos${ang(num - beta)}+i\sin${ang(num - beta)}\right)$.`,
           T`Lewa strona: $\frac{${U[0]}}{2}=\cos\left(${at(U[1], U[2])}\right)+i\sin\left(${at(U[1], U[2])}\right)$. Dzielimy przez nią: $z^3=${K === 1 ? '' : K}\left(\cos${ang(th)}+i\sin${ang(th)}\right)$.`,
           T`Pierwiastki trzeciego stopnia: moduł $\sqrt[3]{${K}}=${A.niceReal(rk)}$, kąty $\frac{${ang(th)}+2k\pi}{3}$, $k=0,1,2$.`,
@@ -477,10 +477,10 @@
         const Pv = ev(P), absC = A.niceReal(Cx.abs(C)), argL = [d ? (d === 1 ? '' : d) + '\\varphi' : '', a ? '-' + (a === 1 ? '' : a) + '\\varphi' : ''].join('').replace(/^\+/, '') + '-' + ang(ph);
         const dm = d - a, phT = ang(ph);
         it.steps = [
-          m === 1 ? T`$${Pt}=${A.polarTex(Pv)}$: moduł $${absC}$, argument $${phT}$.` : T`$${Pt}=${A.polarTex(Pv)}$, więc z de Moivre’a $${Cden}$ ma moduł $${absC}$ i argument $${m}\cdot${A.parTex(ang(Cx.arg(Pv)))}$${ang(m * Cx.arg(Pv)) === phT && (m * (A.piFrac(Cx.arg(Pv))[0] / A.piFrac(Cx.arg(Pv))[1])) < 2 ? '' : T`, czyli $${phT}$`}.`,
+          m === 1 ? T`$${Pt}=${A.polarTex(Pv)}$: moduł $${absC}$, argument $${phT}$.` : T`$${Pt}=${A.polarTex(Pv)}$, więc z de Moivre’a $${Cden}$ ma moduł $${absC}$ i argument $${m}\cdot ${A.parTex(ang(Cx.arg(Pv)))}$${ang(m * Cx.arg(Pv)) === phT && (m * (A.piFrac(Cx.arg(Pv))[0] / A.piFrac(Cx.arg(Pv))[1])) < 2 ? '' : T`, czyli $${phT}$`}.`,
           b > 0 ? T`$z=0$ spełnia równanie (obie strony są zerem).` : T`$z=0$ nie spełnia równania (prawa strona to $1$).`,
           T`Dla $z\neq0$: $z=|z|(\cos\varphi+i\sin\varphi)$, $\overline z$ ma argument $-\varphi$. Lewa strona ma moduł $\frac{${pw('|z|', d + a) || '1'}}{${absC}}$ i argument $${argL}$; prawa — moduł $${b ? pw('|z|', b) : '1'}$ i argument $0$.`,
-          T`Moduły: $${pw('|z|', d + a)}=${absC}\cdot${b ? pw('|z|', b) : '1'}$, czyli $${pw('|z|', e)}=${absC}$${e === 1 ? '' : T`, więc $|z|=${A.niceReal(r)}$`}.`,
+          T`Moduły: $${pw('|z|', d + a)}=${absC}\cdot ${b ? pw('|z|', b) : '1'}$, czyli $${pw('|z|', e)}=${absC}$${e === 1 ? '' : T`, więc $|z|=${A.niceReal(r)}$`}.`,
           dm > 0
             ? T`Argumenty: $${dm === 1 ? '' : dm}\varphi-${phT}=2k\pi$, więc $\varphi=${dm === 1 ? T`${phT}+2k\pi` : T`\frac{${phT}+2k\pi}{${dm}}`}$${k > 1 ? T` dla $k=0,\ldots,${k - 1}$` : ''}.`
             : T`Argumenty: $-${-dm === 1 ? '' : -dm}\varphi-${phT}=2k\pi$, czyli $${-dm === 1 ? '' : -dm}\varphi=-${A.parTex(phT)}-2k\pi$. Ponieważ $k$ przebiega wszystkie liczby całkowite, piszemy $\varphi=${-dm === 1 ? T`-${A.parTex(phT)}+2k\pi` : T`\frac{-${A.parTex(phT)}+2k\pi}{${-dm}}`}$${k > 1 ? T` dla $k=0,\ldots,${k - 1}$` : ''}.`,
@@ -557,7 +557,7 @@
     function genSumEps() {
       const m = R.int(4, 200), r = m % 3;
       return { gk: 'p0', q: T`Dla $\varepsilon=\cos\frac{2\pi}3+i\sin\frac{2\pi}3$ oblicz $1+\varepsilon^{${m}}+\varepsilon^{${2 * m}}$.`, fields: [{ label: 'wynik', ans: r === 0 ? '3' : '0', restrict: ['plain'] }],
-        steps: [T`$\varepsilon^3=1$, więc potęgi $\varepsilon$ powtarzają się co $3$: liczy się tylko reszta z dzielenia wykładnika przez $3$.`, T`$${m}=3\cdot${Math.floor(m / 3)}+${r}$, więc $\varepsilon^{${m}}=\varepsilon^{${r}}$${r ? T` i $\varepsilon^{${2 * m}}=\varepsilon^{${(2 * r) % 3}}$` : ''}.`,
+        steps: [T`$\varepsilon^3=1$, więc potęgi $\varepsilon$ powtarzają się co $3$: liczy się tylko reszta z dzielenia wykładnika przez $3$.`, T`$${m}=3\cdot ${Math.floor(m / 3)}+${r}$, więc $\varepsilon^{${m}}=\varepsilon^{${r}}$${r ? T` i $\varepsilon^{${2 * m}}=\varepsilon^{${(2 * r) % 3}}$` : ''}.`,
           r === 0 ? T`Wszystkie trzy składniki są równe $1$: suma $=3$.` : T`Składniki to $1,\ \varepsilon,\ \varepsilon^2$ (w pewnej kolejności), a $1+\varepsilon+\varepsilon^2=0$. Suma $=0$.`] };
     }
     t39.gen = gk => {
@@ -573,11 +573,11 @@
       const n = R.int(3, 10), prod = gk.startsWith('prod'), e = gk.endsWith('1') ? 1 : gk.endsWith('2') ? 2 : R.int(3, 3 * n);
       const pw = j => (e === 1 ? T`\varepsilon_{${j}}` : T`\varepsilon_{${j}}^{${e}}`);
       const P1 = (n + 1) % 2 === 0 ? 1 : -1, ans = prod ? (e % 2 === 0 || P1 === 1 ? 1 : -1) : (e % n === 0 ? n : 0);
-      const q = prod ? T`Oblicz $${pw(0)}\cdot${pw(1)}\cdots${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.` : T`Oblicz $${pw(0)}+${pw(1)}+\ldots+${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.`;
+      const q = prod ? T`Oblicz $${pw(0)}\cdot ${pw(1)}\cdots${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.` : T`Oblicz $${pw(0)}+${pw(1)}+\ldots+${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.`;
       const steps = prod
         ? [T`Iloczyn wszystkich pierwiastków wielomianu $z^{${n}}-1$ (wzory Viète’a): $\varepsilon_0\cdots\varepsilon_{${n - 1}}=(-1)^{${n}+1}=${P1}$.`, e === 1 ? T`Wynik: $${P1}$.` : T`Iloczyn potęg to potęga iloczynu: $\left(${P1}\right)^{${e}}=${ans}$.`]
         : [T`$\varepsilon_k=\varepsilon_1^{\,k}$, więc $\varepsilon_k^{${e}}=q^k$ dla $q=\varepsilon_1^{${e}}$ — to suma ciągu geometrycznego $1+q+\ldots+q^{${n - 1}}$.`,
-          e % n === 0 ? T`$${n}\mid${e}$, więc $q=1$ i każdy składnik to $1$: suma $=${n}$.` : T`$${n}\nmid${e}$, więc $q\neq1$, a $q^{${n}}=1$. Suma $=\frac{q^{${n}}-1}{q-1}=0$.`];
+          e % n === 0 ? T`$${n}\mid ${e}$, więc $q=1$ i każdy składnik to $1$: suma $=${n}$.` : T`$${n}\nmid${e}$, więc $q\neq1$, a $q^{${n}}=1$. Suma $=\frac{q^{${n}}-1}{q-1}=0$.`];
       return { gk, q, fields: [{ label: prod ? 'iloczyn' : 'suma', ans: String(ans), restrict: ['plain'] }], steps };
     }
     t310.gen = gk => genRoots1(['sum1', 'prod1', 'sum2', 'prod2', 'summ', 'prodm'].includes(gk) ? gk : R.pick(['summ', 'prodm']));
