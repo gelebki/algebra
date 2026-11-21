@@ -81,7 +81,7 @@
       steps: [T`Przenosimy: $p^2+pq=${N}$, czyli $p(p+q)=${N}$. Zatem $p\mid ${N}$, więc $p\in\{${primes(N).filter(x => N % x === 0).join(',')}\}$.`,
         T`Sprawdzamy: ` + tried.map(([p, q]) => T`$p=${p}$: $q=${N}/${p}-${p}=${q}$ ${q > 0 && isP(q) && q !== p ? '✓' : q === p ? '(równe $p$ ✗)' : '✗'}`).join('; ') + '.',
         T`Odpowiedź: $${tex}$.`],
-      wrong: [[T`(p,q)\in\{${pairT(all)}\}`, 'Część wartości $q$ nie jest pierwsza — sprawdź każdą.'], [sol.length > 1 ? T`(p,q)\in\{${pairT(sol.slice(0, 1))}\}` : T`(p,q)\in\{${pairT(sol.map(([a, b]) => [b, a]))}\}`, sol.length > 1 ? 'Brakuje rozwiązania — sprawdź wszystkie dzielniki pierwsze.' : 'Sprawdź: $p$ musi dzielić ' + N + ', a role $p$ i $q$ nie są symetryczne.'], [T`(p,q)\in\{${pairT(sol.concat(sol.map(([a, b]) => [b, a])))}\}`, 'Równanie nie jest symetryczne — zamiana $p$ i $q$ nie daje rozwiązania.'], [T`\text{brak takich par}`, 'Sprawdź dzielniki pierwsze ' + N + '.']] });
+      wrong: [[T`(p,q)\in\{${pairT(all)}\}`, 'Część wartości $q$ nie jest pierwsza — sprawdź każdą.'], [sol.length > 1 ? T`(p,q)\in\{${pairT(sol.slice(0, 1))}\}` : T`(p,q)\in\{${pairT(sol.map(([a, b]) => [b, a]))}\}`, sol.length > 1 ? 'Brakuje rozwiązania — sprawdź wszystkie dzielniki pierwsze.' : 'Sprawdź: $p$ musi dzielić ' + N + ', a role $p$ i $q$ nie są symetryczne.'], [T`(p,q)\in\{${pairT(sol.concat(sol.map(([a, b]) => [b, a])))}\}`, 'Równanie nie jest symetryczne — zamiana $p$ i $q$ nie daje rozwiązania.'], [T`(p,q)\in\{${pairT(sol.map(([a, b]) => [a, b + 2]))}\}`, 'Przelicz $q=\frac{' + N + '}{p}-p$.'], [T`(p,q)\in\{${pairT(sol.map(([a, b]) => [b, a]))}\}`, 'Sprawdź: $p$ musi dzielić ' + N + '.']] });
   }
   function genPq() { for (;;) { const N = R.int(30, 300); const it = pqEq(N); if (/brak/.test(it.mcCorrect)) continue; return it; } }
 
@@ -105,7 +105,7 @@
       steps: [T`$pqr=${k}(p+q+r)$, więc $${k}\mid pqr$; $${k}$ jest pierwsza, więc dzieli jeden z czynników — np. $r=${k}$.`,
         T`Wtedy $pq=p+q+${k}$, czyli $pq-p-q+1=${k + 1}$, $(p-1)(q-1)=${k + 1}$.`,
         T`Rozkłady $${k + 1}$ (z $p\leq q$): ` + cands.map(([p, q]) => T`$p=${p},q=${q}$ ${isP(p) && isP(q) ? '✓' : '✗'}`).join('; ') + T`. Odpowiedź: $${tex}$ (z dokładnością do kolejności).`],
-      wrong: [[tripT(cands.map(([p, q]) => [p, q, k].sort((x, y) => x - y))), 'Nie wszystkie te liczby są pierwsze — sprawdź każdą.'], [k === 3 ? T`\{3,3,3\}` : T`\{${k},${k},${k}\}`, k === 3 ? 'Brakuje trójki $\\{2,3,5\\}$: 0=3\\cdot10$.' : T`$${k ** 3}\neq ${k}\cdot ${3 * k}$.`], [T`\{2,3,${k + 1}\}`, 'Trik $(p-1)(q-1)=' + (k + 1) + '$ trzeba rozwiązać przez dzielniki.'], [T`\text{brak takich trójek}`, 'Sprawdź rozkład $' + (k + 1) + '=1\\cdot' + (k + 1) + '$.'], [tripT(sol.slice(0, -1).length ? sol.slice(0, -1) : [[2, k, k + 2]]), sol.length > 1 ? 'Brakuje jednej trójki.' : T`$${2 * k * (k + 2)}\neq ${k}\cdot ${2 + k + k + 2}$.`]] });
+      wrong: [[tripT(cands.map(([p, q]) => [p, q, k].sort((x, y) => x - y))), 'Nie wszystkie te liczby są pierwsze — sprawdź każdą.'], [k === 3 ? T`\{3,3,3\}` : T`\{${k},${k},${k}\}`, k === 3 ? 'Brakuje trójki $\\{2,3,5\\}$: 0=3\\cdot10$.' : T`$${k ** 3}\neq ${k}\cdot ${3 * k}$.`], [T`\{2,3,${k + 1}\}`, 'Trik $(p-1)(q-1)=' + (k + 1) + '$ trzeba rozwiązać przez dzielniki.'], [tripT(sol.slice(0, -1).length ? sol.slice(0, -1) : [[2, k, k + 2]]), sol.length > 1 ? 'Brakuje jednej trójki.' : T`$${2 * k * (k + 2)}\neq ${k}\cdot ${2 + k + k + 2}$.`]] });
   }
 
   /* ===== 7. jedna jest różnicą sześcianów dwóch pozostałych ===== */
@@ -131,7 +131,7 @@
   /* ===== 9–12. kiedy wyrażenie od n jest pierwsze ===== */
   function whenPrime(gk, q, steps, sol, wrong) { const tex = sol.length ? T`n=${sol.join(',\\ ')}` : T`\text{nie istnieje}`; return mk({ gk, field: txtField(), q, tex, steps, wrong }); }
   const it9 = whenPrime('n44', T`Dla jakich $n\in\mathbb N$ liczba $n^4+4$ jest pierwsza?`, [T`Dopisujemy i odejmujemy $4n^2$: $n^4+4=(n^2+2)^2-(2n)^2=(n^2-2n+2)(n^2+2n+2)$.`, T`Drugi czynnik jest $\geq5$, więc dla pierwszej liczby musi być $n^2-2n+2=1$, czyli $(n-1)^2=0$, $n=1$.`, T`$n=1$: $1+4=5$ — pierwsza ✓. Odpowiedź: $n=1$.`], [1],
-    [[T`\text{nie istnieje}`, 'Sprawdź $n=1$: $1+4=5$.'], [T`n=1,\ 3`, '$3^4+4=85=5\\cdot17$.'], [T`\text{każde nieparzyste }n`, '$3^4+4=85$ jest złożona.']]);
+    [[T`\text{nie istnieje}`, 'Sprawdź $n=1$: $1+4=5$.'], [T`n=1,\ 3`, '$3^4+4=85=5\\cdot17$.'], [T`n=1,\ 5`, '$5^4+4=629=17\\cdot37$.'], [T`n=3`, '$85=5\\cdot17$.']]);
   const it10 = whenPrime('n421', T`Dla jakich $n\in\mathbb N$ liczba $n^4+n^2+1$ jest pierwsza?`, [T`$n^4+n^2+1=(n^2+1)^2-n^2=(n^2-n+1)(n^2+n+1)$.`, T`$n^2+n+1\geq3$, więc musi być $n^2-n+1=1$, czyli $n(n-1)=0$, $n=1$.`, T`$n=1$: $1+1+1=3$ — pierwsza ✓. Odpowiedź: $n=1$.`], [1],
     [[T`n=1,\ 2`, '$16+4+1=21=3\\cdot7$.'], [T`\text{nie istnieje}`, '$n=1$ daje $3$.'], [T`n=2`, '$21$ jest złożona.']]);
   function cubeMinus(a, b, plus) { // a³n³ ∓ b³
@@ -144,7 +144,7 @@
     const steps = [T`Wzór na ${plus ? 'sumę' : 'różnicę'} sześcianów: $${E}=(${a}n)^3${plus ? '+' : '-'}${b}^3=(${f1})(${f2})$.`,
       plus ? T`Dla $n\geq1$: $${f1}\geq ${a + b}$ i $${f2}=${a}n(${a}n-${b})+${b * b}\geq ${Math.min(...[1, 2, 3].map(n => a * a * n * n - a * b * n + b * b))}$ — oba czynniki są większe od $1$, więc liczba jest złożona.` : T`Drugi czynnik jest większy od $1$, więc musi być $${f1}=1$, czyli $n=${n1 == null ? '\\frac{' + (b + 1) + '}{' + a + '}' : n1}$${n1 == null ? ' — to nie jest liczba naturalna' : ''}.`,
       plus ? T`Odpowiedź: nie istnieje.` : sol.length ? T`$n=${sol[0]}$: $${val(sol[0])}$ — pierwsza ✓. Odpowiedź: $n=${sol.join(',')}$.` : T`Odpowiedź: dla żadnego $n$.`];
-    const wrong = plus ? [[T`n=1`, T`$${val(1)}=${a + b}\cdot ${a * a - a * b + b * b}$ — złożona.`], [T`n=2`, T`$${val(2)}$ dzieli się przez $${2 * a + b}$.`], [T`\text{każde nieparzyste }n`, 'Wzór na sumę sześcianów daje rozkład dla każdego $n$.']]
+    const wrong = plus ? [[T`n=1`, T`$${val(1)}=${a + b}\cdot ${a * a - a * b + b * b}$ — złożona.`], [T`n=2`, T`$${val(2)}$ dzieli się przez $${2 * a + b}$.`], [T`n=1,\ 3`, 'Wzór na sumę sześcianów daje rozkład dla każdego $n$.']]
       : [[sol.length ? T`\text{nie istnieje}` : T`n=1`, sol.length ? 'Sprawdź $n=' + sol[0] + '$.' : T`$${val(1)}$ jest złożona albo $\leq1$.`], [T`n=${(sol[0] || 1) + 1}`, T`$${val((sol[0] || 1) + 1)}$ dzieli się przez $${a * ((sol[0] || 1) + 1) - b}$.`], [T`n=${sol.length ? sol[0] + ',\\ ' + (sol[0] + 2) : '2'}`, 'Dla większych $n$ pierwszy czynnik jest większy od 1 — liczba złożona.']];
     return whenPrime(plus ? 'c3p' : 'c3m', q, steps, plus ? [] : sol, wrong);
   }
