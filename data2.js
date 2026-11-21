@@ -154,7 +154,7 @@
       const r2 = [Z.mul(c, a1), Z.mul(c, a2)];
       const tm = (x, v, f) => { const t = Z.tex(...x); const body = (t === '1' ? '' : t === '-1' ? '-' : (x[0] && x[1] ? '(' + t + ')' : t)) + v; return f ? body : (/^-/.test(body) ? body : '+' + body); };
       return { type: 'choice', q: T`Ile rozwiązań ma układ $$\begin{cases}${tm(a1, 'z_1', 1)}${tm(a2, 'z_2')}=${Z.tex(...b1)}\\${tm(r2[0], 'z_1', 1)}${tm(r2[1], 'z_2')}=${Z.tex(...b2)}\end{cases}$$`, choice: { multi: false, opts: ['dokładnie jedno', 'brak rozwiązań (układ sprzeczny)', 'nieskończenie wiele'], correct: [kind === 0 ? 1 : 2] },
-        steps: [T`$W=a_{11}a_{22}-a_{12}a_{21}=0$ — lewa strona drugiego równania to pierwsze pomnożone przez $${Z.tex(...c)}$.`, kind === 0 ? T`Prawa strona: $${Z.ptex(...c)}\cdot ${Z.ptex(...b1)}=${Z.tex(...Z.mul(c, b1))}\neq${Z.tex(...b2)}$ — układ sprzeczny.` : T`Prawa strona też: $${Z.ptex(...c)}\cdot ${Z.ptex(...b1)}=${Z.tex(...b2)}$ — równania są równoważne, nieskończenie wiele rozwiązań.`] };
+        steps: [T`$W=a_{11}a_{22}-a_{12}a_{21}=0$ — lewa strona drugiego równania to pierwsze pomnożone przez $${Z.tex(...c)}$.`, kind === 0 ? T`Prawa strona: $${Z.ptex(...c)}\cdot ${Z.ptex(...b1)}=${Z.tex(...Z.mul(c, b1))}\neq ${Z.tex(...b2)}$ — układ sprzeczny.` : T`Prawa strona też: $${Z.ptex(...c)}\cdot ${Z.ptex(...b1)}=${Z.tex(...b2)}$ — równania są równoważne, nieskończenie wiele rozwiązań.`] };
     }
     for (;;) {
       const a = [Z.rnd(2, false), Z.rnd(2, false), Z.rnd(2, false), Z.rnd(2, false)];
@@ -657,7 +657,7 @@
     function genDbl() {
       const [a, b, c] = R.pick(TRI), Q2 = Math.random() < 0.5; // sin = b/c, cos = ±a/c
       const ca = Q2 ? -a : a, s2 = fr(2 * b * ca, c * c), c2 = fr(ca * ca - b * b, c * c), t2 = fr(2 * b * ca, ca * ca - b * b);
-      return { gk: 'dbl', q: T`Wiadomo, że $\sin\alpha=${A.fracTex(b, c)}$ i $\alpha\in${Q2 ? T`\left(\frac\pi2,\pi\right)` : T`\left(0,\frac\pi2\right)`}$. Oblicz $\sin2\alpha$, $\cos2\alpha$ i $\operatorname{tg}2\alpha$.`,
+      return { gk: 'dbl', q: T`Wiadomo, że $\sin\alpha=${A.fracTex(b, c)}$ i $\alpha\in ${Q2 ? T`\left(\frac\pi2,\pi\right)` : T`\left(0,\frac\pi2\right)`}$. Oblicz $\sin2\alpha$, $\cos2\alpha$ i $\operatorname{tg}2\alpha$.`,
         fields: [{ label: T`\sin2\alpha`, ans: fs(s2), restrict: ['notrig'] }, { label: T`\cos2\alpha`, ans: fs(c2), restrict: ['notrig'] }, { label: T`\operatorname{tg}2\alpha`, ans: fs(t2), restrict: ['notrig'] }],
         steps: [T`Z jedynki trygonometrycznej: $\cos^2\alpha=1-\sin^2\alpha=1-\frac{${b * b}}{${c * c}}=\frac{${a * a}}{${c * c}}$, więc $\cos\alpha=\pm ${A.fracTex(a, c)}$. W ${Q2 ? 'II' : 'I'} ćwiartce cosinus jest ${Q2 ? 'ujemny' : 'dodatni'}: $\cos\alpha=${A.fracTex(ca, c)}$.`,
           T`$\sin2\alpha=2\sin\alpha\cos\alpha=2\cdot ${A.fracTex(b, c)}\cdot ${par(A.fracTex(ca, c))}=${ft(s2)}$.`,
