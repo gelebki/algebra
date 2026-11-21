@@ -96,7 +96,7 @@
       [poly([[-c * d - b, 'x^{n-1}', ''], [-c, 'x^{n-2}', '']]).tex, T`$-${c}\cdot(-${d}x^{n-1})=+${c * d}x^{n-1}$.`]] });
     const v = A1 * x ** (n - 1) + A2 * x ** (n - 2);
     return mk({ gk: 'val', q: T`Oblicz wartość wyrażenia $$${exprT}$$ dla $x=${x}$ oraz $n=${n}$.`, ans: String(v), tex: big(v),
-      steps: [...base, T`Dla $n=${n}$, $x=${x}$: $${A1}\cdot${x}^{${n - 1}}${A2 < 0 ? '-' : '+'}${Math.abs(A2)}\cdot${x}^{${n - 2}}=${big(A1 * x ** (n - 1))}${A2 < 0 ? '-' : '+'}${big(Math.abs(A2) * x ** (n - 2))}=${big(v)}$.`], wrong: [
+      steps: [...base, T`Dla $n=${n}$, $x=${x}$: $${A1}\cdot ${x}^{${n - 1}}${A2 < 0 ? '-' : '+'}${Math.abs(A2)}\cdot ${x}^{${n - 2}}=${big(A1 * x ** (n - 1))}${A2 < 0 ? '-' : '+'}${big(Math.abs(A2) * x ** (n - 2))}=${big(v)}$.`], wrong: [
         [big((c * d + b) * x ** (n - 1) - c * x ** (n - 2)), T`Zły znak przy $${b}x^{n-1}$.`], [big(A1 * x ** (n - 1) + c * x ** (n - 2)), T`$-${c}x^{n-2}$ ma minus.`], [big(A1 * x ** (n - 2) + A2 * x ** (n - 1)), T`Pomylone wykładniki: $x^{n-1}=x^{${n - 1}}$, $x^{n-2}=x^{${n - 2}}$.`], [big(v - 2 * a * x ** (n - 2)), T`$-(-${a}x^{n-2})$ znosi się z $-${a}x^{n-2}$.`]] });
   }
   const gen23 = gk => e23(R.int(2, 9), R.int(2, 9), R.int(2, 9), R.int(2, 3), R.int(2, 9), R.int(3, 4), gk === 'simp' ? 'simp' : 'val');
@@ -115,7 +115,7 @@
   /* ---------- 2.5 ---------- */
   function e25(x0, yv, s, k) { // (2/3)(x-x0)^2 + k m^2 = 0;  a^2 b^{y+s} ~ a^2 b^{yv+s}
     const val = x0 * x0 * yv + 10 * x0 * yv * yv;
-    const steps = [T`Suma nieujemnych składników $\frac23(x-${x0})^2+${k}m^2$ jest zerem tylko gdy oba są zerami: $x=${x0}$, $m=0$.`, T`Wyrazy podobne mają te same potęgi: $b^{y+${s}}$ i $b^{${yv + s}}$, więc $y=${yv}$.`, T`Upraszczamy klamrę: $-\frac7{16}x^2y-\frac14xy^2-\frac3{16}x^2y-3{,}475xy^2-6{,}275xy^2=-\frac58x^2y-10xy^2$.`, T`Wyrażenie: $\frac38x^2y+${k}m^2+\frac58x^2y+10xy^2=x^2y+10xy^2+${k}m^2$.`, T`Podstawiamy: $${x0}^2\cdot${yv}+10\cdot${x0}\cdot${yv}^2+0=${val}$.`];
+    const steps = [T`Suma nieujemnych składników $\frac23(x-${x0})^2+${k}m^2$ jest zerem tylko gdy oba są zerami: $x=${x0}$, $m=0$.`, T`Wyrazy podobne mają te same potęgi: $b^{y+${s}}$ i $b^{${yv + s}}$, więc $y=${yv}$.`, T`Upraszczamy klamrę: $-\frac7{16}x^2y-\frac14xy^2-\frac3{16}x^2y-3{,}475xy^2-6{,}275xy^2=-\frac58x^2y-10xy^2$.`, T`Wyrażenie: $\frac38x^2y+${k}m^2+\frac58x^2y+10xy^2=x^2y+10xy^2+${k}m^2$.`, T`Podstawiamy: $${x0}^2\cdot ${yv}+10\cdot ${x0}\cdot ${yv}^2+0=${val}$.`];
     const q = T`Liczby $m,x,y$ spełniają: $\frac23(x-${x0})^2+${k}m^2=0$ oraz $-2a^2b^{y+${s}}$ i $3a^2b^{${yv + s}}$ są wyrazami podobnymi. Oblicz $$\begin{wrap}&\tfrac38x^2y+${k}m^2-\Big\{-\tfrac7{16}x^2y\\&+\left[-\tfrac14xy^2-\tfrac3{16}x^2y-3{,}475xy^2\right]-6{,}275xy^2\Big\}\end{wrap}$$`;
     return multi({ gk: 'val', q, steps, parts: [
       part('x', x0, String(x0), [[String(-x0), T`$(x-${x0})^2=0\iff x=${x0}$.`], ['0', T`To $m$ jest zerem; $x$ zeruje nawias $(x-${x0})$.`], [String(x0 * x0), 'Nie podnosimy do kwadratu — rozwiązujemy $x-' + x0 + '=0$.']]),
@@ -209,7 +209,7 @@
     const wf = w < 0 ? "+" + (-w) : "-" + w;
     const m = 2 * u + w, n = m - u, a = Q(Math.round((p + q) * 100), Math.round(r * 100)), abc = qmul(a, Q(n * m));
     const dec = x => String(x).replace('.', '{,}');
-    const steps = [T`Wyrazy podobne: $b=m-${u}$, $c=2n${wf}$. Ich suma $${dec(p + q)}x^by^c$ ma być równa $${dec(r)}ax^ny^m$.`, T`Porównujemy potęgi: $b=n$ i $c=m$. Wtedy $n=m-${u}$ i $m=2n${wf}=2m-${2 * u + w}$, więc $m=${m}$, $n=${n}$.`, T`Stąd $b=${n}$, $c=${m}$, a współczynniki: $${dec(p + q)}=${dec(r)}a$, czyli $a=${qt(a)}$.`, T`$abc=${qt(a)}\cdot${n}\cdot${m}=${qt(abc)}$.`];
+    const steps = [T`Wyrazy podobne: $b=m-${u}$, $c=2n${wf}$. Ich suma $${dec(p + q)}x^by^c$ ma być równa $${dec(r)}ax^ny^m$.`, T`Porównujemy potęgi: $b=n$ i $c=m$. Wtedy $n=m-${u}$ i $m=2n${wf}=2m-${2 * u + w}$, więc $m=${m}$, $n=${n}$.`, T`Stąd $b=${n}$, $c=${m}$, a współczynniki: $${dec(p + q)}=${dec(r)}a$, czyli $a=${qt(a)}$.`, T`$abc=${qt(a)}\cdot ${n}\cdot ${m}=${qt(abc)}$.`];
     return multi({ gk: 'abc', q: T`Jednomiany $${dec(p)}x^by^c$ oraz $${dec(q)}x^{m-${u}}y^{2n${wf}}$ są wyrazami podobnymi, a ich suma wynosi $${dec(r)}ax^ny^m$. Oblicz $abc$.`, steps, parts: [
       part('n', n, String(n), [[String(m), 'Pomylone $n$ i $m$.'], [String(n + 1), 'Pomyłka o 1.'], [String(u), T`$n=m-${u}$, a nie $${u}$.`]]),
       part('m', m, String(m), [[String(n), 'Pomylone $n$ i $m$.'], [String(2 * n), T`$m=2n${wf}$.`], [String(m - 1), 'Pomyłka o 1.']]),
@@ -245,7 +245,7 @@
     const vs = ['a', 'b', 'c', 'd', 'e'].slice(0, k), fr = vs.map(v => T`\frac{${v}}{${vs.filter(u => u !== v).join('+')}}`).join('=');
     const half = qt(Q(1, k - 1));
     return mk({ gk: 'ratio', field: txtField(), q: T`Jeśli $x=${fr}$, to $x$ wynosi:`, tex: T`${half}\text{ lub }-1`,
-      steps: [T`Każdy licznik to $x$ razy mianownik. Dodajemy wszystkie ${k} równości: $${vs.join('+')}=x\cdot${k - 1}(${vs.join('+')})$.`, T`Jeśli $${vs.join('+')}\neq0$: dzielimy i $x=${half}$.`, T`Jeśli $${vs.join('+')}=0$: mianownik $${vs.slice(1).join('+')}=-a$, więc $x=\frac a{-a}=-1$.`, T`Oba przypadki są możliwe (np. ${k === 3 ? '$a=b=c=1$ oraz $a=1,b=1,c=-2$' : 'wszystkie równe albo suma zero'}), więc $x=${half}$ lub $x=-1$.`],
+      steps: [T`Każdy licznik to $x$ razy mianownik. Dodajemy wszystkie ${k} równości: $${vs.join('+')}=x\cdot ${k - 1}(${vs.join('+')})$.`, T`Jeśli $${vs.join('+')}\neq0$: dzielimy i $x=${half}$.`, T`Jeśli $${vs.join('+')}=0$: mianownik $${vs.slice(1).join('+')}=-a$, więc $x=\frac a{-a}=-1$.`, T`Oba przypadki są możliwe (np. ${k === 3 ? '$a=b=c=1$ oraz $a=1,b=1,c=-2$' : 'wszystkie równe albo suma zero'}), więc $x=${half}$ lub $x=-1$.`],
       wrong: [[half, T`Przy dzieleniu przez $${vs.join('+')}$ trzeba osobno rozpatrzyć przypadek, gdy ta suma jest zerem.`], ['-1', T`To tylko przypadek sumy zerowej — gdy liczby są równe, wychodzi $${half}$.`], [qt(Q(k, k - 1)), 'Błąd przy dodawaniu mianowników.']] });
   }
   const gen217 = () => e217(R.int(3, 5));
@@ -275,7 +275,7 @@
   function e222(x, y, z) {
     const a = x * y, b = x * z, c = y * z, v = x * x + y * y + z * z;
     return mk({ gk: 'num', q: T`Liczby $x,y,z$ spełniają $xy=${a}$, $xz=${b}$, $yz=${c}$. Oblicz $x^2+y^2+z^2$.`, ans: String(v), tex: String(v),
-      steps: [T`$x^2=\frac{(xy)(xz)}{yz}=\frac{${a}\cdot${b}}{${c}}=${x * x}$, $\ y^2=\frac{${a}\cdot${c}}{${b}}=${y * y}$, $\ z^2=\frac{${b}\cdot${c}}{${a}}=${z * z}$.`, T`Suma: $${x * x}+${y * y}+${z * z}=${v}$.`],
+      steps: [T`$x^2=\frac{(xy)(xz)}{yz}=\frac{${a}\cdot ${b}}{${c}}=${x * x}$, $\ y^2=\frac{${a}\cdot ${c}}{${b}}=${y * y}$, $\ z^2=\frac{${b}\cdot ${c}}{${a}}=${z * z}$.`, T`Suma: $${x * x}+${y * y}+${z * z}=${v}$.`],
       wrong: [[String(a * a + b * b + c * c), T`$a=xy$, więc $a^2=x^2y^2$ — to nie $x^2$.`], [String(Math.abs(x) + Math.abs(y) + Math.abs(z)), 'Policzono $|x|+|y|+|z|$ zamiast sumy kwadratów.'], [String(v + 2 * (a + b + c)), 'To $(x+y+z)^2$.']] });
   }
   const gen222 = gk => (gk === 'gen' ? e222gen() : e222(R.nz(-6, 6), R.nz(-6, 6), R.nz(-6, 6)));
