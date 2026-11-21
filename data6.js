@@ -131,7 +131,7 @@
     const mul = (k, s0) => { let sg = 1, a = 0, b = 0; red.forEach(([s, g], i) => { const e = EXP[g], dir = i === 2 ? -1 : 1; const ss = i === k ? -s : s; sg *= ss; a += dir * e[0]; b += dir * e[1]; }); return [sg * s0, a, b]; };
     const [sg, a, b] = mul(-1, 1);
     if (a === 0 && b === 0) return e35r();
-    const q = T`Uprość $$\frac{${fT(...fs[0].map((x, i) => (i ? x[0] : x)))}\cdot${fT(fs[1][0], fs[1][1][0])}}{${fT(fs[2][0], fs[2][1][0])}}$$`;
+    const q = T`Uprość $$\frac{${fT(...fs[0].map((x, i) => (i ? x[0] : x)))}\cdot ${fT(fs[1][0], fs[1][1][0])}}{${fT(fs[2][0], fs[2][1][0])}}$$`;
     const steps = [...fs.map(([f, sh], i) => T`$${fT(f, sh[0])}=${sgT(red[i][0], red[i][1])}$ — ${Math.abs(sh[1]) % 180 === 90 ? 'kąt $\\frac\\pi2$ lub $\\frac{3\\pi}2$: zmiana na kofunkcję' : 'kąt $\\pi$ lub $2\\pi$: ta sama funkcja'}, znak jak ${f === 'sin' ? 'sinusa' : f === 'cos' ? 'cosinusa' : f === 'tg' ? 'tangensa' : 'cotangensa'} w ćwiartce kąta $${sh[0]}$ (dla ostrego $\alpha$).`), T`Wynik: $${monoTex(sg, a, b)}$.`];
     const wrong = [[monoTex(-sg, a, b), 'Zły znak jednego z czynników — sprawdź ćwiartkę.']];
     for (let k = 0; k < 3; k++) { const [f, sh] = fs[k]; if (Math.abs(sh[1]) % 180 === 90) { const e1 = EXP[red[k][1]], e0 = EXP[f]; const dir = k === 2 ? -1 : 1; wrong.push([monoTex(sg, a - dir * e1[0] + dir * e0[0], b - dir * e1[1] + dir * e0[1]), T`Dla $${sh[0]}$ funkcja zmienia się na kofunkcję.`]); } }
@@ -144,7 +144,7 @@
       T`$\operatorname{tg}\left(\alpha-\frac\pi2\right)=-\operatorname{ctg}\alpha$; $\ \sin\left(\alpha-\frac{3\pi}2\right)=\cos\alpha$, $\ \sin\left(\frac{3\pi}2+\alpha\right)=-\cos\alpha$, więc nawias to $2\cos^2\alpha$.`,
       T`Mianownik: $-\operatorname{ctg}\alpha\cdot2\cos^2\alpha=-\frac{2\cos^3\alpha}{\sin\alpha}$.`,
       T`Iloraz: $\frac{-\frac1{\sin\alpha\cos\alpha}}{-\frac{2\cos^3\alpha}{\sin\alpha}}=\frac{1}{2\cos^4\alpha}$.`];
-    const part = (label, tex, wrong) => { const seen = new Set([norm(tex)]), mc = []; for (const [t, w] of wrong) if (!seen.has(norm(t)) && mc.length < 3) { seen.add(norm(t)); mc.push({ tex: t, why: w }); } return { label, kind: 'txt', ans: '0', mcCorrect: tex, mc }; };
+    const part = (label, tex, wrong) => { const seen = new Set([norm(tex)]), mc = []; for (const [t, w] of wrong) if (!seen.has(norm(t)) && mc.length < 6) { seen.add(norm(t)); mc.push({ tex: t, why: w }); } return { label, kind: 'txt', ans: '0', mcCorrect: tex, mc }; };
     return { label: '3.5', gk: 'simp', pairs: true, sol: steps, steps,
       q: T`Doprowadź do prostszej postaci: $$\frac{\operatorname{tg}(\pi-\alpha)\operatorname{ctg}^2(\alpha-\pi)-\operatorname{tg}^3(\alpha-2\pi)\operatorname{tg}^2\left(\frac32\pi-\alpha\right)}{\operatorname{tg}\left(\alpha-\frac\pi2\right)\left[\sin^2\left(\alpha-\frac32\pi\right)+\sin^2\left(\frac32\pi+\alpha\right)\right]}$$`,
       fields: [
