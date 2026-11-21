@@ -182,12 +182,11 @@
   function fracCheck(a, b, c, d) {
     const D = a * d - b * c, num = linV([a, b], ['n', '']), den = linV([c, d], ['n', '']);
     let ce = null; for (let n = 1; n < 400; n++) { const x = a * n + b, y = c * n + d; if (gcd(x, y) > 1) { ce = [n, x, y]; break; } }
-    const tex = ce ? T`\text{Nie, np. }n=${ce[0]}:\ \tfrac{${ce[1]}}{${ce[2]}}=\tfrac{${ce[1] / gcd(ce[1], ce[2])}}{${ce[2] / gcd(ce[1], ce[2])}}` : T`\text{Tak, zawsze}`;
+    const tex = ce ? T`\text{Nie, np. }n=${ce[0]}:\ \tfrac{${ce[1]}}{${ce[2]}}\text{ się skraca}` : T`\text{Tak, zawsze}`;
     const fake = n => T`\text{Nie, np. }n=${n}:\ \tfrac{${a * n + b}}{${c * n + d}}\text{ się skraca}`;
     const wrong = ce ? [[T`\text{Tak, zawsze}`, T`Kombinacja daje $${Math.abs(D)}$, a nie $1$ — dla niektórych $n$ wspólnym dzielnikiem jest $${Math.abs(D)}$.`], [fake(ce[0] + 1), T`$(${a * (ce[0] + 1) + b},${c * (ce[0] + 1) + d})=${gcd(a * (ce[0] + 1) + b, c * (ce[0] + 1) + d)}$ — ten ułamek jest nieskracalny.`], [fake(1), T`$(${a + b},${c + d})=${gcd(a + b, c + d)}$.`].filter(() => gcd(a + b, c + d) === 1)]
-      : [[fake(1), T`$(${a + b},${c + d})=1$.`], [fake(2), T`$(${2 * a + b},${2 * c + d})=1$.`], [T`\text{Tylko dla parzystych }n`, 'Kombinacja daje 1 dla każdego $n$.']];
+      : [[fake(1), T`$(${a + b},${c + d})=1$.`], [fake(2), T`$(${2 * a + b},${2 * c + d})=1$.`], [fake(3), T`$(${3 * a + b},${3 * c + d})=1$.`]];
     for (const k of [2, 3, 4, 5, 7]) { const nn = (ce ? ce[0] : 0) + k; if (gcd(a * nn + b, c * nn + d) === 1) wrong.push([fake(nn), T`$(${a * nn + b},${c * nn + d})=1$ — ten ułamek jest nieskracalny.`]); }
-    if (wrong.length < 3) wrong.push([T`\text{Tylko dla nieparzystych }n`, ce ? T`Ułamek skraca się np. dla $n=${ce[0]}$.` : 'Kombinacja daje 1 dla każdego $n$.']);
     return mk({ gk: 'fcheck', field: txtField(), q: T`Czy dla każdej liczby naturalnej $n$ ułamek $\dfrac{${num}}{${den}}$ jest nieskracalny?`, tex,
       steps: [T`Niech $d$ dzieli licznik i mianownik. Kombinacja: $${c}(${num})-${a}(${den})=${-D}$, więc $d\mid ${Math.abs(D)}$.`,
         Math.abs(D) === 1 ? T`Zatem $d=1$ — ułamek jest zawsze nieskracalny.` : T`$${Math.abs(D)}$ nie jest jedynką, więc skracanie przez $${Math.abs(D)}$ jest możliwe. Szukamy $n$ z $${Math.abs(D)}\mid ${num}$: najmniejsze to $n=${ce[0]}$.`,
@@ -200,7 +199,7 @@
   const it8 = proof('3.8', 'adbc', T`Udowodnij, że jeżeli $ad-bc=1$, to ułamek $\dfrac{a+b}{c+d}$ jest nieskracalny.`, [
     M('Kombinacja liniowa', 'Znajdź kombinację $a+b$ i $c+d$ równą $ad-bc$.', T`$d(a+b)-b(c+d)=ad-bc=1$, więc wspólny dzielnik $a+b$ i $c+d$ dzieli 1.`,
       [S('Wspólny dzielnik', 'Od czego zacząć?', '$g\\mid a+b$ i $g\\mid c+d$', T`Niech $g$ będzie wspólnym dzielnikiem $a+b$ i $c+d$ (dodatnim).`, 'Pokażemy, że $g=1$.', ['$g\\mid a$', 'Nie wiemy tego.'], ['$g=ad-bc$', 'To nie jest definicja $g$.']),
-       S('Kombinacja', 'Jaka kombinacja daje $ad-bc$?', '$d(a+b)-b(c+d)$', T`$d(a+b)-b(c+d)=ad+bd-bc-bd=ad-bc=1$.`, 'Wyrazy $bd$ się skracają.', ['$a(c+d)-c(a+b)$', 'To daje $ad-bc$? Policz: $ac+ad-ac-bc=ad-bc$ — też działa, ale sprawdź znaki przy wyborze.'], ['$(a+b)-(c+d)$', 'Nie daje $ad-bc$.']),
+       S('Kombinacja', 'Jaka kombinacja daje $ad-bc$?', '$d(a+b)-b(c+d)$', T`$d(a+b)-b(c+d)=ad+bd-bc-bd=ad-bc=1$.`, 'Wyrazy $bd$ się skracają.', ['$a(a+b)-b(c+d)$', 'Wychodzi $a^2+ab-bc-bd$ — wyrazy się nie skracają.'], ['$(a+b)-(c+d)$', 'Nie daje $ad-bc$.']),
        S('Wniosek', 'Wniosek?', '$g\\mid1$, więc $g=1$', T`$g$ dzieli kombinację, czyli $g\mid1$, więc $g=1$. Ułamek jest nieskracalny. $\blacksquare$`, 'Jedyny dodatni dzielnik 1 to 1.', ['$g\\mid ad$', 'Zbyt słabe.'], ['$g=ad-bc$', 'Tylko $g\\mid ad-bc$.'])],
       [[T`$g\mid a+b$, $g\mid c+d$.`, 'oznaczenie'], [T`$d(a+b)-b(c+d)=ad-bc=1$.`, 'kombinacja'], [T`$g\mid1\Rightarrow g=1$. $\blacksquare$`, 'wniosek']],
       ['Brak wymnożenia kombinacji.']),
@@ -252,7 +251,7 @@
 
   const it12 = mk({ gk: 'a2b2', field: txtField(), q: T`Niech $a,b\in\mathbb Z$, $(a,b)=1$. Znajdź wszystkie możliwe wartości $(a^2+b^2,\ a+b)$.`, tex: T`1\text{ lub }2`,
     steps: [T`Niech $d=(a^2+b^2,a+b)$. $a^2+b^2=(a+b)^2-2ab$, więc $d\mid 2ab$.`, T`Z zad. 3.11: $d\mid a+b$ i $(a,b)=1$ daje $(d,a)=(d,b)=1$, więc $(d,ab)=1$ i z $d\mid 2ab$ wynika $d\mid2$.`, T`Obie wartości występują: $a=2,b=1$: $(5,3)=1$; $a=b=1$: $(2,2)=2$. Odpowiedź: $1$ lub $2$.`],
-    wrong: [[T`\text{tylko }1`, 'Dla $a=b=1$: $(2,2)=2$.'], [T`\text{tylko }2`, 'Dla $a=2,b=1$: $(5,3)=1$.'], [T`1,\ 2\text{ lub }4`, 'Z $d\\mid2$ — więc 4 jest niemożliwe.']] });
+    wrong: [[T`1`, 'Dla $a=b=1$: $(2,2)=2$ — dwójka też występuje.'], [T`2`, 'Dla $a=2,b=1$: $(5,3)=1$.'], [T`1,\ 2\text{ lub }4`, 'Z $d\\mid2$ — więc 4 jest niemożliwe.']] });
 
   /* ===== 13. równania diofantyczne ===== */
   function dio2(a, b, c) { // ax + by = c
@@ -260,7 +259,7 @@
     const q = T`Rozwiąż w liczbach całkowitych: $${eq}=${c}$.`;
     if (c % g) return mk({ gk: 'dio', field: txtField(), q, tex: T`\text{brak rozwiązań}`,
       steps: [T`$(${Math.abs(a)},${Math.abs(b)})=${g}$, a $${g}\nmid ${c}$.`, T`Lewa strona dzieli się przez $${g}$ dla każdych całkowitych $x,y$, prawa nie — brak rozwiązań.`],
-      wrong: [[T`x=${c}+${Math.abs(b)}t,\ y=${-c}${tsign(-a, 't')}`, 'Sprawdź: najpierw warunek $(a,b)\\mid c$.'], [T`x=0,\ y=${(c / b).toFixed(2).replace('.', '{,}')}`, 'Szukamy liczb całkowitych.'], [T`\text{nieskończenie wiele}`, 'Warunek $(a,b)\\mid c$ nie jest spełniony.']] });
+      wrong: [[T`x=${c}+${Math.abs(b)}t,\ y=${-c}${tsign(-a, 't')}`, 'Sprawdź: najpierw warunek $(a,b)\\mid c$.'], [T`x=0,\ y=${(c / b).toFixed(2).replace('.', '{,}')}`, 'Szukamy liczb całkowitych.'], [T`x=${c}${tsign(Math.abs(b) / gcd(a, b), 't')},\ y=${-c}${tsign(-a / gcd(a, b), 't')},\ t\in\mathbb Z`, 'Podstaw $t=0$ — nie spełnia równania; najpierw warunek $(a,b)\\mid c$.']] });
     const { x: x1, y: y1 } = bezoutRows(Math.abs(a), Math.abs(b));
     let X = x1 * Math.sign(a) * (c / g), Y = y1 * Math.sign(b) * (c / g);
     let kx = b / g, ky = -a / g; if (kx < 0) { kx = -kx; ky = -ky; }
@@ -279,7 +278,7 @@
   function dio3(a, b, c, e) { // ax + by + cz = e, (a,b)=d1
     const d1 = gcd(a, b), g = gcd(d1, c), eq = linV([a, b, c], ['x', 'y', 'z']);
     const q = T`Rozwiąż w liczbach całkowitych: $${eq}=${e}$.`;
-    if (e % g) return mk({ gk: 'dio3', field: txtField(), q, tex: T`\text{brak rozwiązań}`, steps: [T`$(${a},${b},${c})=${g}$, a $${g}\nmid ${e}$.`, T`Lewa strona dzieli się przez $${g}$ dla wszystkich całkowitych $x,y,z$, prawa nie — brak rozwiązań.`], wrong: [[T`x=${e},\ y=-${e},\ z=0`, 'Podstaw — nie spełnia równania.'], [T`\text{nieskończenie wiele}`, T`Najpierw warunek $(a,b,c)\mid ${e}$.`], [T`x=s,\ y=t,\ z=${e}-s-t`, 'To nie jest rozwiązanie tego równania.']] });
+    if (e % g) return mk({ gk: 'dio3', field: txtField(), q, tex: T`\text{brak rozwiązań}`, steps: [T`$(${a},${b},${c})=${g}$, a $${g}\nmid ${e}$.`, T`Lewa strona dzieli się przez $${g}$ dla wszystkich całkowitych $x,y,z$, prawa nie — brak rozwiązań.`], wrong: [[T`x=${e},\ y=-${e},\ z=0`, 'Podstaw — nie spełnia równania.'], [T`x=${e}-3s,\quad y=s+t,\quad z=-t\ (s,t\in\mathbb Z)`, T`Podstaw — nie spełnia; najpierw warunek $(a,b,c)\mid ${e}$.`], [T`x=s,\ y=t,\ z=${e}-s-t`, 'To nie jest rozwiązanie tego równania.']] });
     const { x: x1, y: y1 } = bezoutRows(Math.abs(a), Math.abs(b)); const sx = x1 * Math.sign(a), sy = y1 * Math.sign(b); // a·sx + b·sy = d1
     const { x: u1, y: v1 } = bezoutRows(d1, Math.abs(c)); const w0 = u1 * (e / g), z0 = v1 * Math.sign(c) * (e / g); // d1·w0 + c·z0 = e
     // w = w0 + (c/g)s, z = z0 − (d1/g)s ; x = sx·w + (b/d1)t, y = sy·w − (a/d1)t
@@ -315,8 +314,8 @@
     else steps.push(T`Współczynniki są dodatnie, więc niewiadome są ograniczone: $${vars[2]}\leq ${Math.floor((e - cs[0] - cs[1]) / cs[2])}$, $${vars[1]}\leq ${Math.floor((e - cs[0] - cs[2]) / cs[1])}$. Sprawdzamy te przypadki — żaden nie daje $${e}$ przy $x\geq1$.`);
     steps.push(found ? 'Odpowiedź: tak.' : 'Odpowiedź: nie.');
     let fakeInt = null; if (!found && e % gg === 0) { outer: for (let x = -60; x <= 60; x++) for (let y = -60; y <= 60; y++) { if (n === 2) { if (cs[0] * x + cs[1] * y === e) { fakeInt = [x, y]; break outer; } } else { const r = e - cs[0] * x - cs[1] * y; if (r % cs[2] === 0) { fakeInt = [x, y, r / cs[2]]; break outer; } } } }
-    const wrong = found ? [[T`\text{Nie}`, T`Przykład: $${solT(found)}$.`], [T`\text{Tak, np. }${solT(found.map((v, i) => (i ? v : v + 1)))}`, (n === 3 ? 'Ta trójka' : 'Ta para') + ' nie spełnia równania — podstaw.'], [T`\text{Tylko }x=y${n === 3 ? '=z' : ''}=0`, '$0\\notin\\mathbb N$, a rozwiązanie naturalne istnieje.']]
-      : [[fakeInt ? T`\text{Tak, np. }${solT(fakeInt)}` : T`\text{Tak, np. }${solT(vars.map(() => 1))}`, fakeInt ? 'To rozwiązanie całkowite, ale ma składowe $\\leq0$ — nie jest naturalne.' : 'Podstaw — nie spełnia równania.'], [T`\text{Tak, nieskończenie wiele}`, e % gg ? T`$(${cs.map(Math.abs).join(',')})=${gg}\nmid ${e}$ — nie ma nawet rozwiązań całkowitych.` : allPos ? 'Przy dodatnich współczynnikach niewiadome są ograniczone.' : 'Sprawdź warunki $x,y\\geq1$ w rozwiązaniu ogólnym.'], [T`\text{Tak, np. }${solT(vars.map((_, i) => (i === 0 ? 2 : 1)))}`, 'Podstaw — nie spełnia równania.']];
+    const wrong = found ? [[T`\text{Nie}`, T`Przykład: $${solT(found)}$.`], [T`\text{Tak, np. }${solT(found.map((v, i) => (i ? v : v + 1)))}`, (n === 3 ? 'Ta trójka' : 'Ta para') + ' nie spełnia równania — podstaw.'], [T`\text{Tak, np. }${solT(found.map((v, i) => (i === 1 ? v + 1 : v)))}`, (n === 3 ? 'Ta trójka' : 'Ta para') + ' nie spełnia równania — podstaw.']]
+      : [[fakeInt ? T`\text{Tak, np. }${solT(fakeInt)}` : T`\text{Tak, np. }${solT(vars.map(() => 1))}`, fakeInt ? 'To rozwiązanie całkowite, ale ma składowe $\\leq0$ — nie jest naturalne.' : 'Podstaw — nie spełnia równania.'], [T`\text{Tak, np. }${solT(vars.map((_, i) => (i === 0 ? 1 : 2)))}`, 'Podstaw — nie spełnia równania.'], [T`\text{Tak, np. }${solT(vars.map((_, i) => (i === 0 ? 2 : 1)))}`, 'Podstaw — nie spełnia równania.']];
     return mk({ label, gk: 'nat', field: txtField(), q: T`Czy istnieją liczby naturalne spełniające równanie $${eq}=${e}$?`, tex, steps, wrong });
   }
 
@@ -351,7 +350,7 @@
     const wrong = [[solT(p0, v.map((c, i) => (i === 2 ? -c : c))), 'Zły znak w kierunku — sprawdź drugie równanie.'], [solT(p0.map((c, i) => (i === 0 ? c + 1 : c)), v), 'Złe rozwiązanie szczególne — podstaw $t=0$.']];
     if (gg > 1) wrong.push([solT(p0, cr.map(c => c * (cr[0] < 0 ? -1 : 1))), 'Wektor kierunkowy trzeba skrócić przez NWD współrzędnych — inaczej gubimy rozwiązania.']);
     else wrong.push([solT(p0, v.map(c => 2 * c)), 'Krok $2t$ pomija co drugie rozwiązanie.']);
-    wrong.push([T`\text{brak rozwiązań całkowitych}`, 'Rozwiązanie istnieje — np. dla $t=0$.']);
+    wrong.push([solT(p0.map((c, i) => (i === 1 ? c - 1 : c)), v), 'Złe rozwiązanie szczególne — podstaw $t=0$ do obu równań.']);
     return mk({ gk: 'sys3', field: txtField(), q: T`Rozwiąż w liczbach całkowitych układ: $\begin{cases}${eqs[0]}\\${eqs[1]}\end{cases}$`, tex,
       steps: [T`Eliminujemy $${V[k]}$: $${r1[k]}\cdot(\text{II})${r2[k] < 0 ? '+' + -r2[k] : '-' + r2[k]}\cdot(\text{I})$ daje $${linV(elim, V)}=${elimE}$ — równanie z dwiema niewiadomymi.`,
         ...elimSteps,
