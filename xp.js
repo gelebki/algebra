@@ -30,7 +30,10 @@
     'P2.19': 16, 'P2.20': 10, 'P2.21': 16, 'P2.22': 12, 'P2.23': 14, 'P2.24': 14,
     // Lista 3
     'P3.1': { todeg: 16, torad: 12 }, 'P3.2': 12, 'P3.3': 6, 'P3.4': { a: 8, b: 10, c: 12 }, 'P3.5': 18, 'P3.6': { a: 8, b: 12 },
-    'P3.7': 10, 'P3.8': { sin: 10, cos: 10, tg: 12, dbl: 12, half: 14 }, 'P3.9': { sin: 8, cos: 8, tg: 12 }, 'P3.10': 10, 'P3.11': 8,
+    'P3.7': 10,
+    // ETL — Lista 1
+    'E1.1': { cube: 10, quint: 12, kontr: 4 }, 'E1.2': { f1: 8, f2: 10, f3: 12 }, 'E1.3': { poly: 10, prod: 12 }, 'E1.4': 8, 'E1.5': 8, 'E1.6': 8,
+    'E1.7': 10, 'E1.8': 10, 'E1.9': 8, 'E1.10': 14, 'P3.8': { sin: 10, cos: 10, tg: 12, dbl: 12, half: 14 }, 'P3.9': { sin: 8, cos: 8, tg: 12 }, 'P3.10': 10, 'P3.11': 8,
   };
   // pula XP za podpunkt (oryginał, pierwsze podejście)
   G.AQ.baseXP = function (task, item) {
