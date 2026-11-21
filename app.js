@@ -645,7 +645,7 @@
         const L = LISTS[i], p = listProgress(L), sel = (V.view === 'list' || V.view === 'task') && V.list === i;
         sub.append(h('button', { class: 'tab lt h-' + L.hue, style: `--k:${k}`, role: 'tab', 'aria-selected': sel ? 'true' : 'false', onclick: () => { if (V.view === 'list' && V.list === i) return; goList(i); } },
           h('span', { class: 'ring', html: ringSVG(p.solved / p.total, 26, 3.5, 'var(--hue)') }),
-          h('span', { class: 'lbl' }, h('b', {}, L.title), h('small', {}, L.name))));
+          h('span', { class: 'lbl' }, h('b', {}, h('span', { class: 'full' }, L.title), h('span', { class: 'short' }, subjLists(cs).length >= 4 ? L.title.replace(/^Lista\s*/, 'L') : L.title)), h('small', {}, L.name))));
       });
       box.append(sub);
     }
