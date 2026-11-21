@@ -167,8 +167,8 @@
   const LISTS = A.lists;
   const itemKey = (t, i) => t.id + '#' + i;
   LISTS.forEach(L => { if (!L.subject) L.subject = 'alg'; });
-  const SUBJ = [{ id: 'alg', name: 'Algebra liniowa', short: 'Algebra', color: '#f0b65a' }, { id: 'pro', name: 'Proseminarium', short: 'Proseminarium', color: '#a594ff' }];
-  const tid = t => String(t.id).replace(/^P/, '');
+  const SUBJ = [{ id: 'alg', name: 'Algebra liniowa', short: 'Algebra', color: '#f0b65a' }, { id: 'pro', name: 'Proseminarium', short: 'Proseminarium', color: '#a594ff' }, { id: 'etl', name: 'Elementarna teoria liczb', short: 'ETL', color: '#3dd6c3' }];
+  const tid = t => String(t.id).replace(/^[PE]/, '');
   const lhash = i => LISTS[i].id;
   const subjOf = i => (LISTS[i] && LISTS[i].subject) || 'alg';
   const subjLists = sid => LISTS.map((L, i) => (L.subject === sid ? i : -1)).filter(i => i >= 0);
@@ -533,6 +533,7 @@
     SFX.hint();
     const gk = T.item.gk || (T.mode === 'orig' ? T.task.items[T.idx].gk : undefined) || (T.task.items[0] && T.task.items[0].gk);
     let ex; for (let k = 0; k < 8; k++) { ex = T.task.gen(gk); if (ex.q !== T.item.q) break; }
+    if (ex.methods) { const mi = Math.min((T.item && T.item._mi) || 0, ex.methods.length - 1); Object.assign(ex, ex.methods[mi]); }
     const type = ex.type || 'fields';
     const steps = type === 'guided' ? ex.steps.map(s => s.line) : (ex.steps || []).slice();
     const stepsBox = h('div', { style: 'display:grid;gap:8px' });
@@ -569,7 +570,7 @@
     { const sb = SUBJ.find(x => x.id === hs); if (sb) { V = { view: 'list', list: lastListOf(sb.id) }; return; } }
     if (hs === 'stats') { V = { view: 'stats', list: V.list }; return; }
     if (hs === 'ranking') { V = { view: 'rank', list: V.list }; return; }
-    const m = hs.match(/^t(P?\d+)-(\d+)$/);
+    const m = hs.match(/^t([PE]?\d+)-(\d+)$/);
     if (m) { const id = m[1] + '.' + m[2]; for (let li = 0; li < LISTS.length; li++) { const task = LISTS[li].tasks.findIndex(t => t.id === id); if (task >= 0) { startTask(li, task); return 'started'; } } }
     V = { view: 'home', list: 0 };
   }
@@ -581,7 +582,7 @@
   function render() {
     const root = app(); root.innerHTML = '';
     const hue = ['stats', 'rank', 'home', 'subj'].includes(V.view) ? 'st' : LISTS[V.list].hue;
-    document.body.className = 'h-' + hue + (navSubj() === 'pro' ? ' s-pro' : '');
+    document.body.className = 'h-' + hue + (navSubj() && navSubj() !== 'alg' ? ' s-' + navSubj() : '');
     const pageKey = V.view + ':' + (V.view === 'subj' ? V.subj : V.view === 'list' ? V.list : V.view === 'task' && T ? T.ti : '');
     const page = V.view === 'home' ? homeView() : V.view === 'subj' ? subjView(V.subj) : V.view === 'list' ? listView() : V.view === 'stats' ? statsView() : V.view === 'rank' ? rankView() : taskView();
     if (pageKey !== lastPage) page.classList.add('pagein');
@@ -996,10 +997,24 @@
     if (T.status === 'answering') box.append(h('div', {}, h('h4', {}, 'Dostępne kroki' + ((it.order.extra || []).length ? ' (uwaga: część jest fałszywa)' : '')), pool));
     return box;
   }
+  // dowód z kilkoma metodami: wybór na początku, przełączanie w trakcie i po zakończeniu
+  const methodItem = (base, i) => Object.assign({}, base, base.methods[i], { _base: base, _mi: i, methods: base.methods });
+  function switchMethod(j) {
+    const base = T.item._base || T.item; T.item = methodItem(base, j); T.gs = null; T.status = 'answering'; resetAttempt(); SFX.whoosh(); render();
+    const c = $('#card'); if (c) c.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+  }
+  function methodPicker(it) {
+    const box = h('div', { class: 'mpicker' }, h('div', { class: 'glabel hl' }, 'Wybierz metodę dowodu'), h('p', { class: 'mphint' }, 'Każda daje pełne punkty. Po przejściu jednej łatwo obejrzysz drugą.'));
+    it.methods.forEach((m, i) => box.append(h('button', { class: 'mpick', onclick: () => { SFX.click(); T.item = methodItem(it, i); T.gs = null; render(); } },
+      h('span', { class: 'mpn' }, String(i + 1)), h('span', { class: 'mpb' }, mdEl('b', m.name), mdEl('small', m.when), h('em', {}, m.steps.length + (m.steps.length < 5 ? ' kroki' : ' kroków'))), h('span', { class: 'mpa', html: IC.next }))));
+    return box;
+  }
   function guidedUI(it) {
+    if (it.methods && it._mi == null) { if (it.methods.length > 1) return methodPicker(it); T.item = it = methodItem(it, 0); }
     if (!T.gs) T.gs = { i: 0, misses: 0, bad: {}, opts: it.steps.map(st => A.R.shuffle([{ t: st.a, ok: true }, ...st.w.map(([t, why]) => ({ t, why }))])) };
     const g = T.gs, n = it.steps.length, done = T.status !== 'answering';
     const box = h('div', { class: 'guided' });
+    if (it.methods && it.methods.length > 1 && !done) box.append(h('div', { class: 'mswitch' }, h('span', {}, 'Metoda: '), mdEl('b', it.name), ...it.methods.map((m, j) => (j === it._mi ? '' : h('button', { class: 'btn small ghost', onclick: () => switchMethod(j) }, 'Zmień na: ', md(m.name))))));
     if (it.idea && !done) {
       if (g.showIdea) box.append(h('div', { class: 'gidea' }, h('div', { class: 'glabel' }, h('span', { html: IC.bulb }), 'Wskazówka · pomysł dowodu'), mdEl('div', it.idea)));
       else box.append(h('div', {}, h('button', { class: 'btn small hintbtn', onclick: () => { g.showIdea = true; SFX.hint(); box.replaceWith(guidedUI(it)); } }, h('span', { html: IC.bulb }), 'Wskazówka')));
@@ -1013,7 +1028,7 @@
         chain.append(h('div', { class: 'gline' + (k === upto - 1 && !done ? ' new' : '') }, h('span', { class: 'n' }, String(k + 1)),
           h('div', { class: 'gbody' }, mdEl('div', st.goal, { class: 'gg' }), mdEl('div', st.line, { class: 'gl' }), st.why ? mdEl('div', st.why, { class: 'gwhy' }) : '')));
       }
-      box.append(h('div', { class: 'glabel' }, done ? 'Gotowy dowód — tak zapisz go na kolokwium' : 'Twój dowód do tej pory'), chain);
+      box.append(h('div', { class: 'glabel' }, done ? (it.exam ? 'Cały tok rozumowania' : 'Gotowy dowód — tak zapisz go na kolokwium') : 'Twój dowód do tej pory'), chain);
     }
     if (g.i < n && !done) {
       const st = it.steps[g.i], cur = h('div', { class: 'gstep' });
@@ -1056,7 +1071,13 @@
     const fb = h('div', { class: 'feedback ' + (ok ? 'ok' : 'learn'), id: 'feedback', role: 'status' });
     const msgsOk = ['Świetnie!', 'Dokładnie tak!', 'Pięknie policzone!', 'Bezbłędnie!', 'Tak jest!', 'Znakomicie!'];
     if (ok) fb.append(h('h3', {}, h('span', { html: IC.check, style: 'width:22px;height:22px;display:grid' }), type === 'guided' ? 'Dowód kompletny!' : msgsOk[Math.floor(Math.random() * msgsOk.length)]));
-    if (ok && type === 'guided') fb.append(h('p', { style: 'margin:6px 0 0' }, 'Powyżej masz cały dowód w czystej postaci. Spróbuj odtworzyć go na kartce bez patrzenia.'));
+    if (ok && type === 'guided' && !it.exam) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Powyżej masz cały dowód w czystej postaci. Spróbuj odtworzyć go na kartce bez patrzenia.'));
+    if (type === 'guided' && it.exam) {
+      fb.append(h('div', { class: 'exam' }, h('div', { class: 'glabel' }, 'Wersja na kolokwium', it.name ? h('span', { class: 'exm' }, ' · ', md(it.name)) : ''),
+        h('ol', {}, ...it.exam.map(([line, pt]) => h('li', {}, mdEl('div', line, { class: 'exl' }), pt ? h('span', { class: 'expt' }, h('span', { html: IC.check }), 'punkt: ', md(pt)) : '')))));
+      if (it.traps && it.traps.length) fb.append(h('div', { class: 'traps' }, h('div', { class: 'glabel' }, 'Za to lecą punkty'), h('ul', {}, ...it.traps.map(t => mdEl('li', t)))));
+      if (it.methods && it.methods.length > 1) fb.append(h('div', { class: 'row others' }, ...it.methods.map((m, j) => (j === it._mi ? '' : h('button', { class: 'btn', onclick: () => switchMethod(j) }, 'Zobacz inną metodę: ', md(m.name))))));
+    }
     if (!ok) fb.append(h('h3', {}, h('span', { html: IC.bulb, style: 'width:22px;height:22px;display:grid' }), type === 'guided' ? 'Dowód kompletny' : 'Zobacz, jak to policzyć'));
     if (ok && T.redeemed) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' zaliczony.'));
     if (!ok) {
