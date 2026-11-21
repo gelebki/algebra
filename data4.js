@@ -74,7 +74,7 @@
     const steps = [
       T`Potęgi: $(-${a})^2=${a * a}$ (parzysty wykładnik), $\left(-\frac1{${a}}\right)^3=-\frac1{${a ** 3}}$ (nieparzysty — minus zostaje).`,
       T`Iloczyn: $${a * a}\cdot\left(-\frac1{${a ** 3}}\right)=-\frac1{${a}}$.`,
-      T`$${b}^3=${b ** 3}$, $\left(-\frac1{${c}}\right)^2=\frac1{${c * c}}$, a dzielenie przez $\frac1{${c * c}}$ to mnożenie przez $${c * c}$: $${b ** 3}\cdot${c * c}=${b ** 3 * c * c}$.`,
+      T`$${b}^3=${b ** 3}$, $\left(-\frac1{${c}}\right)^2=\frac1{${c * c}}$, a dzielenie przez $\frac1{${c * c}}$ to mnożenie przez $${c * c}$: $${b ** 3}\cdot ${c * c}=${b ** 3 * c * c}$.`,
       T`$(-1)^{${N}}=${-s}$ (${N % 2 ? 'nieparzysty' : 'parzysty'} wykładnik), więc $-(-1)^{${N}}=${s > 0 ? '+1' : '-1'}$.`,
       T`Razem: $-\frac1{${a}}-${b ** 3 * c * c}${s > 0 ? '+1' : '-1'}=${qt(v)}$.`];
     const W1 = qadd(Q(1, a), Q(-(b ** 3) * c * c + s)), W2 = qadd(qadd(Q(-1, a), Q(-(b ** 3), c * c)), Q(s)), W3 = qadd(Q(-1, a), Q(-(b ** 3) * c * c - s));
@@ -97,9 +97,9 @@
   }
   function w2(k, n) {
     const dec = { 2: '0{,}5', 4: '0{,}25', 5: '0{,}2', 8: '0{,}125' }[k], s = n % 2 ? -1 : 1;
-    return mk({ gk: 'w2', q: T`Oblicz $(-${dec})^{${n}}\cdot${k}^{${n + 1}}$.`, ans: String(s * k), tex: String(s * k),
-      steps: [T`$${dec}=\frac1{${k}}$, więc $(-${dec})^{${n}}\cdot${k}^{${n}}=\left(-\frac1{${k}}\cdot${k}\right)^{${n}}=(-1)^{${n}}=${s}$.`, T`Został jeszcze jeden czynnik: $${k}^{${n + 1}}=${k}^{${n}}\cdot${k}$.`, T`Wynik: $${s}\cdot${k}=${s * k}$.`],
-      wrong: [[String(-s * k), T`Zły znak: $(-1)^{${n}}=${s}$, bo wykładnik jest ${n % 2 ? 'nieparzysty' : 'parzysty'}.`], [String(s), T`Zgubiony ostatni czynnik $${k}$: $${k}^{${n + 1}}=${k}^{${n}}\cdot${k}$.`], [String(s * k * k), T`Za dużo jednego czynnika $${k}$.`], [qt(Q(s, k)), 'Odwrócony wynik.']] });
+    return mk({ gk: 'w2', q: T`Oblicz $(-${dec})^{${n}}\cdot ${k}^{${n + 1}}$.`, ans: String(s * k), tex: String(s * k),
+      steps: [T`$${dec}=\frac1{${k}}$, więc $(-${dec})^{${n}}\cdot ${k}^{${n}}=\left(-\frac1{${k}}\cdot ${k}\right)^{${n}}=(-1)^{${n}}=${s}$.`, T`Został jeszcze jeden czynnik: $${k}^{${n + 1}}=${k}^{${n}}\cdot ${k}$.`, T`Wynik: $${s}\cdot ${k}=${s * k}$.`],
+      wrong: [[String(-s * k), T`Zły znak: $(-1)^{${n}}=${s}$, bo wykładnik jest ${n % 2 ? 'nieparzysty' : 'parzysty'}.`], [String(s), T`Zgubiony ostatni czynnik $${k}$: $${k}^{${n + 1}}=${k}^{${n}}\cdot ${k}$.`], [String(s * k * k), T`Za dużo jednego czynnika $${k}$.`], [qt(Q(s, k)), 'Odwrócony wynik.']] });
   }
   function w3(ns) { // ns: liczby; pierwsze dwie dodawane jako ujemne, reszta odejmowane ujemne
     const [p1, p2, ...r] = ns, v = -p1 - p2 + r.reduce((a, b) => a + b, 0);
@@ -132,24 +132,24 @@
   function e13(a, k) {
     const A1 = BigInt(a), p = 10n ** BigInt(k), v = A1 * p - A1, nn = '9'.repeat(k);
     const noBorrow = BigInt(String(a) + String(p - A1).padStart(k, '0'));
-    return mk({ q: T`Oblicz $${a}\cdot${nn}$.`, ans: String(v), tex: big(v),
-      steps: [T`$${nn}=10^{${k}}-1$, więc $${a}\cdot${nn}=${a}\cdot10^{${k}}-${a}$.`, T`$${a}\cdot10^{${k}}=${big(A1 * p)}$ (dopisujemy ${k} zer).`, T`Odejmujemy pisemnie: $${big(A1 * p)}-${a}=${big(v)}$. Uwaga na pożyczkę z cyfry jedności liczby $${a}$.`],
+    return mk({ q: T`Oblicz $${a}\cdot ${nn}$.`, ans: String(v), tex: big(v),
+      steps: [T`$${nn}=10^{${k}}-1$, więc $${a}\cdot ${nn}=${a}\cdot10^{${k}}-${a}$.`, T`$${a}\cdot10^{${k}}=${big(A1 * p)}$ (dopisujemy ${k} zer).`, T`Odejmujemy pisemnie: $${big(A1 * p)}-${a}=${big(v)}$. Uwaga na pożyczkę z cyfry jedności liczby $${a}$.`],
       wrong: [[big(noBorrow), T`Zapomniana pożyczka: ostatnie cyfry są dobre, ale przednia część to $${a}-1$, nie $${a}$.`], [big(A1 * p + A1), T`$${nn}=10^{${k}}-1$, więc $${a}$ odejmujemy, a nie dodajemy.`], [big(A1 * p - 1n), T`Odejmujemy $${a}\cdot1=${a}$, a nie $1$.`]] });
   }
   const gen13 = () => { const k = R.int(4, 7); const digs = R.pick(['123456789', '987654321', '135792468', '246813579']).slice(0, k); return e13(+digs, k); };
 
   /* ---------- 1.4 ---------- */
   function e14(n) {
-    return mk({ q: T`Oblicz $$\frac{${n}}{(-${n})^2+(-${n - 1})\cdot${n + 1}}$$`, ans: String(n), tex: String(n),
+    return mk({ q: T`Oblicz $$\frac{${n}}{(-${n})^2+(-${n - 1})\cdot ${n + 1}}$$`, ans: String(n), tex: String(n),
       steps: [T`Podstaw $n=${n}$: mianownik to $(-n)^2+(-(n-1))(n+1)=n^2-(n-1)(n+1)$.`, T`$(n-1)(n+1)=n^2-1$ (różnica kwadratów), więc mianownik $=n^2-(n^2-1)=1$.`, T`Wynik: $\frac{${n}}{1}=${n}$.`],
-      wrong: [[T`\frac{${n}}{${2 * n * n - 1}}`, T`$(-${n - 1})\cdot${n + 1}$ jest ujemne — minus zmienia $+(n^2-1)$ na $-(n^2-1)$.`], [String(-n), T`Mianownik to $+1$: $n^2-(n^2-1)=1$, a nie $-1$.`], [T`\frac1{${n}}`, 'Odwrócony ułamek.']] });
+      wrong: [[T`\frac{${n}}{${2 * n * n - 1}}`, T`$(-${n - 1})\cdot ${n + 1}$ jest ujemne — minus zmienia $+(n^2-1)$ na $-(n^2-1)$.`], [String(-n), T`Mianownik to $+1$: $n^2-(n^2-1)=1$, a nie $-1$.`], [T`\frac1{${n}}`, 'Odwrócony ułamek.']] });
   }
   const gen14 = () => { const d = R.pick([13579, 24680, 11111, 98765, 54321, 20262]); return e14(d + R.int(-50, 50)); };
 
   /* ---------- 1.5 ---------- */
   function e15(a, b, note) {
-    return mk({ q: T`Oblicz $$\frac{${a}^3+${b}^3}{${a}\cdot${a - b}+${b}^2}$$`, ans: String(a + b), tex: String(a + b),
-      steps: [...(note ? [note] : []), T`Zauważ: $${a - b}=${a}-${b}$, więc mianownik to $${a}^2-${a}\cdot${b}+${b}^2$.`, T`Licznik: $${a}^3+${b}^3=(${a}+${b})(${a}^2-${a}\cdot${b}+${b}^2)$.`, T`Nawias się skraca: wynik to $${a}+${b}=${a + b}$.`],
+    return mk({ q: T`Oblicz $$\frac{${a}^3+${b}^3}{${a}\cdot ${a - b}+${b}^2}$$`, ans: String(a + b), tex: String(a + b),
+      steps: [...(note ? [note] : []), T`Zauważ: $${a - b}=${a}-${b}$, więc mianownik to $${a}^2-${a}\cdot ${b}+${b}^2$.`, T`Licznik: $${a}^3+${b}^3=(${a}+${b})(${a}^2-${a}\cdot ${b}+${b}^2)$.`, T`Nawias się skraca: wynik to $${a}+${b}=${a + b}$.`],
       wrong: [[String(a - b), T`Pomylony wzór: $a^3+b^3=(a+b)(a^2-ab+b^2)$ — w pierwszym nawiasie jest plus.`], [String(a * a - a * b + b * b), 'To sam mianownik — nie podzielono.'], [String((a + b) ** 2), T`Licznik to $(a+b)\cdot(\ldots)$, a nie $(a+b)^2\cdot(\ldots)$.`]] });
   }
   const gen15 = () => { const b = R.int(7, 29), a = b + R.int(20, 80); return e15(a, b); };
@@ -157,10 +157,10 @@
   /* ---------- 1.6 ---------- */
   function e16(a, b) {
     const num = [a, a + 2, a + 4], den = [a + 1, a + 3, a + 5];
-    const t = n => T`(${n}\cdot${n + 3}+2)`;
+    const t = n => T`(${n}\cdot ${n + 3}+2)`;
     const v = (a + 1) * (b + 2);
     return mk({ q: T`Oblicz $$\frac{${num.map(t).join('')}\cdots${t(b)}}{${den.map(t).join('')}\cdots${t(b - 1)}}$$`, ans: String(v), tex: String(v),
-      steps: [T`Każdy czynnik ma postać $n(n+3)+2=n^2+3n+2=(n+1)(n+2)$.`, T`Licznik ($n=${a},${a + 2},\ldots,${b}$): $${a + 1}\cdot${a + 2}\cdot${a + 3}\cdot${a + 4}\cdots${b + 1}\cdot${b + 2}$ — kolejne liczby od $${a + 1}$ do $${b + 2}$.`, T`Mianownik ($n=${a + 1},\ldots,${b - 1}$): kolejne liczby od $${a + 2}$ do $${b + 1}$.`, T`Po skróceniu zostaje $${a + 1}\cdot${b + 2}=${v}$.`],
+      steps: [T`Każdy czynnik ma postać $n(n+3)+2=n^2+3n+2=(n+1)(n+2)$.`, T`Licznik ($n=${a},${a + 2},\ldots,${b}$): $${a + 1}\cdot ${a + 2}\cdot ${a + 3}\cdot ${a + 4}\cdots${b + 1}\cdot ${b + 2}$ — kolejne liczby od $${a + 1}$ do $${b + 2}$.`, T`Mianownik ($n=${a + 1},\ldots,${b - 1}$): kolejne liczby od $${a + 2}$ do $${b + 1}$.`, T`Po skróceniu zostaje $${a + 1}\cdot ${b + 2}=${v}$.`],
       wrong: [[String(b + 2), T`Zgubiony czynnik $${a + 1}$ z początku licznika.`], [String(a + 1), T`Zgubiony czynnik $${b + 2}$ z końca licznika.`], [T`\frac1{${v}}`, 'Odwrócony wynik: więcej czynników jest w liczniku.']] });
   }
   const gen16 = () => { const a = R.pick([2, 4, 6, 8]); return e16(a, a + 2 * R.int(15, 60)); };
@@ -177,25 +177,25 @@
   function e18(c, m) {
     const v = qsub(Q(c), Q(m, m + 1)), dens = Array.from({ length: m }, (_, k) => (k + 1) * (k + 2));
     return mk({ q: T`Oblicz $$${wrapSum([String(c), ...dens.map(d => '-\\frac1{' + d + '}')], 5)}$$`, ans: qs(v), tex: qt(v),
-      steps: [T`Mianowniki to $1\cdot2,\ 2\cdot3,\ 3\cdot4,\ldots,${m}\cdot${m + 1}$, a $\frac1{k(k+1)}=\frac1k-\frac1{k+1}$.`, T`Suma odejmowanych ułamków: $\left(1-\frac12\right)+\left(\frac12-\frac13\right)+\ldots+\left(\frac1{${m}}-\frac1{${m + 1}}\right)=1-\frac1{${m + 1}}=\frac{${m}}{${m + 1}}$.`, T`Wynik: $${c}-\frac{${m}}{${m + 1}}=${qt(v)}$.`],
+      steps: [T`Mianowniki to $1\cdot2,\ 2\cdot3,\ 3\cdot4,\ldots,${m}\cdot ${m + 1}$, a $\frac1{k(k+1)}=\frac1k-\frac1{k+1}$.`, T`Suma odejmowanych ułamków: $\left(1-\frac12\right)+\left(\frac12-\frac13\right)+\ldots+\left(\frac1{${m}}-\frac1{${m + 1}}\right)=1-\frac1{${m + 1}}=\frac{${m}}{${m + 1}}$.`, T`Wynik: $${c}-\frac{${m}}{${m + 1}}=${qt(v)}$.`],
       wrong: [[qt(qsub(Q(c), Q(1, m + 1))), T`Odjęto tylko ostatni ułamek; teleskop daje $1-\frac1{${m + 1}}$, a to odejmujemy od $${c}$.`], [qt(qsub(Q(c), Q(m + 1, m + 2))), 'Przesunięcie o jeden: ostatni mianownik to $' + m + '\\cdot' + (m + 1) + '$.'], [qt(Q(m, m + 1)), T`To sama suma ułamków — trzeba ją jeszcze odjąć od $${c}$.`], [qt(qsub(Q(c), Q(m - 1, m))), T`Ułamków jest $${m}$ — teleskop kończy się na $\frac1{${m + 1}}$.`], [qt(qadd(Q(c), Q(m, m + 1))), 'Ułamki odejmujemy, a nie dodajemy.']] });
   }
   const gen18 = () => e18(R.int(1, 5), R.int(4, 11));
   function e19(m) {
     const v = Q(m, 2 * m + 1), dens = Array.from({ length: m }, (_, k) => (2 * k + 1) * (2 * k + 3));
     return mk({ q: T`Oblicz $$${wrapSum(dens.map((d, i) => (i ? '+' : '') + '\\frac1{' + d + '}'), 4)}$$`, ans: qs(v), tex: qt(v),
-      steps: [T`Mianowniki to iloczyny kolejnych liczb nieparzystych: $1\cdot3,\ 3\cdot5,\ldots,${2 * m - 1}\cdot${2 * m + 1}$.`, T`$\frac1{(2k-1)(2k+1)}=\frac12\left(\frac1{2k-1}-\frac1{2k+1}\right)$.`, T`Suma $=\frac12\left(1-\frac1{${2 * m + 1}}\right)=\frac12\cdot\frac{${2 * m}}{${2 * m + 1}}=${qt(v)}$.`],
+      steps: [T`Mianowniki to iloczyny kolejnych liczb nieparzystych: $1\cdot3,\ 3\cdot5,\ldots,${2 * m - 1}\cdot ${2 * m + 1}$.`, T`$\frac1{(2k-1)(2k+1)}=\frac12\left(\frac1{2k-1}-\frac1{2k+1}\right)$.`, T`Suma $=\frac12\left(1-\frac1{${2 * m + 1}}\right)=\frac12\cdot\frac{${2 * m}}{${2 * m + 1}}=${qt(v)}$.`],
       wrong: [[qt(Q(2 * m, 2 * m + 1)), T`Zgubione $\frac12$: $\frac1{2k-1}-\frac1{2k+1}=\frac{2}{(2k-1)(2k+1)}$.`], [qt(Q(m, 2 * m - 1)), 'Ostatni mianownik źle wyznaczony.'], [qt(qmul(Q(1, 2), qsub(Q(1, 2), Q(1, 2 * m + 1)))), T`Teleskop zaczyna się od $\frac11$, a nie od $\frac12$.`]] });
   }
   const gen19 = () => e19(R.int(4, 9));
   function eTel(gk, a, d, n) { // 1/(x(x+d)) od x=a, n wyrazów
     const last = a + n * d, v = qmul(Q(1, d), qsub(Q(1, a), Q(1, last)));
     const terms = Array.from({ length: n }, (_, k) => [a + k * d, a + (k + 1) * d]);
-    const show = gk === 'odd' ? terms.map(([x, y]) => T`\frac1{${x}\cdot${y}}`) : terms.map(([x, y]) => T`\frac1{${x * y}}`);
+    const show = gk === 'odd' ? terms.map(([x, y]) => T`\frac1{${x}\cdot ${y}}`) : terms.map(([x, y]) => T`\frac1{${x * y}}`);
     const steps = [
       ...(gk === 'odd' ? [] : [T`Rozłóż mianowniki: $${terms.map(([x, y]) => x * y + '=' + x + '\\cdot' + y).join(',\\ ')}$ — czynniki rosną co $${d}$.`]),
       T`$\frac1{x(x+${d})}=\frac1{${d}}\left(\frac1x-\frac1{x+${d}}\right)$.`,
-      T`Teleskop: $\frac1{${d}}\left(\frac1{${a}}-\frac1{${last}}\right)=\frac1{${d}}\cdot${qt(qsub(Q(1, a), Q(1, last)))}=${qt(v)}$.`];
+      T`Teleskop: $\frac1{${d}}\left(\frac1{${a}}-\frac1{${last}}\right)=\frac1{${d}}\cdot ${qt(qsub(Q(1, a), Q(1, last)))}=${qt(v)}$.`];
     return mk({ gk, q: T`Oblicz $$${wrapSum(show.map((x, i) => (i ? '+' : '') + x), 3)}$$`, ans: qs(v), tex: qt(v), steps,
       wrong: [[qt(qsub(Q(1, a), Q(1, last))), T`Zgubiony czynnik $\frac1{${d}}$: $\frac1x-\frac1{x+${d}}=\frac{${d}}{x(x+${d})}$.`], [qt(qmul(Q(1, d), qsub(Q(1, a), Q(1, last - d)))), T`Ostatni ułamek rozkłada się do $\frac1{${last}}$, a nie $\frac1{${last - d}}$.`], [qt(qmul(Q(1, d + 1), qsub(Q(1, a), Q(1, last)))), T`Różnica czynników to $${d}$, więc dzielimy przez $${d}$.`], [qt(Q(n, a * last)), 'Teleskopu nie da się zastąpić mnożeniem liczby wyrazów.']] });
   }
@@ -248,8 +248,8 @@
   /* ---------- 1.13 ---------- */
   function e113(a, b, k) {
     const rb = T`${b}${b}`, ra = T`${a}${a}`, B2 = b + k, v = (a * b - B2 * a) * 10001;
-    return mk({ q: T`Oblicz $${a}\cdot${rb}-${B2}\cdot${ra}$.`, ans: String(v), tex: big(v),
-      steps: [T`$${rb}=${b}\cdot10001$ oraz $${ra}=${a}\cdot10001$.`, T`Wyrażenie: $${a}\cdot${b}\cdot10001-${B2}\cdot${a}\cdot10001=${a}\cdot10001\cdot(${b}-${B2})$.`, k === 0 ? 'Nawias jest zerem, więc wynik to $0$.' : T`$=${a}\cdot10001\cdot(${-k})=${big(v)}$.`],
+    return mk({ q: T`Oblicz $${a}\cdot ${rb}-${B2}\cdot ${ra}$.`, ans: String(v), tex: big(v),
+      steps: [T`$${rb}=${b}\cdot10001$ oraz $${ra}=${a}\cdot10001$.`, T`Wyrażenie: $${a}\cdot ${b}\cdot10001-${B2}\cdot ${a}\cdot10001=${a}\cdot10001\cdot(${b}-${B2})$.`, k === 0 ? 'Nawias jest zerem, więc wynik to $0$.' : T`$=${a}\cdot10001\cdot(${-k})=${big(v)}$.`],
       wrong: k === 0 ? [['10001', 'Wspólny czynnik $10001$ mnoży się przez zero w nawiasie.'], [big(a * b), 'Iloczyny są równe i się odejmują.'], ['1', 'Iloczyny się zerują — nie zostaje nic.']] : [[big(-v), 'Zły znak: odejmujemy większy iloczyn.'], [big(-k * a), T`Zgubiony czynnik $10001$.`], ['0', T`Czynniki nie są takie same: $${b}\neq${B2}$.`]] });
   }
   const gen113 = () => { const a = R.int(1900, 2099), b = R.int(1900, 2099); return e113(a, b, R.pick([0, 0, 1, -1, 2])); };
@@ -289,7 +289,7 @@
   function e119(n) {
     const v = n * (n + 1) / 2;
     return mk({ gk: 'num', q: T`Oblicz $$\begin{wrap}&1+\left(\frac12+\frac22+\frac12\right)\\&+\left(\frac13+\frac23+\frac33+\frac23+\frac13\right)\\&+\ldots+\left(\frac1{${n}}+\ldots+\frac{${n}}{${n}}+\ldots+\frac1{${n}}\right)\end{wrap}$$`, ans: String(v), tex: String(v),
-      steps: [T`Grupa dla $k$: $\frac{1+2+\ldots+k+\ldots+2+1}{k}=\frac{k^2}{k}=k$.`, T`Suma: $1+2+\ldots+${n}=\frac{${n}\cdot${n + 1}}2=${v}$.`],
+      steps: [T`Grupa dla $k$: $\frac{1+2+\ldots+k+\ldots+2+1}{k}=\frac{k^2}{k}=k$.`, T`Suma: $1+2+\ldots+${n}=\frac{${n}\cdot ${n + 1}}2=${v}$.`],
       wrong: [[String(n * n), T`Każda grupa daje $k$, a nie $${n}$.`], [String(2 * v), 'Zgubiona dwójka we wzorze na sumę.'], [String(v - n), 'Pominięta ostatnia grupa.']] });
   }
   const gen119 = gk => (gk === 'gen' ? e119gen() : e119(R.int(8, 60)));
@@ -298,8 +298,8 @@
   function e120(n) {
     const odd = n % 2 === 1, v = odd ? n * (n + 1) / 2 : -n * (n + 1) / 2;
     return mk({ q: T`Oblicz $$1^2-2^2+3^2-4^2+\ldots${odd ? T`-${n - 1}^2+${n}^2` : T`+${n - 1}^2-${n}^2`}$$`, ans: String(v), tex: big(v),
-      steps: odd ? [T`Grupujemy: $1^2+(3^2-2^2)+(5^2-4^2)+\ldots+(${n}^2-${n - 1}^2)$.`, T`$(k+1)^2-k^2=(k+1)+k$ — różnica kwadratów kolejnych liczb to ich suma.`, T`Zatem całość to $1+2+3+\ldots+${n}=\frac{${n}\cdot${n + 1}}2=${big(v)}$.`]
-        : [T`Grupujemy: $(1^2-2^2)+(3^2-4^2)+\ldots+(${n - 1}^2-${n}^2)$.`, T`$k^2-(k+1)^2=-(k+(k+1))$.`, T`Zatem całość to $-(1+2+\ldots+${n})=-\frac{${n}\cdot${n + 1}}2=${big(v)}$.`],
+      steps: odd ? [T`Grupujemy: $1^2+(3^2-2^2)+(5^2-4^2)+\ldots+(${n}^2-${n - 1}^2)$.`, T`$(k+1)^2-k^2=(k+1)+k$ — różnica kwadratów kolejnych liczb to ich suma.`, T`Zatem całość to $1+2+3+\ldots+${n}=\frac{${n}\cdot ${n + 1}}2=${big(v)}$.`]
+        : [T`Grupujemy: $(1^2-2^2)+(3^2-4^2)+\ldots+(${n - 1}^2-${n}^2)$.`, T`$k^2-(k+1)^2=-(k+(k+1))$.`, T`Zatem całość to $-(1+2+\ldots+${n})=-\frac{${n}\cdot ${n + 1}}2=${big(v)}$.`],
       wrong: [[big(-v), 'Zły znak — sprawdź, czy ostatni wyraz jest dodawany, czy odejmowany.'], [big(odd ? (n - 1) * n / 2 : -(n - 1) * n / 2), T`Suma kończy się na $${n}$, nie na $${n - 1}$.`], [big(n * n), 'To tylko ostatni wyraz.']] });
   }
   const gen120 = () => e120(R.int(50, 2999));
@@ -309,7 +309,7 @@
     const ones = Number('1'.repeat(m) + '0'), sub = m * (19 - m) / 2, v = 2 * ones - sub;
     const terms = wrapSum(Array.from({ length: m }, (_, k) => (k ? '+' : '') + '1' + '9'.repeat(k) + String(k + 1)), 3);
     return mk({ q: T`Znajdź sumę $$${terms}$$`, ans: String(v), tex: big(v),
-      steps: [T`Każdy wyraz to $2\cdot10^k$ minus coś małego: $11=20-9$, $192=200-8$, $1993=2000-7$, …`, T`Suma $=2\cdot(10+100+\ldots+10^{${m}})-(9+8+\ldots+${10 - m})=2\cdot${big(ones)}-${sub}$.`, T`$=${big(2 * ones)}-${sub}=${big(v)}$.`],
+      steps: [T`Każdy wyraz to $2\cdot10^k$ minus coś małego: $11=20-9$, $192=200-8$, $1993=2000-7$, …`, T`Suma $=2\cdot(10+100+\ldots+10^{${m}})-(9+8+\ldots+${10 - m})=2\cdot ${big(ones)}-${sub}$.`, T`$=${big(2 * ones)}-${sub}=${big(v)}$.`],
       wrong: [[big(2 * ones), 'Zapomniano odjąć poprawki $9+8+\\ldots$.'], [big(2 * ones + sub), 'Poprawki trzeba odjąć, nie dodać.'], [big(ones - sub), T`Każdy wyraz jest bliski $2\cdot10^k$, a nie $10^k$.`]] });
   }
   const gen121 = () => e121(R.int(4, 8));
@@ -327,7 +327,7 @@
   function e123(N, gk) {
     const TN = N * (N + 1) / 2;
     const core = T`\begin{wrap}&1-\frac{2}{1\cdot(1+2)}-\frac{3}{(1+2)(1+2+3)}\\&-\ldots-\frac{${N}}{(1+\ldots+${N - 1})(1+\ldots+${N})}\end{wrap}`;
-    const base = [T`Oznacz $T_k=1+2+\ldots+k$. Wtedy $T_k-T_{k-1}=k$.`, T`$\frac{k}{T_{k-1}T_k}=\frac{T_k-T_{k-1}}{T_{k-1}T_k}=\frac1{T_{k-1}}-\frac1{T_k}$.`, T`Suma odejmowanych ułamków: $\frac1{T_1}-\frac1{T_{${N}}}=1-\frac1{${TN}}$, więc wyrażenie $=\frac1{${TN}}$ (bo $T_{${N}}=\frac{${N}\cdot${N + 1}}2=${TN}$).`];
+    const base = [T`Oznacz $T_k=1+2+\ldots+k$. Wtedy $T_k-T_{k-1}=k$.`, T`$\frac{k}{T_{k-1}T_k}=\frac{T_k-T_{k-1}}{T_{k-1}T_k}=\frac1{T_{k-1}}-\frac1{T_k}$.`, T`Suma odejmowanych ułamków: $\frac1{T_1}-\frac1{T_{${N}}}=1-\frac1{${TN}}$, więc wyrażenie $=\frac1{${TN}}$ (bo $T_{${N}}=\frac{${N}\cdot ${N + 1}}2=${TN}$).`];
     if (gk === 'diff') return mk({ gk, q: T`Wyrażenie $$${core}$$ po uproszczeniu jest ułamkiem nieskracalnym. Znajdź różnicę między jego mianownikiem a licznikiem.`, ans: String(TN - 1), tex: String(TN - 1),
       steps: [...base, T`Różnica: $${TN}-1=${TN - 1}$.`], wrong: [[String(TN), 'To sam mianownik — trzeba odjąć licznik $1$.'], [String(TN + 1), 'Licznik odejmujemy, a nie dodajemy.'], [String(N * (N - 1) / 2 - 1), T`Ostatnia suma to $1+\ldots+${N}$, nie $1+\ldots+${N - 1}$.`]] });
     return mk({ gk: 'val', q: T`Oblicz $$${core}$$`, ans: '1/' + TN, tex: T`\frac1{${TN}}`, steps: base,
@@ -338,8 +338,8 @@
   /* ---------- 1.24 ---------- */
   function e124(N) {
     const v = qmul(Q(1, 2), qsub(Q(1, 2), Q(1, (N + 1) * (N + 2))));
-    return mk({ q: T`Oblicz $$\frac1{1\cdot2\cdot3}+\frac1{2\cdot3\cdot4}+\ldots+\frac1{${N}\cdot${N + 1}\cdot${N + 2}}$$`, ans: qs(v), tex: qt(v),
-      steps: [T`$\frac1{k(k+1)(k+2)}=\frac12\left(\frac1{k(k+1)}-\frac1{(k+1)(k+2)}\right)$.`, T`Teleskop: $\frac12\left(\frac1{1\cdot2}-\frac1{${N + 1}\cdot${N + 2}}\right)=\frac12\left(\frac12-\frac1{${(N + 1) * (N + 2)}}\right)$.`, T`$=${qt(v)}$.`],
+    return mk({ q: T`Oblicz $$\frac1{1\cdot2\cdot3}+\frac1{2\cdot3\cdot4}+\ldots+\frac1{${N}\cdot ${N + 1}\cdot ${N + 2}}$$`, ans: qs(v), tex: qt(v),
+      steps: [T`$\frac1{k(k+1)(k+2)}=\frac12\left(\frac1{k(k+1)}-\frac1{(k+1)(k+2)}\right)$.`, T`Teleskop: $\frac12\left(\frac1{1\cdot2}-\frac1{${N + 1}\cdot ${N + 2}}\right)=\frac12\left(\frac12-\frac1{${(N + 1) * (N + 2)}}\right)$.`, T`$=${qt(v)}$.`],
       wrong: [[qt(qsub(Q(1, 2), Q(1, (N + 1) * (N + 2)))), T`Zgubione $\frac12$ z rozkładu.`], [qt(qmul(Q(1, 2), qsub(Q(1, 2), Q(1, N * (N + 1))))), T`Ostatni wyraz rozkładu to $\frac1{(N+1)(N+2)}$.`], [T`\frac14`, 'To granica dla nieskończenie wielu wyrazów — tu wyrazów jest skończenie wiele.']] });
   }
   const gen124 = () => e124(R.int(10, 120));
