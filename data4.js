@@ -116,7 +116,7 @@
   }
   const w5 = () => mk({ gk: 'w5', field: txtField(), q: T`Jaki znak ma wyrażenie $$\left[\left(-\frac67\right)^7+\left(-\frac45\right)\cdot\left(-\frac49\right)\cdot\frac{16}{81}\right]\cdot\left(9\tfrac{246}{247}-0{,}666\right)?$$`,
     tex: T`\text{ujemny}`, steps: [T`Drugi nawias: $9\tfrac{246}{247}-0{,}666\approx9{,}33>0$ — nie zmienia znaku.`, T`$\left(-\frac67\right)^7<0$ (nieparzysta potęga), i to wcale nie mała liczba: $\left(\frac67\right)^7=\left(\frac{36}{49}\right)^3\cdot\frac67\approx0{,}34$.`, T`$\left(-\frac45\right)\left(-\frac49\right)\frac{16}{81}=\frac{256}{3645}\approx0{,}07$ — dodatnie, ale za małe.`, T`Pierwszy nawias $\approx-0{,}27<0$, więc całe wyrażenie jest <b>ujemne</b>.`],
-    wrong: [[T`\text{dodatni}`, T`$\left(-\frac67\right)^7$ jest ujemne i większe co do modułu niż drugi składnik.`], [T`\text{równy }0`, 'Składniki nawiasu nie znoszą się: $-0{,}34+0{,}07\\neq0$.'], [T`\text{nie da się ustalić bez kalkulatora}`, T`Wystarczy oszacować: $\left(\frac67\right)^7>\left(\frac23\right)^7>0{,}05\cdot\ldots$ — szacowanie wystarcza.`]] });
+    wrong: [[T`\text{dodatni}`, T`$\left(-\frac67\right)^7$ jest ujemne i większe co do modułu niż drugi składnik.`], [T`\text{równy }0`, 'Składniki nawiasu nie znoszą się: $-0{,}34+0{,}07\\neq0$.'], [T`\text{nieujemny}`, T`Pierwszy nawias jest ujemny: $\left(-\frac67\right)^7\approx-0{,}34$ przeważa nad $\approx0{,}07$.`]] });
   const maxItem = () => mk({ gk: 'max', field: txtField(), q: T`Które z pięciu wyrażeń zadania 1.2 ma największą wartość? (Wartości: $(1)=247$, $(2)=-8$, $(3)=242$, $(4)=\frac{538}{13}$, $(5)<0$.)`,
     tex: T`\text{wyrażenie }(1)`, steps: [T`$(1)=247$, $(3)=242$, $(4)=\frac{538}{13}\approx41{,}4$, $(2)=-8$, $(5)<0$.`, T`Największe jest $(1)=247$ — tylko o $5$ więcej niż $(3)$, więc trzeba liczyć dokładnie.`],
     wrong: [[T`\text{wyrażenie }(3)`, T`$242<247$ — różnica jest mała, ale jest.`], [T`\text{wyrażenie }(4)`, T`$\frac{538}{13}\approx41$, dużo mniej niż $247$.`], [T`\text{wyrażenie }(5)`, 'Wyrażenie (5) jest ujemne.']] });
@@ -208,7 +208,7 @@
     const res = rel === '<' ? '(a-b)^2>(a+b)^2' : '(a-b)^2<(a+b)^2';
     return mk({ field: txtField(), q: T`Jeśli $${cond}$, ustal relację między $(a-b)^2$ oraz $(a+b)^2$.`, tex: res,
       steps: [T`Porównujemy przez różnicę: $(a-b)^2-(a+b)^2=(a^2-2ab+b^2)-(a^2+2ab+b^2)=-4ab$.`, rel === '<' ? T`$ab<0$, więc $-4ab>0$: różnica dodatnia.` : T`$ab>0$, więc $-4ab<0$: różnica ujemna.`, T`Zatem $${res}$.`],
-      wrong: [[rel === '<' ? '(a-b)^2<(a+b)^2' : '(a-b)^2>(a+b)^2', T`Różnica to $-4ab$, a znak $ab$ jest dany — sprawdź znak $-4ab$.`], ['(a-b)^2=(a+b)^2', T`Równość byłaby tylko dla $ab=0$.`], [T`\text{zależy od }a\text{ i }b`, T`Znak różnicy $-4ab$ zależy tylko od znaku $ab$, a ten znamy.`]] });
+      wrong: [[rel === '<' ? '(a-b)^2<(a+b)^2' : '(a-b)^2>(a+b)^2', T`Różnica to $-4ab$, a znak $ab$ jest dany — sprawdź znak $-4ab$.`], ['(a-b)^2=(a+b)^2', T`Równość byłaby tylko dla $ab=0$.`], [rel === '<' ? '(a-b)^2\\leq(a+b)^2' : '(a-b)^2\\geq(a+b)^2', T`Różnica $-4ab$ ma ustalony znak — sprawdź, jaki.`]] });
   }
   const gen110 = () => e110(R.pick(['<', '>']));
 
