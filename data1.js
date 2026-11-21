@@ -20,7 +20,7 @@
         q: T`Oblicz $\sqrt{${a}+${b}\sqrt{${c}}}+\sqrt{${a}-${b}\sqrt{${c}}}$. Czy ta liczba jest wymierna?`,
         fields: [{ label: 'wartość', ans: String(2 * p), restrict: ['plain'] }],
         steps: [
-          T`Szukamy zapisu $${a}\pm${b}\sqrt{${c}}=(x\pm y\sqrt{${c}})^2=x^2+${c}y^2\pm 2xy\sqrt{${c}}$.`,
+          T`Szukamy zapisu $${a}\pm ${b}\sqrt{${c}}=(x\pm y\sqrt{${c}})^2=x^2+${c}y^2\pm 2xy\sqrt{${c}}$.`,
           T`Warunki $x^2+${c}y^2=${a}$, $2xy=${b}$ spełniają $x=${p}$, $y=${q}$.`,
           T`Ponieważ $${p}>${qs}\sqrt{${c}}$, mamy $\sqrt{${a}-${b}\sqrt{${c}}}=${p}-${qs}\sqrt{${c}}$ (pierwiastek jest nieujemny!).`,
           T`Suma: $(${p}+${qs}\sqrt{${c}})+(${p}-${qs}\sqrt{${c}})=${2 * p}\in\mathbb{Q}$.`],
@@ -204,7 +204,7 @@
       q: T`W ciele $\{x+y\sqrt{${d}}:x,y\in\mathbb{Q}\}$ wyznacz $\left(${a}${b < 0 ? '-' : '+'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}\right)^{-1}=x+y\sqrt{${d}}$.`,
       fields: [{ label: 'x', ans: frs(a, N), restrict: ['plain'] }, { label: 'y', ans: frs(-b, N), restrict: ['plain'] }],
       steps: [T`Mnożymy licznik i mianownik ułamka $\frac{1}{${a}${b < 0 ? '-' : '+'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}}$ przez sprzężenie $${a}${b < 0 ? '+' : '-'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}$.`,
-        T`Mianownik: $${a}^2-${d}\cdot${b * b}=${N}$ (różnica kwadratów — liczba wymierna, niezerowa, bo $\sqrt{${d}}\notin\mathbb Q$).`,
+        T`Mianownik: $${a}^2-${d}\cdot ${b * b}=${N}$ (różnica kwadratów — liczba wymierna, niezerowa, bo $\sqrt{${d}}\notin\mathbb Q$).`,
         T`Wynik: $x=${fr(a, N)}$, $y=${fr(-b, N)}$.`],
     };
     it.sol = it.steps; return it;
@@ -281,7 +281,7 @@
     return [
       T`W $\mathbb{Z}_{${p}}$ liczymy zwykły wynik, a potem bierzemy resztę z dzielenia przez $${p}$ (odejmujemy $${p}$ tyle razy, aż wynik będzie mniejszy niż $${p}$). W tabelce poniżej górny wiersz to zwykły wynik $${r}${mul ? '\\cdot' : '+'} k$, a dolny — reszta z dzielenia przez $${p}$.`,
       T`$$\begin{array}{r|${'c'.repeat(cols.length)}}k&${cols.join('&')}\\\hline ${r}${op} k&${cols.map(k => String(raw(k))).join('&')}\\ \text{reszta}&${cols.map(k => (ks.includes(k) ? HL(raw(k) % p) : String(raw(k) % p))).join('&')}\end{array}$$`,
-      ex != null ? T`Np. $${r}${op}${ex}=${raw(ex)}=${Math.floor(raw(ex) / p)}\cdot${p}+${raw(ex) % p}$, więc w $\mathbb{Z}_{${p}}$ wychodzi $${raw(ex) % p}$.` : T`Wszystkie wyniki są mniejsze niż $${p}$, więc zostają bez zmian.`,
+      ex != null ? T`Np. $${r}${op}${ex}=${raw(ex)}=${Math.floor(raw(ex) / p)}\cdot ${p}+${raw(ex) % p}$, więc w $\mathbb{Z}_{${p}}$ wychodzi $${raw(ex) % p}$.` : T`Wszystkie wyniki są mniejsze niż $${p}$, więc zostają bez zmian.`,
       T`<b>Wiersz $${r}$ w tabelce:</b>` + rowTable(p, r, ks, mul, true),
     ];
   }
@@ -295,14 +295,14 @@
     if (gk === 'inv') {
       const a = R.int(2, p - 1); const x = invMod(a, p);
       return { q: T`Wyznacz $${a}^{-1}$ w ciele $\mathbb{Z}_{${p}}$.`, fields: [{ label: T`${a}^{-1}`, kind: 'mod', mod: p, ans: String(x) }],
-        steps: [T`Szukamy $x$ takiego, że $${a}x\equiv1\pmod{${p}}$.`, T`Sprawdzamy kolejne $x$ (lub algorytm Euklidesa): $${a}\cdot${x}=${a * x}=${Math.floor(a * x / p)}\cdot${p}+1$.`, T`Zatem $${a}^{-1}=${x}$.`] };
+        steps: [T`Szukamy $x$ takiego, że $${a}x\equiv1\pmod{${p}}$.`, T`Sprawdzamy kolejne $x$ (lub algorytm Euklidesa): $${a}\cdot ${x}=${a * x}=${Math.floor(a * x / p)}\cdot ${p}+1$.`, T`Zatem $${a}^{-1}=${x}$.`] };
     }
     if (gk === 'ops') {
       const a = R.int(1, p - 1), b = R.int(1, p - 1), c = R.int(2, p - 1);
       const ci = invMod(c * c, p);
-      return { q: T`W ciele $\mathbb{Z}_{${p}}$ oblicz $${a}+${b}$, $${a}\cdot${b}$, $${a}-${b}$ oraz $${a}\cdot${c}^{-2}$.`,
-        fields: [{ label: T`${a}+${b}`, ans: (a + b) % p }, { label: T`${a}\cdot${b}`, ans: (a * b) % p }, { label: T`${a}-${b}`, ans: md(a - b, p) }, { label: T`${a}\cdot${c}^{-2}`, ans: (a * ci) % p }].map(f => Object.assign(f, { kind: 'mod', mod: p, ans: String(f.ans) })),
-        steps: [T`$${a}-${b}=${a - b}\equiv${md(a - b, p)}$ (dodajemy $${p}$, gdy wynik ujemny).`, T`$${c}^{2}=${c * c}\equiv${(c * c) % p}$, a jego odwrotność to $${ci}$, bo $${(c * c) % p}\cdot${ci}=${((c * c) % p) * ci}\equiv1$.`, T`$${a}\cdot${c}^{-2}=${a}\cdot${ci}=${a * ci}\equiv${(a * ci) % p}$.`] };
+      return { q: T`W ciele $\mathbb{Z}_{${p}}$ oblicz $${a}+${b}$, $${a}\cdot ${b}$, $${a}-${b}$ oraz $${a}\cdot ${c}^{-2}$.`,
+        fields: [{ label: T`${a}+${b}`, ans: (a + b) % p }, { label: T`${a}\cdot ${b}`, ans: (a * b) % p }, { label: T`${a}-${b}`, ans: md(a - b, p) }, { label: T`${a}\cdot ${c}^{-2}`, ans: (a * ci) % p }].map(f => Object.assign(f, { kind: 'mod', mod: p, ans: String(f.ans) })),
+        steps: [T`$${a}-${b}=${a - b}\equiv ${md(a - b, p)}$ (dodajemy $${p}$, gdy wynik ujemny).`, T`$${c}^{2}=${c * c}\equiv ${(c * c) % p}$, a jego odwrotność to $${ci}$, bo $${(c * c) % p}\cdot ${ci}=${((c * c) % p) * ci}\equiv1$.`, T`$${a}\cdot ${c}^{-2}=${a}\cdot ${ci}=${a * ci}\equiv ${(a * ci) % p}$.`] };
     }
     // expr: a^k * (b^2 - c) * (d*(-e))^{-1}
     const P = R.pick([7, 11, 13]); const a = R.int(2, P - 2), k = R.int(P, 2 * P), b = R.int(2, 6), c = R.int(1, 9), d = R.int(2, 5), e = R.int(2, 5);
@@ -310,7 +310,7 @@
     if (!dei || !bc) return gen18('expr');
     const res = md(ak * bc * dei, P);
     return { q: T`Oblicz $${a}^{${k}}\cdot(${b}^2-${c})\cdot(${d}\cdot(-${e}))^{-1}$ w ciele $\mathbb{Z}_{${P}}$.`, fields: [{ label: 'wynik', kind: 'mod', mod: P, ans: String(res) }],
-      steps: [T`Małe tw. Fermata: $${a}^{${P - 1}}=1$, więc $${a}^{${k}}=${a}^{${k % (P - 1)}}=${ak}$.`, T`$${b}^2-${c}=${b * b - c}\equiv${bc}$.`, T`$${d}\cdot(-${e})=-${d * e}\equiv${de}$, odwrotność: $${dei}$ (bo $${de}\cdot${dei}\equiv1$).`, T`Wynik: $${ak}\cdot${bc}\cdot${dei}=${ak * bc * dei}\equiv${res}$.`] };
+      steps: [T`Małe tw. Fermata: $${a}^{${P - 1}}=1$, więc $${a}^{${k}}=${a}^{${k % (P - 1)}}=${ak}$.`, T`$${b}^2-${c}=${b * b - c}\equiv ${bc}$.`, T`$${d}\cdot(-${e})=-${d * e}\equiv ${de}$, odwrotność: $${dei}$ (bo $${de}\cdot ${dei}\equiv1$).`, T`Wynik: $${ak}\cdot ${bc}\cdot ${dei}=${ak * bc * dei}\equiv ${res}$.`] };
   }
 
   /* ---------------- 1.9 ---------------- */
@@ -354,7 +354,7 @@
     const r = [x[0] * y[0] - x[1] * y[1], x[0] * y[1] + x[1] * y[0]];
     return { q: T`Oblicz $(${x[0]},${x[1]})\cdot(${y[0]},${y[1]})$ w $\mathbb{R}\times\mathbb{R}$ z mnożeniem $(x_1,x_2)\cdot(y_1,y_2)=(x_1y_1-x_2y_2,\ x_1y_2+x_2y_1)$.`,
       fields: [{ label: 'pierwsza', ans: String(r[0]) }, { label: 'druga', ans: String(r[1]) }].map(f => Object.assign(f, { restrict: ['plain'] })),
-      steps: [T`Pierwsza: $${x[0]}\cdot${par(y[0])}-${par(x[1])}\cdot${par(y[1])}=${r[0]}$.`, T`Druga: $${x[0]}\cdot${par(y[1])}+${par(x[1])}\cdot${par(y[0])}=${r[1]}$.`, T`Uwaga: to dokładnie mnożenie liczb $${A.Z.tex(x[0], x[1])}$ i $${A.Z.tex(y[0], y[1])}$ w $\mathbb C$.`] };
+      steps: [T`Pierwsza: $${x[0]}\cdot ${par(y[0])}-${par(x[1])}\cdot ${par(y[1])}=${r[0]}$.`, T`Druga: $${x[0]}\cdot ${par(y[1])}+${par(x[1])}\cdot ${par(y[0])}=${r[1]}$.`, T`Uwaga: to dokładnie mnożenie liczb $${A.Z.tex(x[0], x[1])}$ i $${A.Z.tex(y[0], y[1])}$ w $\mathbb C$.`] };
   }
 
   A.addList({
@@ -424,10 +424,10 @@
         gen: gen18,
         items: [
           { label: '8.1a', gk: 'row', q: rowQ(5, 3, [0, 1, 2, 3, 4], false, T`Tabelka dodawania w $\mathbb Z_5$ — wiersz $3$.`), fields: [0, 1, 2, 3, 4].map(k => ({ label: '3+' + k, kind: 'mod', mod: 5, ans: String((3 + k) % 5) })), sol: rowSol(5, 3, [0, 1, 2, 3, 4], false) },
-          { label: '8.1b', gk: 'row', q: rowQ(5, 3, [1, 2, 3, 4], true, T`Tabelka mnożenia w $\mathbb Z_5$ — wiersz $3$.`), fields: [1, 2, 3, 4].map(k => ({ label: T`3\cdot${k}`, kind: 'mod', mod: 5, ans: String((3 * k) % 5) })), sol: rowSol(5, 3, [1, 2, 3, 4], true) },
-          { label: '8.1c', gk: 'row', q: rowQ(7, 5, [1, 2, 3, 4, 5, 6], true, T`Tabelka mnożenia w $\mathbb Z_7$ — wiersz $5$.`), fields: [1, 2, 3, 4, 5, 6].map(k => ({ label: T`5\cdot${k}`, kind: 'mod', mod: 7, ans: String((5 * k) % 7) })), sol: rowSol(7, 5, [1, 2, 3, 4, 5, 6], true) },
-          { label: '8.1d', gk: 'row', q: rowQ(11, 4, [3, 5, 7, 9, 10], true, T`Tabelka mnożenia w $\mathbb Z_{11}$ — wiersz $4$.`), fields: [3, 5, 7, 9, 10].map(k => ({ label: T`4\cdot${k}`, kind: 'mod', mod: 11, ans: String((4 * k) % 11) })), sol: rowSol(11, 4, [3, 5, 7, 9, 10], true) },
-          { label: '8.1e', gk: 'row', q: rowQ(13, 6, [2, 5, 8, 11, 12], true, T`Tabelka mnożenia w $\mathbb Z_{13}$ — wiersz $6$.`), fields: [2, 5, 8, 11, 12].map(k => ({ label: T`6\cdot${k}`, kind: 'mod', mod: 13, ans: String((6 * k) % 13) })), sol: rowSol(13, 6, [2, 5, 8, 11, 12], true) },
+          { label: '8.1b', gk: 'row', q: rowQ(5, 3, [1, 2, 3, 4], true, T`Tabelka mnożenia w $\mathbb Z_5$ — wiersz $3$.`), fields: [1, 2, 3, 4].map(k => ({ label: T`3\cdot ${k}`, kind: 'mod', mod: 5, ans: String((3 * k) % 5) })), sol: rowSol(5, 3, [1, 2, 3, 4], true) },
+          { label: '8.1c', gk: 'row', q: rowQ(7, 5, [1, 2, 3, 4, 5, 6], true, T`Tabelka mnożenia w $\mathbb Z_7$ — wiersz $5$.`), fields: [1, 2, 3, 4, 5, 6].map(k => ({ label: T`5\cdot ${k}`, kind: 'mod', mod: 7, ans: String((5 * k) % 7) })), sol: rowSol(7, 5, [1, 2, 3, 4, 5, 6], true) },
+          { label: '8.1d', gk: 'row', q: rowQ(11, 4, [3, 5, 7, 9, 10], true, T`Tabelka mnożenia w $\mathbb Z_{11}$ — wiersz $4$.`), fields: [3, 5, 7, 9, 10].map(k => ({ label: T`4\cdot ${k}`, kind: 'mod', mod: 11, ans: String((4 * k) % 11) })), sol: rowSol(11, 4, [3, 5, 7, 9, 10], true) },
+          { label: '8.1e', gk: 'row', q: rowQ(13, 6, [2, 5, 8, 11, 12], true, T`Tabelka mnożenia w $\mathbb Z_{13}$ — wiersz $6$.`), fields: [2, 5, 8, 11, 12].map(k => ({ label: T`6\cdot ${k}`, kind: 'mod', mod: 13, ans: String((6 * k) % 13) })), sol: rowSol(13, 6, [2, 5, 8, 11, 12], true) },
           { label: '8.2', gk: 'ops', q: T`Oblicz $3+4$, $3\cdot4$, $3-4$, $3\cdot2^{-2}$ w ciele $\mathbb Z_5$.`, fields: [['3+4', 2], [T`3\cdot4`, 2], ['3-4', 4], [T`3\cdot2^{-2}`, 2]].map(([l, v]) => ({ label: l, kind: 'mod', mod: 5, ans: String(v) })), sol: [T`$2^2=4$, $4^{-1}=4$ (bo $16\equiv1$), więc $3\cdot2^{-2}=12\equiv2$.`] },
           { label: '8.3', gk: 'inv', q: T`Wyznacz $3^{-1}$ kolejno w ciałach $\mathbb Z_5,\mathbb Z_7,\mathbb Z_{11},\mathbb Z_{13}$.`, fields: [[5, 2], [7, 5], [11, 4], [13, 9]].map(([p, v]) => ({ label: T`\mathbb Z_{${p}}`, kind: 'mod', mod: p, ans: String(v) })), sol: [T`$3\cdot2=6\equiv1\ (5)$, $3\cdot5=15\equiv1\ (7)$, $3\cdot4=12\equiv1\ (11)$, $3\cdot9=27\equiv1\ (13)$.`] },
           { label: '8.4', gk: 'expr', q: T`Oblicz $4^{12}\cdot(5^2-6)\cdot(2\cdot(-3))^{-1}$ w ciele $\mathbb Z_{11}$.`, fields: [{ label: 'wynik', kind: 'mod', mod: 11, ans: '8' }], sol: [T`$4^{10}\equiv1$, więc $4^{12}\equiv16\equiv5$; $5^2-6=19\equiv8$; $2\cdot(-3)=-6\equiv5$, $5^{-1}=9$.`, T`$5\cdot8\cdot9=360\equiv8$.`] },
