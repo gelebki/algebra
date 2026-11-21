@@ -48,7 +48,19 @@
        S('Wniosek', 'Co z tego wynika?', T`$${k}\mid ${exprT}$ dla każdego $n$`, T`W każdym przypadku $${exprT}\equiv0\pmod{${k}}$, więc $${k}\mid ${exprT}$ dla każdego $n\in\mathbb N$. $\blacksquare$`, 'Przypadki obejmują wszystkie liczby całkowite.', ['Tylko dla $n<' + k + '$', 'Reszty obejmują wszystkie $n$, nie tylko małe.'], ['Tylko dla $n$ podzielnych przez ' + k, 'Wyszło 0 dla każdej reszty.'])],
       [[T`Rozważamy reszty $n$ z dzielenia przez $${k}$.`, 'wszystkie przypadki wymienione'], [T`$${tblA}$`, 'rachunek dla każdej reszty'], [T`Zatem $${k}\mid ${exprT}$ dla każdego $n$. $\blacksquare$`, 'wniosek']],
       ['Pominięcie którejś reszty.', 'Zapis „n = 1, 2, 3 sprawdzone” zamiast reszt — to nie jest dowód.']);
-    return proof('', p === 3 ? 'cube' : 'quint', q, [factorMethod, restMethod]);
+    // trzecia metoda: indukcja (A_{n+1} − A_n dzieli się przez k)
+    const cT = c === 0 ? '' : c > 0 ? '+' + c : String(c), aT = a < 0 ? String(a) : '+' + a;
+    const diffT = p === 3 ? T`3n(n+1)${cT}` : T`5(n^4+2n^3+2n^2+n)${cT}`;
+    const expT = p === 3 ? T`(n+1)^3-n^3${aT}=3n^2+3n+1${aT}` : T`(n+1)^5-n^5${aT}=5n^4+10n^3+10n^2+5n+1${aT}`;
+    const whyDiff = k === 6 ? T`$n(n+1)$ to iloczyn dwóch kolejnych liczb, więc jest parzysty i $6\mid 3n(n+1)$; do tego $6\mid ${c}$.` : p === 3 ? T`$3\mid 3n(n+1)$ i $3\mid ${c}$.` : T`$5\mid 5(n^4+2n^3+2n^2+n)$ i $5\mid ${c}$.`;
+    const indMethod = M('Indukcja', 'Teza „dla każdego $n\\in\\mathbb N$” — indukcja działa zawsze, gdy rozkład nie przychodzi do głowy.', T`Policz różnicę $A_{n+1}-A_n=${diffT}$ — dzieli się przez $${k}$, więc podzielność „przechodzi” z $n$ na $n+1$.`,
+      [S('Baza', 'Co sprawdzamy na początku?', T`$n=1$: $A_1=${c}$, podzielne przez $${k}$`, T`Niech $A_n=${exprT}$. <b>Baza:</b> $A_1=1${aT}=${c}$ i $${k}\mid ${c}$.`, 'Bez bazy indukcja nic nie dowodzi — to osobny punkt.', [T`$n=0$: $A_0=0$`, 'Dowodzimy dla $n\\in\\mathbb N=\\{1,2,\\ldots\\}$ — zaczynamy od $n=1$.'], [T`$n=1$: $A_1=${p}$`, T`$1^{${p}}${aT}\cdot 1=${c}$.`]),
+       S('Różnica', T`Ile wynosi $A_{n+1}-A_n$?`, T`$${diffT}$`, T`<b>Założenie:</b> $${k}\mid A_n$. <b>Krok:</b> $A_{n+1}-A_n=${expT.replace("=", "$ $=")}$ $=${diffT}$.`, 'Wyrazy $n^' + p + '$ się skracają, zostaje wielomian niższego stopnia.', [p === 3 ? T`$3n^2+3n$` : T`$5n^4+5n$`, 'Zgubione wyrazy z dwumianu albo wyraz wolny.'], [T`$${p}n^{${p - 1}}$`, 'To tylko pierwszy wyraz rozwinięcia $(n+1)^' + p + '$.']),
+       S('Podzielność różnicy', T`Dlaczego $${k}\mid ${diffT}$?`, k === 6 ? T`$n(n+1)$ jest parzyste, więc $6\mid 3n(n+1)$, i $6\mid ${c}$` : T`Oba składniki dzielą się przez $${k}$`, T`${whyDiff} Zatem $${k}\mid A_{n+1}-A_n$.`, k === 6 ? 'Sam czynnik 3 nie wystarcza — parzystość $n(n+1)$ daje brakującą dwójkę.' : 'Suma liczb podzielnych przez ' + k + ' dzieli się przez ' + k + '.', [T`Bo $${k}\mid n$`, 'Nie wiemy tego — $n$ jest dowolne.'], [k === 6 ? T`Bo $3\mid 3n(n+1)$` : T`Nie dzieli się`, k === 6 ? 'Przez 3 tak, ale potrzebujemy 6 — brakuje parzystości.' : 'Dzieli: oba składniki są wielokrotnościami ' + k + '.']),
+       S('Zakończenie', 'Co wynika dla $A_{n+1}$?', T`$${k}\mid A_{n+1}$`, T`$A_{n+1}=A_n+(A_{n+1}-A_n)$ — suma dwóch liczb podzielnych przez $${k}$, więc $${k}\mid A_{n+1}$. Na mocy zasady indukcji $${k}\mid ${exprT}$ dla każdego $n\in\mathbb N$. $\blacksquare$`, 'Zdanie „na mocy zasady indukcji” zamyka dowód.', ['Bo $A_{n+1}>A_n$', 'Wielkość liczby nic nie mówi o podzielności.'], ['Tylko dla parzystych $n$', 'Krok działa dla każdego $n$.'])],
+      [[T`$A_n=${exprT}$. Baza: $A_1=${c}$, $${k}\mid ${c}$.`, 'baza'], [T`Założenie: $${k}\mid A_n$. Krok: $A_{n+1}-A_n=${diffT}$.`, 'rachunek różnicy'], [whyDiff, 'podzielność różnicy z uzasadnieniem'], [T`$A_{n+1}=A_n+(A_{n+1}-A_n)$, więc $${k}\mid A_{n+1}$; na mocy zasady indukcji teza zachodzi dla każdego $n$. $\blacksquare$`, 'wniosek z założenia indukcyjnego']],
+      ['Brak bazy albo brak zdania kończącego indukcję.', 'Krok bez użycia założenia $' + k + '\\mid A_n$ — wtedy to nie jest indukcja.', ...(k === 6 ? ['Uzasadnienie tylko podzielności przez 3 zamiast przez 6.'] : [])]);
+    return proof('', p === 3 ? 'cube' : 'quint', q, [factorMethod, restMethod, indMethod]);
   }
   const genCube = gk => { if (gk === 'quint') { const a = R.pick([-1, 4, 9, -6]); return cubeProof(5, 5, a); } const k = R.pick([3, 6]); const a = R.pick(k === 3 ? [-1, 2, 5, 8, -4] : [-1, 5, 11, -7]); return cubeProof(3, k, a); };
 
@@ -134,7 +146,7 @@
     const P = polyT(co);
     return mk({ gk: gk || 'poly', field: txtField(), q: T`Dla jakich liczb naturalnych $n$ liczba $${P}$ jest podzielna przez $${divT}$?`, tex: setT(sol),
       steps: [T`Dzielimy wielomian przez $${divT}$ z resztą: reszta to $W(${root})=${Wr}$ (twierdzenie o reszcie), czyli $${P}=(${divT})\cdot Q(n)${Wr < 0 ? Wr : '+' + Wr}$ z całkowitym $Q$.`, T`Stąd $${divT}\mid W(n)\iff ${divT}\mid ${Wr}$. Dzielniki $${Math.abs(Wr)}$: $\pm ${divs(Wr).join(',\\pm')}$.`, T`$${divT}$ przyjmuje te wartości, a $n\geq1$ (przyjmujemy $\mathbb N=\{1,2,\ldots\}$): $${setT(sol)}$.`, 'Na koniec warto sprawdzić jeden wynik podstawieniem.'],
-      wrong: [[setT(pos), r < 0 ? 'Dzielnik $' + divT + '$ może być ujemny — wtedy też dzieli.' : 'Sprawdź, które dzielniki dają $n\\geq1$.'], [setT([...new Set(divs(W3(co, -root)).map(d => d - r).filter(n => n >= 1))].sort((x, y) => x - y)), T`Reszta to $W(${root})$, a nie $W(${-root})$ — podstawiamy pierwiastek dzielnika.`], [setT(sol.filter((_, i) => i !== sol.length - 1)), 'Pominięty największy dzielnik.'], [setT([...sol, sol.length ? sol[sol.length - 1] + 1 : 1]), 'Sprawdź podstawieniem — ta wartość nie spełnia warunku.']] });
+      wrong: [[setT(pos), r < 0 ? 'Dzielnik $' + divT + '$ może być ujemny — wtedy też dzieli.' : 'Sprawdź, które dzielniki dają $n\\geq1$.'], [setT([...new Set(divs(W3(co, -root)).map(d => d - r).filter(n => n >= 1))].sort((x, y) => x - y)), T`Reszta to $W(${root})$, a nie $W(${-root})$ — podstawiamy pierwiastek dzielnika.`], [setT(sol.filter((_, i) => i !== sol.length - 1)), 'Pominięty największy dzielnik.'], [setT([...sol, sol.length ? sol[sol.length - 1] + 1 : 1]), 'Sprawdź podstawieniem — ta wartość nie spełnia warunku.'], ...(typeof sol[0] === 'number' ? [[setT(sol.slice(1)), 'Brakuje najmniejszego rozwiązania — sprawdź wszystkie dzielniki.'], [setT(sol.map(x => x + 1)), 'Przesunięcie o 1: $n$ to wartość dzielnika minus ' + (r > 0 ? r : '(' + r + ')') + '.']] : [])] });
   }
   function genPoly() { for (;;) { const co = [1, R.int(-9, 9), R.int(-9, 9), R.int(-12, 12)], r = R.pick([1, 2, 3, -1, -2, -3, -5, -7]); const Wr = W3(co, -r); if (!Wr || Math.abs(Wr) > 60 || divs(Wr).length < 3) continue; const it = polyDiv(co, r); if (/brak/.test(it.mcCorrect)) continue; return it; } }
   // 3(c): przez iloczyn (n−7)(n+2)
@@ -235,7 +247,7 @@
     num: 21, id: 'e1', subject: 'etl', title: 'Lista 1', name: 'Podzielność', hue: 'e1',
     blurb: 'Dowody podzielności: rozkład, reszty, kongruencje, indukcja i kombinacje liniowe.',
     tasks: [
-      { id: 'E1.1', name: 'Podzielność $n^p-n$', statement: T`Niech $n\in\mathbb N$. (a) Udowodnij, że $3\mid n^3-n$. (b) Udowodnij, że $5\mid n^5-n$. (c) Czy zawsze $4\mid n^4-n$?`, wzIds: it => ({ kontr: ['m_kontr', 'def'] }[it && it.gk] || ['m_rozk', 'm_reszty', 'kolejne', 'kongr']), gen: gk => (gk === 'kontr' ? genKontr() : genCube(gk)),
+      { id: 'E1.1', name: 'Podzielność $n^p-n$', statement: T`Niech $n\in\mathbb N$. (a) Udowodnij, że $3\mid n^3-n$. (b) Udowodnij, że $5\mid n^5-n$. (c) Czy zawsze $4\mid n^4-n$?`, wzIds: it => ({ kontr: ['m_kontr', 'def'] }[it && it.gk] || ['m_rozk', 'm_reszty', 'm_ind', 'kolejne', 'kongr']), gen: gk => (gk === 'kontr' ? genKontr() : genCube(gk)),
         items: [P('(a)', cubeProof(3, 3, -1)), P('(b)', cubeProof(5, 5, -1)), P('(c)', kontr(4))] },
       { id: 'E1.2', name: 'Podzielność potęg', statement: T`Udowodnij, że dla każdego $n\in\mathbb N$: (a) $4\mid5^{5n-2}+3$, (b) $10\mid3^{4n+2}+1$, (c) $133\mid11^{n+2}+12^{2n+1}$, (d) $7\mid2^{n+2}+3^{2n+1}$, (e) $9\mid4^n+15n-1$.`, wzIds: it => ['m_kong', 'm_ind', 'kongr', ...(it && it.gk === 'f3' ? ['dwumian'] : [])], gen: gk => (gk === 'f2' ? genF2() : gk === 'f3' ? genF3() : genF1()),
         items: [P('(a)', powProofA(4, 5, 5, -2, 3, '5n-2')), P('(b)', powProofA(10, 3, 4, 2, 1, '4n+2')), P('(c)', powProofB(133, 11, 2, 12, 1)), P('(d)', powProofB(7, 2, 2, 3, 1)), P('(e)', powProofC(3, 15))] },
@@ -252,5 +264,5 @@
   });
   for (const t of A.lists.find(l => l.id === 'e1').tasks) t.wzLib = F;
   A.ETL = { cubeProof, kontr, powProofA, powProofB, powProofC, polyDiv, fracInt, resProof, combProof, sumProof, W3, genF1, genF2, genF3, genComb, genRes, genPoly, genFrac, genCube };
-  void norm;
+  A.ETLH = { S, M, proof, P, gcd, md, inv, divs, big, sgn, lin, pw, W, mk, txtField, norm };
 })();
