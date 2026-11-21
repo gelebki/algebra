@@ -159,8 +159,8 @@
     const num = [a, a + 2, a + 4], den = [a + 1, a + 3, a + 5];
     const t = n => T`(${n}\cdot ${n + 3}+2)`;
     const v = (a + 1) * (b + 2);
-    return mk({ q: T`Oblicz $$\frac{${num.map(t).join('')}\cdots${t(b)}}{${den.map(t).join('')}\cdots${t(b - 1)}}$$`, ans: String(v), tex: String(v),
-      steps: [T`Każdy czynnik ma postać $n(n+3)+2=n^2+3n+2=(n+1)(n+2)$.`, T`Licznik ($n=${a},${a + 2},\ldots,${b}$): $${a + 1}\cdot ${a + 2}\cdot ${a + 3}\cdot ${a + 4}\cdots${b + 1}\cdot ${b + 2}$ — kolejne liczby od $${a + 1}$ do $${b + 2}$.`, T`Mianownik ($n=${a + 1},\ldots,${b - 1}$): kolejne liczby od $${a + 2}$ do $${b + 1}$.`, T`Po skróceniu zostaje $${a + 1}\cdot ${b + 2}=${v}$.`],
+    return mk({ q: T`Oblicz $$\frac{${num.map(t).join('')}\cdots ${t(b)}}{${den.map(t).join('')}\cdots ${t(b - 1)}}$$`, ans: String(v), tex: String(v),
+      steps: [T`Każdy czynnik ma postać $n(n+3)+2=n^2+3n+2=(n+1)(n+2)$.`, T`Licznik ($n=${a},${a + 2},\ldots,${b}$): $${a + 1}\cdot ${a + 2}\cdot ${a + 3}\cdot ${a + 4}\cdots ${b + 1}\cdot ${b + 2}$ — kolejne liczby od $${a + 1}$ do $${b + 2}$.`, T`Mianownik ($n=${a + 1},\ldots,${b - 1}$): kolejne liczby od $${a + 2}$ do $${b + 1}$.`, T`Po skróceniu zostaje $${a + 1}\cdot ${b + 2}=${v}$.`],
       wrong: [[String(b + 2), T`Zgubiony czynnik $${a + 1}$ z początku licznika.`], [String(a + 1), T`Zgubiony czynnik $${b + 2}$ z końca licznika.`], [T`\frac1{${v}}`, 'Odwrócony wynik: więcej czynników jest w liczniku.']] });
   }
   const gen16 = () => { const a = R.pick([2, 4, 6, 8]); return e16(a, a + 2 * R.int(15, 60)); };
@@ -250,7 +250,7 @@
     const rb = T`${b}${b}`, ra = T`${a}${a}`, B2 = b + k, v = (a * b - B2 * a) * 10001;
     return mk({ q: T`Oblicz $${a}\cdot ${rb}-${B2}\cdot ${ra}$.`, ans: String(v), tex: big(v),
       steps: [T`$${rb}=${b}\cdot10001$ oraz $${ra}=${a}\cdot10001$.`, T`Wyrażenie: $${a}\cdot ${b}\cdot10001-${B2}\cdot ${a}\cdot10001=${a}\cdot10001\cdot(${b}-${B2})$.`, k === 0 ? 'Nawias jest zerem, więc wynik to $0$.' : T`$=${a}\cdot10001\cdot(${-k})=${big(v)}$.`],
-      wrong: k === 0 ? [['10001', 'Wspólny czynnik $10001$ mnoży się przez zero w nawiasie.'], [big(a * b), 'Iloczyny są równe i się odejmują.'], ['1', 'Iloczyny się zerują — nie zostaje nic.']] : [[big(-v), 'Zły znak: odejmujemy większy iloczyn.'], [big(-k * a), T`Zgubiony czynnik $10001$.`], ['0', T`Czynniki nie są takie same: $${b}\neq${B2}$.`]] });
+      wrong: k === 0 ? [['10001', 'Wspólny czynnik $10001$ mnoży się przez zero w nawiasie.'], [big(a * b), 'Iloczyny są równe i się odejmują.'], ['1', 'Iloczyny się zerują — nie zostaje nic.']] : [[big(-v), 'Zły znak: odejmujemy większy iloczyn.'], [big(-k * a), T`Zgubiony czynnik $10001$.`], ['0', T`Czynniki nie są takie same: $${b}\neq ${B2}$.`]] });
   }
   const gen113 = () => { const a = R.int(1900, 2099), b = R.int(1900, 2099); return e113(a, b, R.pick([0, 0, 1, -1, 2])); };
 
@@ -297,7 +297,7 @@
   /* ---------- 1.20 ---------- */
   function e120(n) {
     const odd = n % 2 === 1, v = odd ? n * (n + 1) / 2 : -n * (n + 1) / 2;
-    return mk({ q: T`Oblicz $$1^2-2^2+3^2-4^2+\ldots${odd ? T`-${n - 1}^2+${n}^2` : T`+${n - 1}^2-${n}^2`}$$`, ans: String(v), tex: big(v),
+    return mk({ q: T`Oblicz $$1^2-2^2+3^2-4^2+\ldots ${odd ? T`-${n - 1}^2+${n}^2` : T`+${n - 1}^2-${n}^2`}$$`, ans: String(v), tex: big(v),
       steps: odd ? [T`Grupujemy: $1^2+(3^2-2^2)+(5^2-4^2)+\ldots+(${n}^2-${n - 1}^2)$.`, T`$(k+1)^2-k^2=(k+1)+k$ — różnica kwadratów kolejnych liczb to ich suma.`, T`Zatem całość to $1+2+3+\ldots+${n}=\frac{${n}\cdot ${n + 1}}2=${big(v)}$.`]
         : [T`Grupujemy: $(1^2-2^2)+(3^2-4^2)+\ldots+(${n - 1}^2-${n}^2)$.`, T`$k^2-(k+1)^2=-(k+(k+1))$.`, T`Zatem całość to $-(1+2+\ldots+${n})=-\frac{${n}\cdot ${n + 1}}2=${big(v)}$.`],
       wrong: [[big(-v), 'Zły znak — sprawdź, czy ostatni wyraz jest dodawany, czy odejmowany.'], [big(odd ? (n - 1) * n / 2 : -(n - 1) * n / 2), T`Suma kończy się na $${n}$, nie na $${n - 1}$.`], [big(n * n), 'To tylko ostatni wyraz.']] });
@@ -357,7 +357,7 @@
   function e126(a, note) {
     const n = 2 * a - 1, term = k => T`\frac{${k}^2}{${k}^2-${2 * a * k}+${2 * a * a}}`;
     return mk({ q: T`Oblicz $$${term(1)}+${term(2)}+\ldots+${term(n)}$$`, ans: String(n), tex: String(n),
-      steps: [...(note ? [note] : []), T`$f(k)=\frac{k^2}{k^2-${2 * a}k+${2 * a * a}}$. Po zamianie $k\to${2 * a}-k$ mianownik się nie zmienia: $(${2 * a}-k)^2-${2 * a}(${2 * a}-k)+${2 * a * a}=k^2-${2 * a}k+${2 * a * a}$.`, T`$f(k)+f(${2 * a}-k)=\frac{k^2+(${2 * a}-k)^2}{k^2-${2 * a}k+${2 * a * a}}=\frac{2(k^2-${2 * a}k+${2 * a * a})}{k^2-${2 * a}k+${2 * a * a}}=2$.`, T`Pary $(1,${n}),(2,${n - 1}),\ldots$: $${a - 1}$ par po $2$, plus środkowy $f(${a})=\frac{${a * a}}{${a * a}}=1$. Razem $${2 * (a - 1)}+1=${n}$.`],
+      steps: [...(note ? [note] : []), T`$f(k)=\frac{k^2}{k^2-${2 * a}k+${2 * a * a}}$. Po zamianie $k\to ${2 * a}-k$ mianownik się nie zmienia: $(${2 * a}-k)^2-${2 * a}(${2 * a}-k)+${2 * a * a}=k^2-${2 * a}k+${2 * a * a}$.`, T`$f(k)+f(${2 * a}-k)=\frac{k^2+(${2 * a}-k)^2}{k^2-${2 * a}k+${2 * a * a}}=\frac{2(k^2-${2 * a}k+${2 * a * a})}{k^2-${2 * a}k+${2 * a * a}}=2$.`, T`Pary $(1,${n}),(2,${n - 1}),\ldots$: $${a - 1}$ par po $2$, plus środkowy $f(${a})=\frac{${a * a}}{${a * a}}=1$. Razem $${2 * (a - 1)}+1=${n}$.`],
       wrong: [[String(n - 1), T`Zapomniany środkowy wyraz $f(${a})=1$.`], [String(2 * n), T`Każda para daje $2$, ale par jest $${a - 1}$, nie $${n}$.`], [String(n + 1), T`Środkowy wyraz to $1$, nie $2$.`]] });
   }
   const gen126 = () => e126(R.int(3, 9));
