@@ -167,7 +167,7 @@
   const LISTS = A.lists;
   const itemKey = (t, i) => t.id + '#' + i;
   LISTS.forEach(L => { if (!L.subject) L.subject = 'alg'; });
-  const SUBJ = [{ id: 'alg', name: 'Algebra liniowa', short: 'Algebra', color: '#f0b65a' }, { id: 'pro', name: 'Proseminarium', short: 'Proseminarium', color: '#a594ff' }, { id: 'etl', name: 'Elementarna teoria liczb', short: 'ETL', color: '#3dd6c3' }];
+  const SUBJ = [{ id: 'alg', name: 'Algebra liniowa', short: 'Algebra', color: '#f0b65a' }, { id: 'pro', name: 'Proseminarium', short: 'Proseminarium', color: '#a594ff' }, { id: 'etl', name: 'Elementarna teoria liczb', short: 'ETL', nav: 'ETL', color: '#3dd6c3' }];
   const tid = t => String(t.id).replace(/^[PE]/, '');
   const lhash = i => LISTS[i].id;
   const subjOf = i => (LISTS[i] && LISTS[i].subject) || 'alg';
@@ -245,7 +245,7 @@
     { id: 'quick', name: 'Błyskawica', desc: '8 przykładów w jednej szybkiej rundzie', ok: () => S.quickBest >= 8 },
     // ukryte — po 100 XP
     { id: 'h_days5', hidden: true, name: 'Kto tak się uczy? 🙈', desc: 'Nauka 5 dni pod rząd', ok: () => S.dayStreak >= 5 },
-    { id: 'h_all', hidden: true, name: 'All in', desc: 'Wszystkie ' + ALLN + ' podpunktów z obu przedmiotów zaliczone', ok: () => LISTS.every(L => { const p = listProgress(L); return p.solved === p.total; }) },
+    { id: 'h_all', hidden: true, name: 'All in', desc: 'Wszystkie ' + ALLN + ' podpunktów ze wszystkich przedmiotów zaliczone', ok: () => LISTS.every(L => { const p = listProgress(L); return p.solved === p.total; }) },
     { id: 'h_run', hidden: true, name: 'Snajper', desc: '25 poprawnych odpowiedzi z rzędu, bez ani jednej pomyłki', ok: () => (S.bestRun || 0) >= 25 },
     { id: 'h_day', hidden: true, name: 'Maraton', desc: '60 rozwiązanych przykładów jednego dnia', ok: () => Object.values(S.days || {}).some(d => (d.ok || 0) >= 60) },
     { id: 'h_clean', hidden: true, name: 'Czysta robota', desc: '100 podpunktów zaliczonych za pierwszym razem, bez Przykładu i Wzorów', ok: () => (S.clean || 0) >= 100 },
@@ -632,7 +632,7 @@
       const p = subjProgress(sb.id), sel = cs === sb.id;
       main.append(h('button', { class: 'tab subjtab', 'data-s': sb.id, style: '--hue:' + sb.color, role: 'tab', 'aria-selected': sel ? 'true' : 'false', onclick: () => { if (V.view === 'list' && subjOf(V.list) === sb.id) return; goSubject(sb.id); } },
         h('span', { class: 'ring', html: ringSVG(p.solved / Math.max(1, p.total), 30, 4, sb.color) }),
-        h('span', { class: 'lbl' }, h('b', {}, h('span', { class: 'full' }, sb.name), h('span', { class: 'short' }, sb.short)), h('small', {}, p.solved + '/' + p.total + ' podpunktów'))));
+        h('span', { class: 'lbl' }, h('b', {}, h('span', { class: 'full' }, sb.nav || sb.name), h('span', { class: 'short' }, sb.short)), h('small', {}, p.solved + '/' + p.total + ' podpunktów'))));
     });
     main.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'stats' ? 'true' : 'false', onclick: () => { SFX.click(); T = null; V = { view: 'stats', list: V.list }; S.tab = 'stats'; save(); setHash('stats'); render(); window.scrollTo({ top: 0, behavior: 'auto' }); } },
       h('span', { class: 'ring', html: IC.chart, style: 'color:var(--xp);display:grid;place-items:center' }), h('span', { class: 'lbl' }, h('b', {}, h('span', { class: 'full' }, 'Statystyki'), h('span', { class: 'short' }, 'Postęp')), h('small', {}, 'postępy i odznaki'))));
