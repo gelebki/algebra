@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#121214">
-<meta name="description" content="Matematyka: Algebra liniowa I i Proseminarium — listy zadań, rozwiązania krok po kroku, poziomy, odznaki i ranking ze znajomymi.">
+<meta name="description" content="Matematyka: Algebra liniowa I, Proseminarium i Elementarna teoria liczb — listy zadań, rozwiązania krok po kroku, poziomy, odznaki i ranking ze znajomymi.">
 <meta property="og:title" content="Matematyka">
-<meta property="og:description" content="Matematyka: Algebra liniowa I i Proseminarium — listy zadań, rozwiązania krok po kroku, poziomy, odznaki i ranking ze znajomymi.">
+<meta property="og:description" content="Matematyka: Algebra liniowa I, Proseminarium i Elementarna teoria liczb — listy zadań, rozwiązania krok po kroku, poziomy, odznaki i ranking ze znajomymi.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://gelebki.github.io/algebra/og.png">
 <meta property="og:url" content="https://gelebki.github.io/algebra/">
@@ -48,10 +48,10 @@ body.s-etl { --accent: #3dd6c3; --accent-ink: #052520; --accent-soft: rgba(61, 2
 /* wybór metody dowodu */
 .mpicker { display: grid; gap: 10px; }
 .mphint { margin: 0; color: var(--muted); font-size: 13.5px; }
-.mpick { display: grid; grid-template-columns: 34px 1fr 22px; gap: 12px; align-items: center; text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; transition: border-color .2s, transform .15s; }
+.mpick { display: grid; grid-template-columns: 34px minmax(0, 1fr) 22px; width: 100%; min-width: 0; gap: 12px; align-items: center; text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; transition: border-color .2s, transform .15s; }
 .mpick:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); transform: translateY(-1px); }
 .mpick .mpn { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font: 800 15px var(--f-mono); background: var(--accent-soft); color: var(--accent); }
-.mpick .mpb { display: grid; gap: 3px; } .mpick .mpb b { font-size: 15.5px; } .mpick .mpb small { color: var(--muted); font-size: 13px; line-height: 1.4; } .mpick .mpb em { font-style: normal; font: 600 11.5px var(--f-mono); color: var(--accent); }
+.mpick .mpb { display: grid; gap: 3px; min-width: 0; } .mpick .mpb mjx-container { max-width: 100%; overflow-x: auto; overflow-y: hidden; vertical-align: middle; } .mpick .mpb b { font-size: 15.5px; } .mpick .mpb small { color: var(--muted); font-size: 13px; line-height: 1.4; } .mpick .mpb em { font-style: normal; font: 600 11.5px var(--f-mono); color: var(--accent); }
 .mpick .mpa { width: 20px; height: 20px; color: var(--muted); display: grid; } .mpick .mpa svg { width: 20px; height: 20px; }
 .mswitch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 10px; font-size: 13px; color: var(--muted); } .mswitch b { color: var(--ink); }
 .exam { margin-top: 14px; padding: 14px 16px; border-radius: 14px; background: var(--surface-2); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); }
@@ -682,7 +682,7 @@ body { background-image: radial-gradient(900px 420px at 50% -160px, color-mix(in
 .gprog i.on { background: var(--ok); border-color: transparent; }
 .gprog i.cur { background: var(--accent); border-color: transparent; }
 .gchain { padding: 6px 0; margin: 0; display: grid; gap: 0; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }
-.gline { display: flex; gap: 12px; padding: 10px 14px; min-width: 0; }
+.gline { display: flex; gap: 12px; padding: 10px 14px; min-width: 0; } .gline .gbody { min-width: 0; flex: 1; } .gline .gl { overflow-x: auto; overflow-y: hidden; }
 .gline + .gline { border-top: 1px solid var(--line); }
 .gline.new { animation: pop .35s; background: var(--ok-bg); }
 .gline .n { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--f-mono); background: var(--ok); color: #0d2217; margin-top: 2px; }
@@ -740,6 +740,9 @@ window.MathJax = { tex: { packages: { '[+]': ['ams'] } }, svg: { fontCache: 'loc
 <script src="data5.js"></script>
 <script src="data6.js"></script>
 <script src="data7.js"></script>
+<script src="data8.js"></script>
+<script src="data9.js"></script>
+<script src="data10.js"></script>
 <script src="proofs.js"></script>
 <script src="wzory.js"></script>
 <script src="mc.js"></script>
