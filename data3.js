@@ -312,7 +312,7 @@
         id: '3.10', name: 'Sumy i iloczyny pierwiastków z jedynki', statement: T`$\varepsilon_k=\cos\frac{2k\pi}n+i\sin\frac{2k\pi}n$, $k=0,\ldots,n-1$, $n\ge2$. Obliczyć sumy i iloczyny $\varepsilon_k$, $\varepsilon_k^2$, $\varepsilon_k^m$.`,
         wzory: [T`$\varepsilon_k$ to wszystkie pierwiastki wielomianu $z^n-1$.`, T`Wzory Viète’a: suma pierwiastków $z^n-1$ to $0$ (dla $n\ge2$), iloczyn to $(-1)^{n+1}$.`, T`$\varepsilon_k=\varepsilon_1^k$ — suma to ciąg geometryczny: $\sum_{k=0}^{n-1}q^k=\frac{q^n-1}{q-1}$ dla $q\neq1$.`, T`$\varepsilon_k^m=\varepsilon_1^{km}$: gdy $n\mid m$, wszystkie są równe $1$.`],
         gen: () => { const n = R.int(3, 9), m = R.int(1, 3 * n); const sum = n % (n / A.gcd(n, m)) === 0 && m % n === 0 ? n : 0; const kind = R.int(0, 1);
-          if (kind === 0) return { q: T`Oblicz $\varepsilon_0^{${m}}+\varepsilon_1^{${m}}+\ldots+\varepsilon_{${n - 1}}^{${m}}$ dla pierwiastków stopnia $n=${n}$ z jedynki.`, fields: [{ label: 'suma', ans: String(m % n === 0 ? n : 0), restrict: ['plain'] }], steps: [T`$\varepsilon_k^{${m}}=q^k$ dla $q=\varepsilon_1^{${m}}$.`, m % n === 0 ? T`$${n}\mid ${m}$, więc $q=1$ i suma $=${n}$.` : T`$${n}\nmid${m}$, więc $q\neq1$, $q^{${n}}=1$, suma $=\frac{q^{${n}}-1}{q-1}=0$.`] };
+          if (kind === 0) return { q: T`Oblicz $\varepsilon_0^{${m}}+\varepsilon_1^{${m}}+\ldots+\varepsilon_{${n - 1}}^{${m}}$ dla pierwiastków stopnia $n=${n}$ z jedynki.`, fields: [{ label: 'suma', ans: String(m % n === 0 ? n : 0), restrict: ['plain'] }], steps: [T`$\varepsilon_k^{${m}}=q^k$ dla $q=\varepsilon_1^{${m}}$.`, m % n === 0 ? T`$${n}\mid ${m}$, więc $q=1$ i suma $=${n}$.` : T`$${n}\nmid ${m}$, więc $q\neq1$, $q^{${n}}=1$, suma $=\frac{q^{${n}}-1}{q-1}=0$.`] };
           const prod = ((n + 1) * m) % 2 === 0 ? 1 : -1;
           return { q: T`Oblicz $\varepsilon_0^{${m}}\cdot\varepsilon_1^{${m}}\cdots\varepsilon_{${n - 1}}^{${m}}$ dla $n=${n}$.`, fields: [{ label: 'iloczyn', ans: String(prod), restrict: ['plain'] }], steps: [T`$\varepsilon_0\varepsilon_1\cdots\varepsilon_{n-1}=(-1)^{n+1}$ (Viète dla $z^n-1$).`, T`Iloczyn potęg $=\left((-1)^{${n + 1}}\right)^{${m}}=${prod}$.`] }; },
         items: [
@@ -573,11 +573,11 @@
       const n = R.int(3, 10), prod = gk.startsWith('prod'), e = gk.endsWith('1') ? 1 : gk.endsWith('2') ? 2 : R.int(3, 3 * n);
       const pw = j => (e === 1 ? T`\varepsilon_{${j}}` : T`\varepsilon_{${j}}^{${e}}`);
       const P1 = (n + 1) % 2 === 0 ? 1 : -1, ans = prod ? (e % 2 === 0 || P1 === 1 ? 1 : -1) : (e % n === 0 ? n : 0);
-      const q = prod ? T`Oblicz $${pw(0)}\cdot ${pw(1)}\cdots${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.` : T`Oblicz $${pw(0)}+${pw(1)}+\ldots+${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.`;
+      const q = prod ? T`Oblicz $${pw(0)}\cdot ${pw(1)}\cdots ${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.` : T`Oblicz $${pw(0)}+${pw(1)}+\ldots+${pw(n - 1)}$ dla pierwiastków stopnia $n=${n}$ z jedynki.`;
       const steps = prod
         ? [T`Iloczyn wszystkich pierwiastków wielomianu $z^{${n}}-1$ (wzory Viète’a): $\varepsilon_0\cdots\varepsilon_{${n - 1}}=(-1)^{${n}+1}=${P1}$.`, e === 1 ? T`Wynik: $${P1}$.` : T`Iloczyn potęg to potęga iloczynu: $\left(${P1}\right)^{${e}}=${ans}$.`]
         : [T`$\varepsilon_k=\varepsilon_1^{\,k}$, więc $\varepsilon_k^{${e}}=q^k$ dla $q=\varepsilon_1^{${e}}$ — to suma ciągu geometrycznego $1+q+\ldots+q^{${n - 1}}$.`,
-          e % n === 0 ? T`$${n}\mid ${e}$, więc $q=1$ i każdy składnik to $1$: suma $=${n}$.` : T`$${n}\nmid${e}$, więc $q\neq1$, a $q^{${n}}=1$. Suma $=\frac{q^{${n}}-1}{q-1}=0$.`];
+          e % n === 0 ? T`$${n}\mid ${e}$, więc $q=1$ i każdy składnik to $1$: suma $=${n}$.` : T`$${n}\nmid ${e}$, więc $q\neq1$, a $q^{${n}}=1$. Suma $=\frac{q^{${n}}-1}{q-1}=0$.`];
       return { gk, q, fields: [{ label: prod ? 'iloczyn' : 'suma', ans: String(ans), restrict: ['plain'] }], steps };
     }
     t310.gen = gk => genRoots1(['sum1', 'prod1', 'sum2', 'prod2', 'summ', 'prodm'].includes(gk) ? gk : R.pick(['summ', 'prodm']));
