@@ -26,7 +26,7 @@
   --g1: #d97706; --g2: #f59e0b; --g3: #fde68a; --g4: #fff7d6;
   --ok: #62cf96; --ok-bg: rgba(98, 207, 150, .09);
   --bad: #8d8d98; --bad-bg: rgba(255, 255, 255, .03);
-  --l1: #6cc4ad; --l2: #e39b88; --l3: #ac9ee3; --p1: #7fb0e8; --p2: #e58bb6; --p3: #a9cf6f; --hue: var(--accent);
+  --l1: #6cc4ad; --l2: #e39b88; --l3: #ac9ee3; --p1: #7fb0e8; --p2: #e58bb6; --p3: #a9cf6f; --e1: #7fb6ff; --e2: #ffb37f; --e3: #d29bff; --e4: #c9e07a; --hue: var(--accent);
   --shadow: 0 10px 28px -18px rgba(0, 0, 0, .75);
   --f-display: "Inter Tight", "Inter", "Segoe UI", system-ui, sans-serif;
   --f-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -40,6 +40,27 @@ body.s-pro { --accent: #a594ff; --accent-ink: #120e26; --accent-soft: rgba(165, 
 .subj[data-s="alg"] { --sc: #f0b65a; } .subj[data-s="pro"] { --sc: #a594ff; }
 .subj .spct { color: var(--sc) !important; }
 .subj.on { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sc) 45%, var(--line)), 0 0 18px -8px var(--sc) !important; }
+
+/* ETL: turkus */
+body.s-etl { --accent: #3dd6c3; --accent-ink: #052520; --accent-soft: rgba(61, 214, 195, .13); --xp: #3dd6c3; --xp-soft: rgba(61, 214, 195, .13);
+  --g1: #0e8c7d; --g2: #2cc7b3; --g3: #b4f2e8; --g4: #e6fffa; }
+.subj[data-s="etl"] { --sc: #3dd6c3; }
+/* wybór metody dowodu */
+.mpicker { display: grid; gap: 10px; }
+.mphint { margin: 0; color: var(--muted); font-size: 13.5px; }
+.mpick { display: grid; grid-template-columns: 34px 1fr 22px; gap: 12px; align-items: center; text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; transition: border-color .2s, transform .15s; }
+.mpick:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); transform: translateY(-1px); }
+.mpick .mpn { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font: 800 15px var(--f-mono); background: var(--accent-soft); color: var(--accent); }
+.mpick .mpb { display: grid; gap: 3px; } .mpick .mpb b { font-size: 15.5px; } .mpick .mpb small { color: var(--muted); font-size: 13px; line-height: 1.4; } .mpick .mpb em { font-style: normal; font: 600 11.5px var(--f-mono); color: var(--accent); }
+.mpick .mpa { width: 20px; height: 20px; color: var(--muted); display: grid; } .mpick .mpa svg { width: 20px; height: 20px; }
+.mswitch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 10px; font-size: 13px; color: var(--muted); } .mswitch b { color: var(--ink); }
+.exam { margin-top: 14px; padding: 14px 16px; border-radius: 14px; background: var(--surface-2); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.exam ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 10px; } .exam .exl { line-height: 1.6; }
+.exam .expt { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 11.5px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 99px; }
+.exam .expt svg { width: 12px; height: 12px; } .exam .exm { color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
+.traps { margin-top: 10px; padding: 12px 16px; border-radius: 14px; background: rgba(255, 255, 255, .03); border: 1px dashed var(--line); }
+.traps ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; color: var(--muted); }
+.row.others { margin-top: 12px; flex-wrap: wrap; }
 
 * { box-sizing: border-box; }
 html, body { min-height: 100%; }
@@ -167,7 +188,7 @@ mjx-container svg { max-width: none; }
 .tab .lbl { display: grid; line-height: 1.2; }
 .tab .lbl small { color: var(--muted); font-size: 12px; }
 .tab .ring { width: 30px; height: 30px; flex: none; }
-.h-l1 { --hue: var(--l1); } .h-p1 { --hue: var(--p1); } .h-p2 { --hue: var(--p2); } .h-p3 { --hue: var(--p3); } .h-l2 { --hue: var(--l2); } .h-l3 { --hue: var(--l3); } .h-st { --hue: var(--accent); }
+.h-l1 { --hue: var(--l1); } .h-p1 { --hue: var(--p1); } .h-e1 { --hue: var(--e1); } .h-e2 { --hue: var(--e2); } .h-e3 { --hue: var(--e3); } .h-e4 { --hue: var(--e4); } .h-p2 { --hue: var(--p2); } .h-p3 { --hue: var(--p3); } .h-l2 { --hue: var(--l2); } .h-l3 { --hue: var(--l3); } .h-st { --hue: var(--accent); }
 
 /* ---------- widok listy ---------- */
 .hero { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; padding: 20px 0 8px; }
@@ -718,6 +739,7 @@ window.MathJax = { tex: { packages: { '[+]': ['ams'] } }, svg: { fontCache: 'loc
 <script src="data4.js"></script>
 <script src="data5.js"></script>
 <script src="data6.js"></script>
+<script src="data7.js"></script>
 <script src="proofs.js"></script>
 <script src="wzory.js"></script>
 <script src="mc.js"></script>
