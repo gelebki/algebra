@@ -126,7 +126,7 @@
     document.body.append(f); setTimeout(() => f.remove(), 1400);
   }
   function toast(title, sub, icon = 'trophy') {
-    const t = h('div', { class: 'toast' }, h('span', { html: IC[icon] }), h('div', {}, h('b', {}, title), h('small', {}, typeof sub === 'string' && sub.includes('$') ? md(sub) : sub)));
+    const t = h('div', { class: 'toast' }, h('span', { html: IC[icon] }), h('div', {}, h('b', {}, title), sub ? h('small', {}, typeof sub === 'string' && sub.includes('$') ? md(sub) : sub) : ''));
     $('#toasts').append(t); setTimeout(() => { t.style.transition = 'opacity .4s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3600);
   }
 
@@ -178,7 +178,7 @@
   const LISTS = A.lists;
   const itemKey = (t, i) => t.id + '#' + i;
   LISTS.forEach(L => { if (!L.subject) L.subject = 'alg'; });
-  const SUBJ = [{ id: 'alg', name: 'Algebra liniowa', short: 'Algebra', color: '#f0b65a' }, { id: 'pro', name: 'Proseminarium', short: 'Proseminarium', color: '#a594ff' }, { id: 'etl', name: 'Elementarna teoria liczb', short: 'ETL', nav: 'ETL', color: '#3dd6c3' }];
+  const SUBJ = [{ id: 'alg', name: 'Algebra liniowa', short: 'Algebra', color: '#f0b65a' }, { id: 'pro', name: 'Proseminarium', short: 'Proseminarium', color: '#a594ff' }, { id: 'etl', name: 'Elementarna teoria liczb', short: 'ETL', nav: 'ETL', color: '#64aee8' }];
   const tid = t => String(t.id).replace(/^[PE]/, '');
   const lhash = i => LISTS[i].id;
   const subjOf = i => (LISTS[i] && LISTS[i].subject) || 'alg';
@@ -248,9 +248,13 @@
     { id: 'l1', name: 'Ciało ukończone', desc: 'Algebra: wszystkie zadania z Listy 1', ok: () => listDone('l1') },
     { id: 'l2', name: 'Zespolony umysł', desc: 'Algebra: wszystkie zadania z Listy 2', ok: () => listDone('l2') },
     { id: 'l3', name: 'Pan pierwiastków', desc: 'Algebra: wszystkie zadania z Listy 3', ok: () => listDone('l3') },
-    { id: 'p1', name: 'Mistrz przekształceń', desc: 'Proseminarium: wszystkie zadania z Listy 1', ok: () => listDone('p1') },
-    { id: 'p2', name: 'Wielomianowy wymiatacz', desc: 'Proseminarium: wszystkie zadania z Listy 2', ok: () => listDone('p2') },
-    { id: 'p3', name: 'Trygonometra', desc: 'Proseminarium: wszystkie zadania z Listy 3', ok: () => listDone('p3') },
+    { id: 'pl1', name: 'Mistrz przekształceń', desc: 'Proseminarium: wszystkie zadania z Listy 1', ok: () => listDone('p1') },
+    { id: 'pl2', name: 'Wielomianowy wymiatacz', desc: 'Proseminarium: wszystkie zadania z Listy 2', ok: () => listDone('p2') },
+    { id: 'pl3', name: 'Trygonometra', desc: 'Proseminarium: wszystkie zadania z Listy 3', ok: () => listDone('p3') },
+    { id: 'el1', name: 'Podzielność opanowana', desc: 'ETL: wszystkie zadania z Listy 1', ok: () => listDone('e1') },
+    { id: 'el2', name: 'Łowca liczb pierwszych', desc: 'ETL: wszystkie zadania z Listy 2', ok: () => listDone('e2') },
+    { id: 'el3', name: 'Uczeń Euklidesa', desc: 'ETL: wszystkie zadania z Listy 3', ok: () => listDone('e3') },
+    { id: 'el4', name: 'Rozkład na czynniki', desc: 'ETL: wszystkie zadania z Listy 4', ok: () => listDone('e4') },
     { id: 'xp1k', name: 'Tysiąc XP', desc: 'Zdobądź 1000 punktów doświadczenia', ok: () => S.xp >= 1000 },
     { id: 'days3', name: 'Trzy dni z rzędu', desc: 'Ucz się 3 dni pod rząd', ok: () => S.dayStreak >= 3 },
     { id: 'quick', name: 'Błyskawica', desc: '8 przykładów w jednej szybkiej rundzie', ok: () => S.quickBest >= 8 },
@@ -261,7 +265,7 @@
     { id: 'h_day', hidden: true, name: 'Maraton', desc: '60 rozwiązanych przykładów jednego dnia', ok: () => Object.values(S.days || {}).some(d => (d.ok || 0) >= 60) },
     { id: 'h_clean', hidden: true, name: 'Czysta robota', desc: '100 podpunktów zaliczonych za pierwszym razem, bez Przykładu i Wzorów', ok: () => (S.clean || 0) >= 100 },
   ];
-  const COOL = { p3: 63, p2: 63, p1: 63, h_all: 100, h_clean: 96, h_run: 92, h_day: 88, h_days5: 84, l3: 62, l2: 61, l1: 60, xp1k: 55, s25: 50, star3: 46, p3: 44, proof: 40, quick: 38, days3: 36, s10: 30, clean: 28, var: 26, s5: 20, first: 10 };
+  const COOL = { el4: 64, el3: 64, el2: 64, el1: 64, pl3: 63, pl2: 63, pl1: 63, h_all: 100, h_clean: 96, h_run: 92, h_day: 88, h_days5: 84, l3: 62, l2: 61, l1: 60, xp1k: 55, s25: 50, star3: 46, p3: 44, proof: 40, quick: 38, days3: 36, s10: 30, clean: 28, var: 26, s5: 20, first: 10 };
   function badgeModal(b) {
     if (b.hidden) { confetti(150, innerWidth / 2, innerHeight / 3, 1.3); } else confetti(90, innerWidth / 2, innerHeight / 3, 1.1);
     SFX.star();
@@ -434,7 +438,7 @@
     if (justDone && bigTask && tpEl) tpEl.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' });
     else if (fb) fb.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
     if (justDone && bigTask) { const p = taskProgress(T.task), tt = T; celebrate(500, () => taskDone(p, tt)); }
-    else if (justDone) toast('Zadanie ' + tid(T.task) + ' zaliczone', 'Dalej prowadzi do następnego zadania', 'star');
+    else if (justDone) toast('Zadanie ' + tid(T.task) + ' zaliczone', '', 'star');
   }
   // następne zadanie z niezaliczonymi podpunktami w tej samej liście; gdy lista zrobiona — powrót do mapy
   function goNextTask(li, ti) {
@@ -762,7 +766,7 @@
     const kick = h('div', { class: 'kicker' });
     if (quick) kick.append(h('span', { class: 'badge q' }, 'Zad. ' + tid(task)), mdEl('span', task.name));
     else if (T.mode === 'var') kick.append(h('span', { class: 'badge var' }, 'Podobny przykład'), md('do ' + (task.items[T.idx].label || tid(task))), pdots());
-    else kick.append(h('span', { class: 'badge' }, tid(task) + (it.label ? ' · ' : '')), it.label ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', !['order', 'guided'].includes(it.type || 'fields') && hasVar() ? pdots() : '');
+    else { const showLab = it.label && String(it.label).replace(/[()$]/g, '') !== tid(task); kick.append(h('span', { class: 'badge' }, tid(task) + (showLab ? ' · ' : '')), showLab ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', !['order', 'guided'].includes(it.type || 'fields') && hasVar() ? pdots() : ''); }
     card.append(kick); if (it.q !== task.statement) card.append(mdEl('div', it.q, { class: 'question' }));
     const type = it.type || 'fields';
     if (type === 'fields') card.append(mcUI(it));
