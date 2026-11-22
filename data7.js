@@ -64,7 +64,7 @@
       ['Brak bazy albo brak zdania kończącego indukcję.', 'Krok bez użycia założenia $' + k + '\\mid A_n$ — wtedy to nie jest indukcja.', ...(k === 6 ? ['Uzasadnienie tylko podzielności przez 3 zamiast przez 6.'] : [])]);
     return proof('', p === 3 ? 'cube' : 'quint', q, [factorMethod, restMethod, indMethod]);
   }
-  const genCube = gk => { if (gk === 'quint') { const a = R.pick([-1, 4, 9, -6]); return cubeProof(5, 5, a); } const k = R.pick([3, 6]); const a = R.pick(k === 3 ? [-1, 2, 5, 8, -4] : [-1, 5, 11, -7]); return cubeProof(3, k, a); };
+  const genCube = gk => { if (gk === 'quint') { const a = R.pick([-1, 4, 9, -6, 14, -11, 19, 24]); return cubeProof(5, 5, a); } const k = R.pick([3, 6]); const a = R.pick(k === 3 ? [-1, 2, 5, 8, -4] : [-1, 5, 11, -7]); return cubeProof(3, k, a); };
 
   /* ===== 1(c) i podobne: czy zawsze m | n^m − n? ===== */
   function kontr(m) {
@@ -155,6 +155,20 @@
   const item3c = mk({ gk: 'prod', field: txtField(), q: T`Dla jakich liczb naturalnych $n$ liczba $n^3-7n^2-5n+10$ jest podzielna przez $n^2-5n-14$?`, tex: setT([2, 6]),
     steps: [T`$n^2-5n-14=(n-7)(n+2)$. Jeśli iloczyn dzieli $W(n)$, to dzieli też każdy czynnik — więc $n$ musi spełniać (a) i (b).`, T`Z (a): $n\in\{2,6,14\}$, z (b): $n\in\{2,6,8,12,32\}$. Część wspólna: $n\in\{2,6\}$.`, T`To tylko warunek konieczny — sprawdzamy: $n=2$: $W=-20$, $n^2-5n-14=-20$ ✓; $n=6$: $W=-56$, dzielnik $-8$, $-56=7\cdot(-8)$ ✓.`, T`Odpowiedź: $n\in\{2,6\}$.`],
     wrong: [[setT([2, 6, 8, 12, 14, 32]), 'To suma zbiorów — a muszą zachodzić oba warunki naraz.'], [setT([2]), T`$n=6$ też spełnia: $-56=7\cdot(-8)$.`], [setT([6, 14]), 'Sprawdź $n=2$: $-20=1\\cdot(-20)$.']] });
+
+  // 3(c) i podobne: podzielność przez iloczyn (n+r1)(n+r2) — warunek konieczny z obu czynników, potem sprawdzenie
+  function polyProd(co, r1, r2) {
+    const P = polyT(co), dT = r => (r > 0 ? 'n+' + r : 'n-' + -r), quad = polyT([0, 1, r1 + r2, r1 * r2]).replace(/^0/, '');
+    const one = r => { const out = []; const Wr = W3(co, -r); for (let n = 1; n <= Math.abs(Wr) + Math.abs(r) + 2; n++) if (n + r !== 0 && W3(co, n) % (n + r) === 0) out.push(n); return out; };
+    const A1 = one(r1), A2 = one(r2), both = A1.filter(n => A2.includes(n));
+    const sol = both.filter(n => W3(co, n) % ((n + r1) * (n + r2)) === 0), bad = both.filter(n => !sol.includes(n));
+    return mk({ gk: 'prod', field: txtField(), q: T`Dla jakich liczb naturalnych $n$ liczba $${P}$ jest podzielna przez $${quad}$?`, tex: setT(sol),
+      steps: [T`$${quad}=(${dT(r1)})(${dT(r2)})$. Jeśli iloczyn dzieli $W(n)$, to dzieli też każdy czynnik — więc $n$ musi spełniać oba warunki.`,
+        T`$${dT(r1)}\mid W(n)\iff ${dT(r1)}\mid W(${-r1})=${W3(co, -r1)}$: $${setT(A1)}$. $\ ${dT(r2)}\mid W(n)\iff ${dT(r2)}\mid W(${-r2})=${W3(co, -r2)}$: $${setT(A2)}$.`,
+        T`Część wspólna: $${setT(both)}$. To tylko warunek konieczny — sprawdzamy cały iloczyn` + (bad.length ? T`: $n=${bad.join(',')}$ odpada` : ': wszystkie pasują') + '.', T`Odpowiedź: $${setT(sol)}$.`],
+      wrong: [[setT([...new Set([...A1, ...A2])].sort((x, y) => x - y)), 'To suma zbiorów — a muszą zachodzić oba warunki naraz.'], [setT(both), bad.length ? 'Część wspólna to tylko warunek konieczny — sprawdź iloczyn.' : 'Sprawdź jeszcze raz część wspólną.'], [setT(sol.slice(1)), 'Brakuje rozwiązania.'], [setT(A1), 'To warunek tylko dla jednego czynnika.'], [setT(A2), 'To warunek tylko dla jednego czynnika.']] });
+  }
+  function genPolyProd() { for (;;) { const co = [1, R.int(-9, 9), R.int(-9, 9), R.int(-12, 12)], r1 = R.int(1, 4), r2 = -R.int(1, 8); const W1 = W3(co, -r1), W2 = W3(co, -r2); if (!W1 || !W2 || Math.abs(W1) > 80 || Math.abs(W2) > 80) continue; const it = polyProd(co, r1, r2); if (/brak/.test(it.mcCorrect) || it.mc.length < 3) continue; return it; } }
 
   /* ===== 4: (n² + a)/(n + b) całkowite ===== */
   function fracInt(a, b) {
@@ -279,7 +293,7 @@
         items: [P('(a)', cubeProof(3, 3, -1)), P('(b)', cubeProof(5, 5, -1)), P('(c)', kontr(4))] },
       { id: 'E1.2', name: 'Podzielność potęg', statement: T`Udowodnij, że dla każdego $n\in\mathbb N$: (a) $4\mid5^{5n-2}+3$, (b) $10\mid3^{4n+2}+1$, (c) $133\mid11^{n+2}+12^{2n+1}$, (d) $7\mid2^{n+2}+3^{2n+1}$, (e) $9\mid4^n+15n-1$.`, wzIds: it => ['m_kong', 'm_ind', 'kongr', ...(it && it.gk === 'f3' ? ['dwumian'] : [])], gen: gk => (gk === 'f2' ? genF2() : gk === 'f3' ? genF3() : genF1()),
         items: [P('(a)', powProofA(4, 5, 5, -2, 3, '5n-2')), P('(b)', powProofA(10, 3, 4, 2, 1, '4n+2')), P('(c)', powProofB(133, 11, 2, 12, 1)), P('(d)', powProofB(7, 2, 2, 3, 1)), P('(e)', powProofC(3, 15))] },
-      { id: 'E1.3', name: 'Wielomian podzielny przez $n\\pm r$', statement: T`Dla jakich liczb naturalnych $n$ liczba $n^3-7n^2-5n+10$ jest podzielna przez: (a) $n+2$, (b) $n-7$, (c) $n^2-5n-14$?`, wzIds: ['m_poly', 'def'], gen: gk => (gk === 'prod' ? genPoly() : genPoly()),
+      { id: 'E1.3', name: 'Wielomian podzielny przez $n\\pm r$', statement: T`Dla jakich liczb naturalnych $n$ liczba $n^3-7n^2-5n+10$ jest podzielna przez: (a) $n+2$, (b) $n-7$, (c) $n^2-5n-14$?`, wzIds: ['m_poly', 'def'], gen: gk => (gk === 'prod' ? genPolyProd() : genPoly()),
         items: [P('(a)', polyDiv([1, -7, -5, 10], 2)), P('(b)', polyDiv([1, -7, -5, 10], -7)), P('(c)', item3c)] },
       { id: 'E1.4', name: 'Kiedy ułamek jest całkowity', statement: T`Znaleźć wszystkie liczby całkowite $n$, dla których $\frac{n^2+1}{n+2}$ jest liczbą całkowitą.`, wzIds: ['m_poly', 'def'], gen: genFrac, items: [P('1.4', fracInt(1, 2))] },
       { id: 'E1.5', name: 'Sprzeczne reszty (18 i 21)', statement: T`Wykaż, że nie istnieje liczba naturalna, która przy dzieleniu przez $18$ daje resztę $13$, a przy dzieleniu przez $21$ daje resztę $2$.`, wzIds: ['m_resz', 'def'], gen: genRes, items: [P('1.5', resProof(18, 13, 21, 2))] },
