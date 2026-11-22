@@ -376,6 +376,55 @@
     steps: [T`$x+y+z=111$, $3x+4y+5z=490$. Odejmujemy potrojone pierwsze: $y+2z=157$.`, T`$5\mid y=157-2z$, więc $2z\equiv157\equiv2\pmod5$, $z\equiv1\pmod5$; a $7\mid z$. Zatem $z\equiv21\pmod{35}$: $z\in\{21,56,91,\ldots\}$.`, T`$z=21$: $y=115>111$ ✗; $z=56$: $y=45$, $x=111-45-56=10$ (parzyste ✓); $z=91$: $y<0$ ✗.`, T`Odpowiedź: $10,\ 45,\ 56$ (sprawdzenie: $30+180+280=490$ ✓).`],
     wrong: [[T`21,\ 35,\ 55`, '$55$ nie dzieli się przez 7.'], [T`10,\ 56,\ 45`, 'Kolejność ma znaczenie: druga część przez 5, trzecia przez 7.'], [T`16,\ 25,\ 70`, 'Sprawdź: $48+100+350=498\\neq490$.']] });
 
+
+  /* ===== generatory dla 3.5 (b, e, f), 3.12, 3.17 ===== */
+  function sysRatio(p, q, d) { // p x = q y, (x,y) = d, (p,q) = 1
+    const sol = [[q * d, p * d]];
+    return mk({ gk: 'ratio', field: txtField(), q: T`Rozwiąż w liczbach naturalnych: $${p}x=${q}y,\ (x,y)=${d}$.`, tex: pairsT(sol),
+      steps: [T`$${p}x=${q}y$ i $(${p},${q})=1$, więc $${q}\mid x$: $x=${q}t$, wtedy $y=${p}t$.`, T`$(x,y)=(${q}t,${p}t)=t\cdot(${q},${p})=t$, więc $t=${d}$.`, T`Odpowiedź: $x=${q * d},\ y=${p * d}$.`],
+      wrong: [[pairsT([[p * d, q * d]]), T`Sprawdź: $${p}\cdot ${p * d}\neq ${q}\cdot ${q * d}$.`], [pairsT([[q, p]]), T`Wtedy $(x,y)=1$, a nie $${d}$.`], [pairsT([[q * d, p * d], [p * d, q * d]]), T`Równanie $${p}x=${q}y$ nie jest symetryczne.`]] });
+  }
+  const genRatio = () => { for (;;) { const p = R.int(2, 13), q = R.int(2, 13); if (p === q || gcd(p, q) !== 1) continue; return sysRatio(p, q, R.int(2, 60)); } };
+  function sysLcmSum(S, k) { // x + y = S, [x,y] = k (x,y)
+    const sol = brute((x, y) => x + y === S && lcm(x, y) === k * gcd(x, y), S, S);
+    const cases = []; for (const s of divs(S)) for (let a = 1; a < s; a++) { const b = s - a; if (a <= b && a * b === k) cases.push([s, a, b, S / s, gcd(a, b) === 1]); }
+    return mk({ gk: 'lcmsum', field: txtField(), q: T`Rozwiąż w liczbach naturalnych: $x+y=${S},\ [x,y]=${k}\,(x,y)$.`, tex: pairsT(sol),
+      steps: [T`$x=da,\ y=db$, $(a,b)=1$, $d=(x,y)$. Wtedy $[x,y]=dab$, więc $dab=${k}d$, czyli $ab=${k}$.`,
+        T`$d(a+b)=${S}$, więc $a+b$ dzieli $${S}$. Pary z $ab=${k}$: ` + (cases.length ? cases.map(([s, a, b, d, ok]) => T`$a+b=${s}$: $\{${a},${b}\}$, $d=${d}$${ok ? ' ✓' : ' (nie są względnie pierwsze ✗)'}`).join('; ') : 'brak') + '.',
+        T`Odpowiedź: $${pairsT(sol)}$.`],
+      wrong: [[pairsT(sol.filter(([x, y]) => x < y)), 'Pary uporządkowane — dopisz zamienione.'], [pairsT(sol.slice(0, Math.max(1, sol.length - 2))), 'Brakuje przypadku — sprawdź wszystkie dzielniki sumy.'], [pairsT(cases.filter(c => c[4]).map(([, a, b]) => [a, b])), 'To pary $(a,b)$ — trzeba pomnożyć przez $d$.'], [T`\text{brak rozwiązań}`, 'Rozwiązania istnieją.']] });
+  }
+  const genLcmSum = () => { for (;;) { const a = R.int(1, 12), b = R.int(a + 1, 25), d = R.int(2, 40); if (gcd(a, b) !== 1) continue; const it = sysLcmSum(d * (a + b), a * b); const k = (it.mcCorrect.match(/\(\d+,\d+\)/g) || []).length; if (k >= 2 && k <= 6) return it; } };
+  // błędne opcje będące tym samym zbiorem par (inna kolejność) odrzucamy
+  const sameSet = (A1, B1) => A1.map(String).sort().join(';') === B1.map(String).sort().join(';');
+  function sysLcm2(Lm, c, u, v, g) { // [x, c y] = Lm, (u x, v y) = g
+    const sol = brute((x, y) => lcm(x, c * y) === Lm && gcd(u * x, v * y) === g, Lm, Lm);
+    return mk({ gk: 'lcm2', field: txtField(), q: T`Rozwiąż w liczbach naturalnych: $[x,${c}y]=${Lm},\ (${u}x,${v}y)=${g}$.`, tex: pairsT(sol),
+      steps: [T`Z $[x,${c}y]=${Lm}$: $x\mid ${Lm}$ i $${c}y\mid ${Lm}$ — kandydatów jest skończenie wiele.`, T`Z $(${u}x,${v}y)=${g}$: oba wyrażenia dzielą się przez $${g}$, a nie mają większego wspólnego dzielnika.`, T`Sprawdzamy pary kandydatów — zostają ` + sol.map(([x, y]) => `$(${x},${y})$`).join(', ') + '.', T`Odpowiedź: $${pairsT(sol)}$.`],
+      wrong: [...(sameSet(sol, sol.map(([x, y]) => [y, x])) ? [] : [[pairsT(sol.map(([x, y]) => [y, x])), 'Zamienione $x$ i $y$ — warunki nie są symetryczne.']]), [pairsT(sol.slice(0, 1)), 'Brakuje rozwiązań — sprawdź wszystkich kandydatów.'], [pairsT(sol.slice(1)), 'Brakuje rozwiązania — sprawdź wszystkich kandydatów.'], [pairsT(brute((x, y) => lcm(x, c * y) === Lm && (u * x) % g === 0 && (v * y) % g === 0, Lm, Lm).slice(0, sol.length + 2)), T`Nie sprawdzono, czy NWD jest dokładnie $${g}$ — może być większy.`]] });
+  }
+  const genLcm2 = () => { for (;;) { const c = R.pick([2, 3]), u = R.pick([2, 3, 5, 7]), v = R.pick([2, 3, 5, 7]), x0 = R.int(2, 40), y0 = R.int(2, 30); if (u === v) continue; const Lm = lcm(x0, c * y0), g = gcd(u * x0, v * y0); if (Lm > 400 || g < 2) continue; const it = sysLcm2(Lm, c, u, v, g); const k = (it.mcCorrect.match(/\(\d+,\d+\)/g) || []).length; if (k >= 1 && k <= 5 && it.mc.length >= 3) return it; } };
+  function sqSum(k) { // możliwe wartości (a^2 + k b^2, a + b) dla (a,b) = 1
+    const vals = new Map(); for (let a = -40; a <= 40; a++) for (let b = 1; b <= 40; b++) if (gcd(a, b) === 1 && a + b !== 0) { const v = gcd(a * a + k * b * b, a + b); if (!vals.has(v)) vals.set(v, [a, b]); }
+    const vs = [...vals.keys()].sort((x, y) => x - y), lst = xs => xs.join(',\\ ');
+    const E = T`a^2+${k === 1 ? '' : k}b^2`;
+    const wrongs = [[lst(divs(k)), T`Kongruencja daje $d\mid ${k + 1}$, a nie $d\mid ${k}$.`], [lst(vs.slice(0, -1)), T`Brakuje wartości $${vs[vs.length - 1]}$, np. $a=${vals.get(vs[vs.length - 1])[0]},\ b=${vals.get(vs[vs.length - 1])[1]}$.`], [lst(divs(2 * (k + 1))), T`Większe dzielniki $${2 * (k + 1)}$ nie wychodzą — $d$ dzieli $${k + 1}$.`], [lst([1]), T`Dla $a=${vals.get(vs[1] || 1)[0]},\ b=${vals.get(vs[1] || 1)[1]}$ wychodzi więcej niż 1.`]].filter(([t]) => t !== lst(vs));
+    return mk({ gk: 'sqsum', field: txtField(), q: T`Niech $a,b\in\mathbb Z$, $(a,b)=1$. Znajdź wszystkie możliwe wartości $(${E},\ a+b)$.`, tex: lst(vs),
+      steps: [T`Niech $d=(${E},a+b)$. Z $d\mid a+b$: $a\equiv-b\pmod d$, więc $${E}\equiv ${k + 1}b^2\pmod d$, czyli $d\mid ${k + 1}b^2$.`, T`Jak w zad. 3.11: $d\mid a+b$ i $(a,b)=1$ daje $(d,b)=1$, więc $d\mid ${k + 1}$.`, T`Każdy dzielnik $${k + 1}$ występuje: ` + vs.map(v => T`$${v}$ dla $a=${vals.get(v)[0]},b=${vals.get(v)[1]}$`).join(', ') + T`. Odpowiedź: $${lst(vs)}$.`],
+      wrong: wrongs });
+  }
+  function split3(N, ds, ws, S) { // N = x+y+z, d_i | części, Σ w_i·część = S
+    const sol = []; for (let x = ds[0]; x < N; x += ds[0]) for (let y = ds[1]; x + y < N; y += ds[1]) { const z = N - x - y; if (z > 0 && z % ds[2] === 0 && ws[0] * x + ws[1] * y + ws[2] * z === S) sol.push([x, y, z]); }
+    if (sol.length !== 1) return null;
+    const [X, Y, Z] = sol[0], A2 = ws[1] - ws[0], A3 = ws[2] - ws[0], RHS = S - ws[0] * N;
+    const zs = []; for (let z = ds[2]; z < N; z += ds[2]) { const r = RHS - A3 * z; if (r % A2 === 0) { const y = r / A2; zs.push([z, y, N - y - z]); } }
+    const fmt = ([z, y, x]) => T`$z=${z}$: $y=${y}$, $x=${x}$ ${y > 0 && x > 0 && y % ds[1] === 0 && x % ds[0] === 0 ? '✓' : '✗'}`;
+    return mk({ gk: 'split', field: txtField(), q: T`Podziel liczbę $${N}$ na trzy części tak, aby pierwsza była podzielna przez $${ds[0]}$, druga przez $${ds[1]}$, trzecia przez $${ds[2]}$, a ${ws[0]}-krotność pierwszej, ${ws[1]}-krotność drugiej i ${ws[2]}-krotność trzeciej dawały w sumie $${S}$.`, tex: T`${X},\ ${Y},\ ${Z}`,
+      steps: [T`$x+y+z=${N}$, $${ws[0]}x+${ws[1]}y+${ws[2]}z=${S}$. Odejmujemy $${ws[0]}$ razy pierwsze: $${A2 === 1 ? '' : A2}y${A3 < 0 ? '-' : '+'}${Math.abs(A3) === 1 ? '' : Math.abs(A3)}z=${RHS}$.`, T`Przeglądamy $z$ podzielne przez $${ds[2]}$, dla których $y$ wychodzi całkowite: ` + zs.slice(0, 6).map(fmt).join('; ') + (zs.length > 6 ? '; …' : '') + '.', T`Odpowiedź: $${X},\ ${Y},\ ${Z}$ (sprawdzenie: $${ws[0] * X}+${ws[1] * Y}+${ws[2] * Z}=${S}$ ✓).`],
+      wrong: [[T`${Y},\ ${X},\ ${Z}`, 'Kolejność ma znaczenie — każda część ma swój dzielnik.'], [T`${X + ds[0]},\ ${Y},\ ${Z - ds[0]}`, T`Suma się zgadza, ale ważona nie: sprawdź $${ws[0]}x+${ws[1]}y+${ws[2]}z$.`], [T`${X},\ ${Y + ds[1]},\ ${Z - ds[1]}`, T`Trzecia część musi dzielić się przez $${ds[2]}$, a ważona suma się nie zgadza.`]] });
+  }
+  const genSplit = () => { for (;;) { const ds = R.shuffle([2, 3, 4, 5, 6, 7, 9]).slice(0, 3), ws = R.shuffle([2, 3, 4, 5, 6]).slice(0, 3); const parts = ds.map(d => d * R.int(1, 12)); const N = parts.reduce((a, b) => a + b, 0), S = parts.reduce((s, x, i) => s + ws[i] * x, 0); if (N > 150) continue; const it = split3(N, ds, ws, S); if (it && it.mc.length >= 3) return it; } };
+
   /* ===== opracowanie ===== */
   const F = {
     m_euk: W(T`<b>Algorytm Euklidesa</b>: $(a,b)=(b,r)$, gdzie $r$ to reszta z dzielenia $a$ przez $b$. Powtarzaj, aż reszta będzie $0$ — NWD to ostatnia niezerowa reszta.`,
@@ -443,7 +492,7 @@
       { id: 'E3.4', name: 'Tożsamość Bézouta', statement: T`Znajdź liczby całkowite takie, że: (a) $990x+4095y=(990,4095)$, (b) $252x+198y=(252,198)$, (c) $168x+396y=(168,396)$, (d) $221x+754y=(221,754)$, (e) $1001x+286y+312z=(1001,286,312)$, (f) $420x+1115y+630z=(420,1115,630)$.`, wzIds: ['m_ext', 'm_euk'], gen: genBez,
         items: [[990, 4095], [252, 198], [168, 396], [221, 754], [1001, 286, 312], [420, 1115, 630]].map((ns, i) => P('(' + 'abcdef'[i] + ')', bezout(ns))) },
       { id: 'E3.5', name: 'Układy z NWD i NWW', statement: T`Rozwiąż w liczbach naturalnych: (a) $x+y=180,\ (x,y)=30$; (b) $7x=11y,\ (x,y)=45$; (c) $xy=720,\ (x,y)=4$; (d) $(x,y)=15,\ [x,y]=420$; (e) $x+y=667,\ [x,y]=120(x,y)$; (f) $[x,2y]=308,\ (3x,5y)=7$.`, wzIds: ['m_nwdnww', 'nwdw'],
-        gen: gk => (['sum', 'prod', 'lcm'].includes(gk) ? genNwdSys(gk) : genNwdSys(R.pick(['sum', 'prod', 'lcm']))),
+        gen: gk => (['sum', 'prod', 'lcm'].includes(gk) ? genNwdSys(gk) : gk === 'ratio' ? genRatio() : gk === 'lcmsum' ? genLcmSum() : gk === 'lcm2' ? genLcm2() : genNwdSys(R.pick(['sum', 'prod', 'lcm']))),
         items: [P('(a)', nwdSys('sum', 180, 30)), P('(b)', sys5b), P('(c)', nwdSys('prod', 720, 4)), P('(d)', nwdSys('lcm', 420, 15)), P('(e)', sys5e), P('(f)', sys5f)] },
       { id: 'E3.6', name: '$(7a+4b,9a+5b)=(a,b)$', statement: T`Wykazać, że dla dowolnych liczb całkowitych $a$ i $b$ takich, że $a\neq0$ lub $b\neq0$, zachodzi równość $(7a+4b,\ 9a+5b)=(a,b)$.`, wzIds: ['m_wzaj', 'm_red', 'nwdw'], gen: genGcomb, items: [P('3.6', gcdComb(7, 4, 9, 5))] },
       { id: 'E3.7', name: 'Ułamki nieskracalne', statement: T`Niech $n\in\mathbb N$. (a) Udowodnij, że ułamek $\frac{2n+1}{9n+4}$ jest nieskracalny. (b) Czy dla każdego $n$ ułamki $\frac{8n+3}{13n+5}$, $\frac{2n-1}{9n+4}$, $\frac{11n+2}{18n+5}$ są nieskracalne?`, wzIds: ['m_komb2', 'm_red'],
@@ -452,7 +501,7 @@
       { id: 'E3.9', name: '$\\frac{2n^2+8n+4}{2n^2+6n+3}$', statement: T`Udowodnij, że jeśli $n\in\mathbb N$, to ułamek $\frac{2n^2+8n+4}{2n^2+6n+3}$ jest nieskracalny.`, wzIds: ['m_red', 'm_komb2'], items: [it9] },
       { id: 'E3.10', name: '$(a+b,a-b)\\in\\{1,2\\}$', statement: T`Niech $a,b\in\mathbb Z$. Pokazać, że jeżeli $(a,b)=1$, to $(a+b,a-b)$ jest równe $1$ lub $2$.`, wzIds: ['nwdw', 'm_pierw'], items: [it10] },
       { id: 'E3.11', name: '$c\\mid a+b\\Rightarrow(c,a)=1$', statement: T`Niech $a,b\in\mathbb Z$. Udowodnić, że jeżeli $(a,b)=1$ i $c\mid a+b$, to $(c,a)=(c,b)=1$.`, wzIds: ['nwdw', 'm_pierw'], items: [it11] },
-      { id: 'E3.12', name: '$(a^2+b^2,a+b)$', statement: T`Niech $a,b\in\mathbb Z$. Znajdź wszystkie możliwe wartości liczby $(a^2+b^2,a+b)$, jeśli $(a,b)=1$.`, wzIds: ['nwdw', 'm_pierw'], items: [P('3.12', it12)] },
+      { id: 'E3.12', name: '$(a^2+b^2,a+b)$', statement: T`Niech $a,b\in\mathbb Z$. Znajdź wszystkie możliwe wartości liczby $(a^2+b^2,a+b)$, jeśli $(a,b)=1$.`, wzIds: ['nwdw', 'm_pierw'], gen: () => sqSum(R.pick([2, 3, 4, 5, 6, 7, 8, 9, 11])), items: [P('3.12', it12)] },
       { id: 'E3.13', name: 'Równania diofantyczne', statement: T`W liczbach całkowitych rozwiązać: (a) $8x+3y=2$, (b) $75x-39y=14$, (c) $32x+45y=7$, (d) $55x+83y=202$, (e) $50x+111y=89$, (f) $54x-42y=-18$, (g) $2x+3y+5z=11$, (h) $181x+51y+12z=3$.`, wzIds: ['m_dio', 'm_dio3', 'm_ext'],
         gen: gk => (gk === 'dio3' ? dio3(R.int(2, 30), R.int(2, 30), R.int(2, 20), R.int(1, 40)) : genDio()),
         items: L13.map((c, i) => P('(' + 'abcdef'[i] + ')', dio2(...c))).concat([P('(g)', dio3(2, 3, 5, 11)), P('(h)', dio3(181, 51, 12, 3))]) },
@@ -463,7 +512,7 @@
         gen: () => { for (;;) { const nz = (lo, hi) => { for (;;) { const v = R.int(lo, hi); if (v) return v; } }; const r1 = [nz(-5, 9), nz(-5, 9), R.pick([1, -1, 2, 3])], r2 = [nz(-5, 9), nz(-5, 9), nz(-4, 4)]; const xs = [R.int(-6, 9), R.int(-6, 9), R.int(-6, 9)]; const cr = [r1[1] * r2[2] - r1[2] * r2[1], r1[2] * r2[0] - r1[0] * r2[2], r1[0] * r2[1] - r1[1] * r2[0]]; if (cr.every(c => !c) || cr.some(c => Math.abs(c) > 40)) continue; const it = sys3(r1.concat([r1[0] * xs[0] + r1[1] * xs[1] + r1[2] * xs[2]]), r2.concat([r2[0] * xs[0] + r2[1] * xs[1] + r2[2] * xs[2]])); if (/NaN|Infinity|undefined/.test(JSON.stringify(it))) continue; return it; } },
         items: [P('(a)', sys3([15, -3, 8, -36], [9, 2, -3, 1])), P('(b)', sys3([2, -1, 1, 5], [3, 2, 1, 7])), P('(c)', sys3([1, -2, 3, 6], [2, 1, -2, 9]))] },
       { id: 'E3.16', name: '$2m+5n=2001$', statement: T`Ile jest par liczb naturalnych $m,n$ takich, że $2m+5n=2001$?`, wzIds: ['m_dio', 'nat'], gen: genCount, items: [P('3.16', countNat(2, 5, 2001))] },
-      { id: 'E3.17', name: 'Podział liczby 111', statement: T`Podzielić liczbę $111$ na takie trzy części, aby pierwsza część była podzielna przez $2$, druga przez $5$, a trzecia przez $7$ i aby potrójna pierwsza część, poczwórna druga i pięciokrotna trzecia dawały w sumie $490$.`, wzIds: ['m_dio'], items: [P('3.17', it17)] },
+      { id: 'E3.17', name: 'Podział liczby 111', statement: T`Podzielić liczbę $111$ na takie trzy części, aby pierwsza część była podzielna przez $2$, druga przez $5$, a trzecia przez $7$ i aby potrójna pierwsza część, poczwórna druga i pięciokrotna trzecia dawały w sumie $490$.`, wzIds: ['m_dio'], gen: genSplit, items: [P('3.17', it17)] },
     ],
   });
   for (const t of A.lists.find(l => l.id === 'e3').tasks) t.wzLib = F;
