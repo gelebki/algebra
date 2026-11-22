@@ -105,7 +105,7 @@
       steps: [T`$pqr=${k}(p+q+r)$, więc $${k}\mid pqr$; $${k}$ jest pierwsza, więc dzieli jeden z czynników — np. $r=${k}$.`,
         T`Wtedy $pq=p+q+${k}$, czyli $pq-p-q+1=${k + 1}$, $(p-1)(q-1)=${k + 1}$.`,
         T`Rozkłady $${k + 1}$ (z $p\leq q$): ` + cands.map(([p, q]) => T`$p=${p},q=${q}$ ${isP(p) && isP(q) ? '✓' : '✗'}`).join('; ') + T`. Odpowiedź: $${tex}$ (z dokładnością do kolejności).`],
-      wrong: [[tripT(cands.map(([p, q]) => [p, q, k].sort((x, y) => x - y))), 'Nie wszystkie te liczby są pierwsze — sprawdź każdą.'], [k === 3 ? T`\{3,3,3\}` : T`\{${k},${k},${k}\}`, k === 3 ? 'Brakuje trójki $\\{2,3,5\\}$: 0=3\\cdot10$.' : T`$${k ** 3}\neq ${k}\cdot ${3 * k}$.`], [T`\{2,3,${k + 1}\}`, 'Trik $(p-1)(q-1)=' + (k + 1) + '$ trzeba rozwiązać przez dzielniki.'], [tripT(sol.slice(0, -1).length ? sol.slice(0, -1) : [[2, k, k + 2]]), sol.length > 1 ? 'Brakuje jednej trójki.' : T`$${2 * k * (k + 2)}\neq ${k}\cdot ${2 + k + k + 2}$.`]] });
+      wrong: [[tripT(cands.map(([p, q]) => [p, q, k].sort((x, y) => x - y))), 'Nie wszystkie te liczby są pierwsze — sprawdź każdą.'], [k === 3 ? T`\{3,3,3\}` : T`\{${k},${k},${k}\}`, k === 3 ? 'Brakuje trójki $\\{2,3,5\\}$: $30=3\\cdot10$.' : T`$${k ** 3}\neq ${k}\cdot ${3 * k}$.`], [T`\{2,3,${k + 1}\}`, 'Trik $(p-1)(q-1)=' + (k + 1) + '$ trzeba rozwiązać przez dzielniki.'], [tripT(sol.slice(0, -1).length ? sol.slice(0, -1) : [[2, k, k + 2]]), sol.length > 1 ? 'Brakuje jednej trójki.' : T`$${2 * k * (k + 2)}\neq ${k}\cdot ${2 + k + k + 2}$.`]] });
   }
 
   /* ===== 7. jedna jest różnicą sześcianów dwóch pozostałych ===== */
