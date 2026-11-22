@@ -82,6 +82,19 @@
       wrong });
   }
 
+  // 4.5 i podobne: a, b, c podane jako iloczyny potęg (także liczb złożonych, np. 6)
+  function abcItem(which, parts) {
+    const fs = parts.map(ps => { let f = {}; for (const [b, e] of ps) f = mul(f, factor(b), e); return f; });
+    const vals = fs.map(val), exT = ps => ps.map(([b, e]) => powT(b, e)).join('\\cdot ');
+    const it = gcdLcmItem(vals, which, which === 'gcd' ? 'NWD' : 'NWW');
+    const def = ['a', 'b', 'c'].map((n, i) => n + '=' + exT(parts[i])).join(',\\ ');
+    it.q = T`Niech $${def}$. Oblicz $${which === 'gcd' ? '(a,b,c)' : '[a,b,c]'}$.`;
+    it.steps = [T`Postacie kanoniczne (liczby złożone rozkładamy do końca): ` + ['a', 'b', 'c'].map((n, i) => T`$${n}=${canonT(fs[i])}=${big(vals[i])}$`).join(', ') + '.'].concat(it.steps.slice(1));
+    it.sol = it.steps;
+    return it;
+  }
+  function genABC(which) { for (;;) { const mk3 = () => { return R.shuffle([2, 3, 5, 6, 10, 15]).slice(0, R.int(2, 4)).map(b => [b, R.int(1, 3)]); }; const parts = [mk3(), mk3(), mk3()]; const it = abcItem(which, parts); if (+it.fields[0].ans > 1 && +it.fields[0].ans < 1e7 && it.mc.length >= 3) return it; } }
+
   /* ===== 6, 7. liczba dzielników ===== */
   function tauItem(parts, label) { // parts: [[b,e], ...]
     let f = {}; for (const [b, e] of parts) f = mul(f, factor(b), e);
@@ -168,7 +181,7 @@
         gen: gk => { if (gk === 'bezR') { const k = R.int(2, 3); for (;;) { const g = R.pick([1, 2, 3, 6, 13, 17]); const ns = [...Array(k)].map(() => g * R.int(3, 60)); const gg = ns.reduce((a, b) => gcd(a, b)); if (gg === g) return bezoutRHS(ns, g); } } for (;;) { const k = R.int(2, 3), g = R.pick([2, 3, 6, 12, 15, 18]); const ns = [...Array(k)].map(() => g * R.int(2, 40)); if (new Set(ns).size === k) return gcdLcmItem(ns, gk === 'lcm' ? 'lcm' : 'gcd', ''); } },
         items: [[252, 198], [221, 754], [45, 168, 396], [420, 1115, 630], [663, 731, 2516, 3655]].flatMap((ns, i) => [gcdLcmItem(ns, 'gcd', '(a) ' + (i + 1) + ' NWD'), gcdLcmItem(ns, 'lcm', '(a) ' + (i + 1) + ' NWW')])
           .concat(N4b.map(([ns, r], i) => P('(b) ' + (i + 1), bezoutRHS(ns, r)))) },
-      { id: 'E4.5', name: 'NWD i NWW trzech liczb', statement: T`Niech $a=2^2\cdot3^2\cdot5\cdot6$, $b=2\cdot3^2\cdot6^2$, $c=2\cdot3^3\cdot5^2$. Znaleźć największy wspólny dzielnik i najmniejszą wspólną wielokrotność liczb $a,b,c$.`, wzIds: ['nwdp', 'kanon'],
+      { id: 'E4.5', name: 'NWD i NWW trzech liczb', statement: T`Niech $a=2^2\cdot3^2\cdot5\cdot6$, $b=2\cdot3^2\cdot6^2$, $c=2\cdot3^3\cdot5^2$. Znaleźć największy wspólny dzielnik i najmniejszą wspólną wielokrotność liczb $a,b,c$.`, wzIds: ['nwdp', 'kanon'], gen: gk => genABC(gk === 'lcm' ? 'lcm' : 'gcd'),
         items: [gcdLcmItem([1080, 648, 1350], 'gcd', 'NWD'), gcdLcmItem([1080, 648, 1350], 'lcm', 'NWW')].map(it => Object.assign(it, { q: it.q.replace(/\$[\(\[]1080,648,1350[\)\]]\$/, m => (m[1] === '(' ? '$(a,b,c)$' : '$[a,b,c]$') + T` dla $a=2^2\cdot3^2\cdot5\cdot6$, $b=2\cdot3^2\cdot6^2$, $c=2\cdot3^3\cdot5^2$`).replace('Przy pomocy wykładników $p$-adycznych oblicz', 'Oblicz'), steps: [T`Postacie kanoniczne: $a=2^3\cdot3^3\cdot5=1080$, $b=2^3\cdot3^4=648$, $c=2\cdot3^3\cdot5^2=1350$ (pamiętaj: $6=2\cdot3$).`].concat(it.steps.slice(1)) })) },
       { id: 'E4.6', name: 'Liczba dzielników', statement: T`Ile dzielników naturalnych mają liczby: (a) $28$, (b) $34\cdot52$, (c) $152$, (d) $32\cdot104$?`, wzIds: ['tau', 'kanon'], gen: genTau,
         items: [tauItem([[28, 1]], '(a)'), tauItem([[34, 1], [52, 1]], '(b)'), tauItem([[152, 1]], '(c)'), tauItem([[32, 1], [104, 1]], '(d)')] },
