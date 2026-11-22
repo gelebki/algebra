@@ -295,6 +295,52 @@
     ],
   });
   for (const t of A.lists.find(l => l.id === 'p3').tasks) if (!t.wzFrom) t.wzLib = F;
+
+  /* ===== Proseminarium: konkretne przykłady pod „?” we Wzorach (dopisywane raz do każdego wpisu) ===== */
+  {
+    const EX = {
+      signs: T`Przykład: $7-(-3)=7+3=10$, a $-5-(-8)=-5+8=3$.`,
+      divfrac: T`Przykład: $6:\frac34=6\cdot\frac43=8$. Sprawdzenie: $8\cdot\frac34=6$ ✓.`,
+      sub: T`Przykład: $1001\cdot999-1000^2$. Z $n=1000$: $(n+1)(n-1)-n^2=n^2-1-n^2=-1$ — bez liczenia dużych iloczynów.`,
+      prodtel: T`Przykład: $\left(1-\frac12\right)\left(1-\frac13\right)\cdots\left(1-\frac1{10}\right)=\frac12\cdot\frac23\cdots\frac9{10}=\frac1{10}$.`,
+      repeat: T`Tak samo dla krótszych bloków: $\overline{abab}=\overline{ab}\cdot101$, $\overline{abcabc}=\overline{abc}\cdot1001$.`,
+      symm: T`Przykład ($a=1$): $f(k)=\frac{k^2}{k^2-2k+2}$. Wtedy $f(k)+f(2-k)=\frac{k^2+(2-k)^2}{k^2-2k+2}=\frac{2(k^2-2k+2)}{k^2-2k+2}=2$ — każda para od końców daje $2$.`,
+      cmp: T`Przykład: jeśli $ab<0$, to $(a-b)^2-(a+b)^2=-4ab>0$, więc $(a-b)^2>(a+b)^2$.`,
+      harm: T`Przykład: $(1+S)\left(S+\frac12\right)-S\left(1+S+\frac12\right)=S^2+\frac32S+\frac12-S^2-\frac32S=\frac12$.`,
+      like: T`Przykład: $4x^2-3xy+x^2+5xy=(4+1)x^2+(-3+5)xy=5x^2+2xy$.`,
+      identity: T`Przykład: $(a-1)x^2+(b+2)x=0$ dla każdego $x$, więc $a-1=0$ i $b+2=0$: $a=1$, $b=-2$.`,
+      sqzero: T`Przykład: $(x-1)^2+3(y+2)^2=0$, więc $x-1=0$ i $y+2=0$: $x=1$, $y=-2$.`,
+      perfsq: T`Przykład: $2^8+2^{11}+2^n$. Mamy $2^8=(2^4)^2$ i $2^{11}=2\cdot2^4\cdot2^6$, więc brakuje $(2^6)^2=2^{12}$: dla $n=12$ suma to $(2^4+2^6)^2=80^2$.`,
+      oddf: T`Przykład: $P(x)=ax^7+bx^3+cx-5$ i $P(-7)=7$. Z $P(x)+P(-x)=-10$: $P(7)=-10-7=-17$ — bez znajomości $a,b,c$.`,
+      unity5: T`Przykład: wtedy $a^{2013}=a^{5\cdot402+3}=(a^5)^{402}\cdot a^3=a^3$.`,
+      sys3: T`Przykład: $xy=6$, $xz=10$, $yz=15$. Wtedy $x^2=\frac{6\cdot10}{15}=4$, $y^2=\frac{6\cdot15}{10}=9$, $z^2=\frac{10\cdot15}{6}=25$, więc $x^2+y^2+z^2=38$.`,
+      deg: T`Przykład: $\frac{3\pi}4=\frac34\cdot180^\circ=135^\circ$; $\ 150^\circ=150\cdot\frac{\pi}{180}=\frac{5\pi}6$.`,
+      period: T`Przykład: $\sin1200^\circ=\sin(1200^\circ-3\cdot360^\circ)=\sin120^\circ=\frac{\sqrt3}2$.`,
+      evenodd: T`Przykład: $\cos(-1080^\circ)=\cos1080^\circ=\cos0^\circ=1$; $\ \sin(-30^\circ)=-\sin30^\circ=-\frac12$.`,
+      tgctg: T`Przykład: $\operatorname{tg}60^\circ=\frac{\sqrt3/2}{1/2}=\sqrt3$, $\ \operatorname{ctg}60^\circ=\frac1{\sqrt3}=\frac{\sqrt3}3$.`,
+      unit: T`Przykład: punkt $(-3,4)$ — $r=\sqrt{9+16}=5$, $\sin\alpha=\frac45$, $\cos\alpha=-\frac35$, $\operatorname{tg}\alpha=-\frac43$.`,
+      sumsin: T`Przykład: $\sin75^\circ=\sin(45^\circ+30^\circ)=\frac{\sqrt2}2\cdot\frac{\sqrt3}2+\frac{\sqrt2}2\cdot\frac12=\frac{\sqrt6+\sqrt2}4$.`,
+      sumcos: T`Przykład: $\cos15^\circ=\cos(45^\circ-30^\circ)=\frac{\sqrt2}2\cdot\frac{\sqrt3}2+\frac{\sqrt2}2\cdot\frac12=\frac{\sqrt6+\sqrt2}4$.`,
+      sumtg: T`Przykład: $\operatorname{tg}15^\circ=\operatorname{tg}(45^\circ-30^\circ)=\frac{1-\frac{\sqrt3}3}{1+\frac{\sqrt3}3}=\frac{3-\sqrt3}{3+\sqrt3}=2-\sqrt3$.`,
+      half: T`Przykład: $\sin^2\frac\pi8=\frac{1-\frac{\sqrt2}2}2=\frac{2-\sqrt2}4$, więc $\sin\frac\pi8=\frac{\sqrt{2-\sqrt2}}2$ (kąt ostry — bierzemy pierwiastek dodatni).`,
+      divcos: T`Przykład: dla $\operatorname{tg}\alpha=2$: $\frac{3\sin\alpha+\cos\alpha}{\cos\alpha-\sin\alpha}=\frac{3\cdot2+1}{1-2}=-7$.`,
+      cubes: T`Przykład: $\sin^3\alpha+\cos^3\alpha=(\sin\alpha+\cos\alpha)(\sin^2\alpha-\sin\alpha\cos\alpha+\cos^2\alpha)=(\sin\alpha+\cos\alpha)(1-\sin\alpha\cos\alpha)$.`,
+      gauss: T`Przykład: $1+2+\ldots+100=\frac{100\cdot101}2=5050$.`,
+      tel1: T`Przykład: $\frac1{1\cdot2}+\frac1{2\cdot3}+\ldots+\frac1{9\cdot10}=\left(1-\frac12\right)+\left(\frac12-\frac13\right)+\ldots+\left(\frac19-\frac1{10}\right)=1-\frac1{10}=\frac9{10}$.`,
+      negpow: T`Przykład: $(-2)^4=16$, $(-2)^5=-32$, $(-1)^{2009}=-1$.`,
+      distr: T`Przykład: $-3(2x-y+4)=-6x+3y-12$ — minus też mnoży każdy wyraz.`,
+      brackets: T`Przykład: $5-\left[2x-(x-3)\right]=5-[2x-x+3]=5-x-3=2-x$.`,
+      coefsum: T`Przykład: $P(x)=(x^2-x-1)^2$: $P(1)=1$, $P(-1)=1$, więc suma współczynników przy parzystych potęgach to $\frac{1+1}2=1$.`,
+      reduce: T`Dalej tak samo: $x^4=x\cdot x^3=x(2x+1)=2x^2+x=2(x+1)+x=3x+2$.`,
+      degree: T`Przykład: $\deg\big((x^3+1)(x^2-x)\big)=3+2=5$.`,
+    };
+    const done = new Set();
+    const TRIG = new Set(['deg', 'period', 'evenodd', 'tgctg', 'unit', 'sumsin', 'sumcos', 'sumtg', 'half', 'divcos']);
+    const EX3 = Object.assign({}, EX, { signs: T`Przykład: $150^\circ$ leży w II ćwiartce, więc $\sin150^\circ=\frac12>0$, a $\cos150^\circ=-\frac{\sqrt3}2<0$.` });
+    const EXA = Object.assign({}, EX, { cubes: T`Przykład: $x^3-8=(x-2)(x^2+2x+4)$, $\ 27+a^3=(3+a)(9-3a+a^2)$.` });
+    for (const k of TRIG) delete EXA[k];
+    for (const L of A.lists.filter(l => l.subject === 'pro')) for (const t of L.tasks) { const F = t.wzLib; if (!F) continue; for (const [k, ex] of Object.entries(L.id === 'p3' ? EX3 : EXA)) { const w = F[k]; if (!w || done.has(w)) continue; done.add(w); w.d = (w.d || []).concat([ex]); } }
+  }
   A.PRO._t3 = { e34, e35r, e36a, e36b, e311, fval, stex, S };
   void fill; void qs;
 })();
