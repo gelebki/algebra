@@ -11,7 +11,9 @@
   const big = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\\,');
   const S = (goal, q, a, line, why, ...w) => ({ goal, q, a, line, why, w });
   // metoda: nazwa, kiedy jej użyć, pomysł, kroki, wersja na kolokwium [[linia, za co punkt]], pułapki
-  const M = (name, when, idea, steps, exam, traps) => ({ name, when, idea, steps, exam, traps, sol: steps.map(s => s.line) });
+  // kropka i ■ po wielowierszowym wzorze lądują przy pierwszym wierszu — przenosimy je do środka, na koniec ostatniego wiersza
+  const fixAl = t => (typeof t === 'string' ? t.replace(/\\end\{aligned\}\$\. \$\\blacksquare\$/g, '.\\ \\blacksquare\\end{aligned}$').replace(/\\end\{aligned\}\$\./g, '.\\end{aligned}$') : t);
+  const M = (name, when, idea, steps, exam, traps) => { steps.forEach(st => { st.line = fixAl(st.line); }); exam = exam.map(([l, pt]) => [fixAl(l), pt]); return { name, when, idea, steps, exam, traps, sol: steps.map(s => s.line) }; };
   // podpunkt-dowód: domyślnie pierwsza metoda (dla zgodności), wybór metody robi aplikacja
   const proof = (label, gk, q, methods) => Object.assign({ label, gk, type: 'guided', q, methods }, { steps: methods[0].steps, idea: methods[0].idea, sol: methods[0].sol, exam: methods[0].exam, traps: methods[0].traps });
   const sgn = x => (x < 0 ? '-' + Math.abs(x) : '+' + x);
