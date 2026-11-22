@@ -1330,7 +1330,7 @@
     function lrow(L) {
       const p = listProgress(L);
       const row = h('div', { class: 'lprow h-' + L.hue }, h('b', {}, L.title + ' · ' + L.name), h('span', { class: 'muted' }, `${p.solved}/${p.total} podpunktów · zadania ${p.done}/${p.tasks}`), h('div', { class: 'bar' }, h('i', { style: 'width:0' })),
-        h('div', { class: 'tasks' }, L.tasks.map(t => { const tp = taskProgress(t); return h('span', { class: 'tpill' + (tp.done ? ' s3' : tp.solved ? ' s1' : ''), title: `${tp.solved}/${tp.total}` }, tid(t) + (tp.done ? ' ✓' : '')); })));
+        h('div', { class: 'tasks' }, L.tasks.map(t => { const tp = taskProgress(t); return h('button', { class: 'tpill' + (tp.done ? ' s3' : tp.solved ? ' s1' : ''), title: `Otwórz zadanie ${tid(t)} — ${tp.solved}/${tp.total} podpunktów`, onclick: e => { e.stopPropagation(); SFX.click(); startTask(LISTS.indexOf(L), L.tasks.indexOf(t)); window.scrollTo({ top: 0, behavior: 'auto' }); } }, tid(t) + (tp.done ? ' ✓' : '')); })));
       const bi = row.querySelector('.bar i'); bi.dataset.w = (100 * p.solved / p.total) + '%';
       requestAnimationFrame(() => { bi.style.width = bi.dataset.w; });
       return row;
