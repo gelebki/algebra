@@ -204,7 +204,7 @@
       q: T`W ciele $\{x+y\sqrt{${d}}:x,y\in\mathbb{Q}\}$ wyznacz $\left(${a}${b < 0 ? '-' : '+'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}\right)^{-1}=x+y\sqrt{${d}}$.`,
       fields: [{ label: 'x', ans: frs(a, N), restrict: ['plain'] }, { label: 'y', ans: frs(-b, N), restrict: ['plain'] }],
       steps: [T`Mnożymy licznik i mianownik ułamka $\frac{1}{${a}${b < 0 ? '-' : '+'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}}$ przez sprzężenie $${a}${b < 0 ? '+' : '-'}${Math.abs(b) === 1 ? '' : Math.abs(b)}\sqrt{${d}}$.`,
-        T`Mianownik: $${a}^2-${d}\cdot ${b * b}=${N}$ (różnica kwadratów — liczba wymierna, niezerowa, bo $\sqrt{${d}}\notin\mathbb Q$).`,
+        T`Mianownik: $${a < 0 ? '(' + a + ')' : a}^2-${d}\cdot ${b * b}=${N}$ (różnica kwadratów — liczba wymierna, niezerowa, bo $\sqrt{${d}}\notin\mathbb Q$).`,
         T`Wynik: $x=${fr(a, N)}$, $y=${fr(-b, N)}$.`],
     };
     it.sol = it.steps; return it;
