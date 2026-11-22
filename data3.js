@@ -52,7 +52,7 @@
   }
   function gen31() {
     const den = R.pick([4, 6, 3, 12]); let p; do { p = R.int(1, 2 * den - 1); } while (A.gcd(p, den) !== 1);
-    const r = den === 12 ? R.pick([2, 4]) : R.pick([1, 2, 3, 4, 2, Math.SQRT2]);
+    const r = den === 12 ? R.pick([2, 4, 8]) : den === 4 ? R.pick([1, 2, 3, 5, 6, Math.SQRT2, 2 * Math.SQRT2]) : R.pick([1, 2, 3, 4, 5, 6, 8]);
     const t = p * Math.PI / den; const z = Cx.polar(r, t);
     const at = A.niceC(z);
     const it = { fmt: 'polar', gk: 'polar', q: T`Przedstaw w postaci trygonometrycznej $z=|z|(\cos\varphi+i\sin\varphi)$: $$z=${at}$$`, keys: ['pi'],
