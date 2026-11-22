@@ -1,1 +1,1 @@
-Aplikacja do nauki Matematyki
+potężne narzędzie do nauki matematyki
