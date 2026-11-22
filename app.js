@@ -153,11 +153,22 @@
       ? inner.split(/\\\\/).map(l => l.replace(/^(\s*[-+=]?)\s*&/, '$1').replace(/^\\qquad/, '').replace(/&/g, '')).join(' ')
       : '\\begin{aligned}' + inner + '\\end{aligned}');
   }
+  // kosmetyka zapisu z generatorów: 1x → x, −1i → −i, +0y → (nic), 0a+… → …, (…)^{1} → (…)
+  function tidyTex(tex) {
+    let t = tex;
+    t = t.replace(/(^|[=+\-(,{&\s]|\\\\|\\begin\{cases\})1(?=[a-zA-Z])(?!(?:cdot|ldots|quad|frac|left|right|mid|equiv|pmod|in|to|sqrt|text)\b)/g, '$1');
+    t = t.replace(/[+-]0(?:[a-zA-Z](?:_\{?\d+\}?)?)(?![a-zA-Z0-9^{])/g, '');
+    t = t.replace(/(^|[=(&{]|\\\\|\\begin\{cases\})(\s*)0[a-zA-Z](?:_\{?\d+\}?)?(?![a-zA-Z0-9^])\s*\+/g, '$1$2').replace(/(^|[=(&{]|\\\\|\\begin\{cases\})(\s*)0[a-zA-Z](?:_\{?\d+\}?)?(?![a-zA-Z0-9^])\s*-/g, '$1$2-');
+    t = t.replace(/=0\+(?=[0-9a-z(\\])/g, '=');
+    t = t.replace(/(\)|\\right\))\^\{1\}(?![0-9])/g, '$1');
+    return t;
+  }
+  A.tidyTex = tidyTex;
   function md(markup) {
     const frag = document.createDocumentFragment();
     for (const p of A.mdToTexParts(String(markup))) {
       if (p.text !== undefined) { const s = h('span', { html: p.text }); frag.append(s); }
-      else frag.append(texNode(wrapTex(p.tex), p.display));
+      else frag.append(texNode(wrapTex(tidyTex(p.tex)), p.display));
     }
     return frag;
   }
