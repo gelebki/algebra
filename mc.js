@@ -312,6 +312,31 @@
     for (const mode of ['split', 'fresh', 'nonorm', 'conjdiv']) { try { const v = evalMode(ast, mode); if (isFinite(v.re) && isFinite(v.im)) out.push({ v, why: MODE_WHY[mode] }); } catch (e) { /* tryb nie dotyczy */ } }
     return out;
   }
+  // gdy poprawna odpowiedź nie ma żadnego minusa, błędne też nie powinny go mieć (inaczej łatwo je odrzucić bez liczenia)
+  const hasNeg = t => /(^|[^\\a-zA-Z])-/.test(String(t).replace(/\\left|\\right|\\!|\\,/g, ''));
+  // zapasowe błędne wartości bez minusa: typowe pomyłki rachunkowe na jednej z wartości
+  function posFill(F, correct) {
+    const out = [];
+    F.forEach((f, i) => {
+      const v = correct[i];
+      if (!v || Array.isArray(v) || typeof v !== 'object' || v.re === undefined || f.kind === 'mod' || f.kind === 'yesno') return;
+      const R0 = Math.abs(v.im) < 1e-12 ? v.re : null;
+      const add = (z, why) => { const vals = correct.slice(); vals[i] = z; out.push({ vals, why: (F.length > 1 ? A.mcLabel(f.label) + ': ' : '') + why }); };
+      if (R0 !== null && R0 > 0) {
+        add(C(2 * R0), 'Wynik wyszedł dwa razy za duży — sprawdź mnożenie.');
+        add(C(R0 / 2), 'Zgubiony czynnik $2$.');
+        if (Math.abs(R0 - 1) > 1e-9) add(C(1 / R0), 'Odwrócony wynik.');
+        add(C(R0 + 1), 'Pomyłka o $1$ — przelicz ostatni krok.');
+        if (R0 > 1) add(C(R0 - 1), 'Pomyłka o $1$ — przelicz ostatni krok.');
+        add(C(R0 * R0), 'Wynik podniesiony do kwadratu — niepotrzebnie.');
+        if (R0 > 0) add(C(Math.sqrt(R0)), 'Zbędny pierwiastek.');
+      } else if (R0 === null) {
+        add(Cx.mul(v, C(2)), 'Zgubiony czynnik $2$.');
+        add(C(v.im, v.re), 'Zamienione części rzeczywista i urojona.');
+      }
+    });
+    return out;
+  }
   function pick3(F, correct, cands) {
     const chosen = [];
     for (const c of cands) {
@@ -431,7 +456,8 @@
   function groupFor(F, gk, item) {
     const correct = F.map(correctVal);
     if (!correct.some(v => v == null)) {
-      const g = grid(F, correct, gk, item);
+      let g = grid(F, correct, gk, item);
+      if (g && !hasNeg(tupleTex(F, correct, true, item)) && g.some(w => hasNeg(tupleTex(F, w.vals, false, item)))) g = null;
       if (g) return { opts: shuffle([{ tex: tupleTex(F, correct, true, item), ok: true }, ...g.map(w => ({ tex: tupleTex(F, w.vals, false, item), ok: false, why: w.why }))]) };
     }
     let cands = [];
@@ -455,30 +481,60 @@
       if (yn) cands = shuffle(cands);
     }
     if (!TRAPS[gk] && F.length > 1 && !F.every(f => f.kind === 'yesno')) { const [first, ...rest] = cands; cands = [first, ...shuffle(rest)].filter(Boolean); }
+    const cTex = tupleTex(F, correct, true, item);
+    if (!hasNeg(cTex)) {
+      const texOf = c => { try { return tupleTex(F, c.vals, false, item); } catch (e) { return '-'; } };
+      cands = [...cands.filter(c => !hasNeg(texOf(c))), ...posFill(F, correct), ...cands.filter(c => hasNeg(texOf(c)))];
+    }
     const wrong = pick3(F, correct, cands);
-    const opts = [{ tex: tupleTex(F, correct, true, item), ok: true }, ...wrong.map(w => ({ tex: tupleTex(F, w.vals, false, item), ok: false, why: w.why }))];
+    const opts = [{ tex: cTex, ok: true }, ...wrong.map(w => ({ tex: tupleTex(F, w.vals, false, item), ok: false, why: w.why }))];
     return { opts: shuffle(opts) };
   }
 
   /* gotowe pytanie wielokrotnego wyboru dla podpunktu z polami */
   const YNQ = { dodawanie: 'Czy dodawanie jest wykonalne?', odejmowanie: 'Czy odejmowanie jest wykonalne?', 'mnożenie': 'Czy mnożenie jest wykonalne?', dzielenie: 'Czy dzielenie jest wykonalne?', przemienne: 'Czy działanie jest przemienne?', 'łączne': 'Czy działanie jest łączne?' };
   const yesnoQ = f => YNQ[f.label] || f.label;
+  // bliskie wartości bez minusa dla liczby całkowitej / ułamka zapisanych w TeX
+  function numAlt(tex) {
+    const t = String(tex).replace(/\s|\\,/g, '');
+    const mI = t.match(/^(\d+)$/), mF = t.match(/^\\frac\{(\d+)\}\{(\d+)\}$/), mS = t.match(/^(\d*)\\sqrt\{?(\d+)\}?$/);
+    const g = (a, b) => { while (b) [a, b] = [b, a % b]; return a; };
+    const fr = (p, q) => { const d = g(p, q); p /= d; q /= d; return q === 1 ? String(p) : '\\frac{' + p + '}{' + q + '}'; };
+    if (mI) { const v = +mI[1]; return [[String(v + 1), 'Pomyłka o $1$ — przelicz ostatni krok.'], [String(2 * v), 'Wynik wyszedł dwa razy za duży — sprawdź mnożenie.'], ...(v > 1 ? [[String(v - 1), 'Pomyłka o $1$ — przelicz ostatni krok.']] : []), [String(v + 2), 'Błąd rachunkowy — sprawdź dodawanie.'], ...(v > 1 ? [[fr(1, v), 'Odwrócony wynik.']] : []), [String(v * v), 'Wynik podniesiony do kwadratu — niepotrzebnie.']]; }
+    if (mF) { const p = +mF[1], q = +mF[2]; return [[fr(q, p), 'Odwrócony ułamek.'], [fr(p + 1, q), 'Błąd w liczniku — przelicz ostatni krok.'], [fr(p, q + 1), 'Błąd w mianowniku — przelicz ostatni krok.'], [fr(2 * p, q), 'Wynik wyszedł dwa razy za duży.'], [fr(p, 2 * q), 'Zgubiony czynnik $2$.']]; }
+    if (mS) { const k = +(mS[1] || 1), r = +mS[2]; return [[String(k * k * r), 'Zgubiony pierwiastek: $\\sqrt{a}\\neq a$.'], [(2 * k) + '\\sqrt{' + r + '}', 'Wynik wyszedł dwa razy za duży.'], [String(k * r), 'Pierwiastek „zgubiony” w rachunku.']]; }
+    return [];
+  }
+  function pick3own(cTex, list) {
+    const all = list.map(d => ({ tex: d.tex, ok: false, why: d.why }));
+    const ord = hasNeg(cTex) ? all : [...all.filter(o => !hasNeg(o.tex)), ...all.filter(o => hasNeg(o.tex))];
+    return ord.slice(0, 3);
+  }
   A.buildMC = function (item) {
     if (item._mc) return item._mc;
     const F = item.fields;
     let groups;
     if (item.mc) {
       const correctTex = item.mcCorrect || tupleTex(F, F.map(f => { try { return correctVal(f); } catch (e) { return null; } }), true, item);
-      groups = [{ opts: shuffle([{ tex: correctTex, ok: true }, ...item.mc.map(d => ({ tex: d.tex, ok: false, why: d.why }))]) }];
+      groups = [{ opts: shuffle([{ tex: correctTex, ok: true }, ...pick3own(correctTex, item.mc)]) }];
     } else if (item.pairs && (F.length >= 3 || F.some(f => f.mc))) {
       // długie listy niezależnych wartości odpytujemy po dwie — każda wartość w każdej grupie jest „do policzenia”
       groups = [];
       // każda wartość osobno — odpytywane po kolei
-      for (const f of F) { const g = f.mc ? { opts: shuffle([{ tex: f.mcCorrect, ok: true }, ...f.mc.map(d => ({ tex: d.tex, ok: false, why: d.why }))]) } : groupFor([f], item.gk, item); g.label = f.kind === 'yesno' ? yesnoQ(f) : f.label; if (f.kind === 'yesno') g.short = f.label; groups.push(g); }
+      for (const f of F) { const g = f.mc ? { opts: shuffle([{ tex: f.mcCorrect, ok: true }, ...pick3own(f.mcCorrect, f.mc)]) } : groupFor([f], item.gk, item); g.label = f.kind === 'yesno' ? yesnoQ(f) : f.label; if (f.kind === 'yesno') g.short = f.label; groups.push(g); }
     } else if (F.some(f => (f.vars || []).length)) {
       groups = F.map(f => Object.assign(groupFor([f], item.gk, item), { label: f.label }));
     } else {
       groups = [groupFor(F, item.gk, item)];
+    }
+    // własne listy błędnych odpowiedzi: bez minusa, gdy poprawna go nie ma
+    for (const g of groups) {
+      const c = g.opts.find(o => o.ok); if (!c || hasNeg(c.tex)) continue;
+      const bad = g.opts.filter(o => !o.ok && hasNeg(o.tex)); if (!bad.length) continue;
+      const good = g.opts.filter(o => !o.ok && !hasNeg(o.tex)), seen = new Set(g.opts.map(o => o.tex.replace(/\s/g, '')));
+      for (const t of numAlt(c.tex)) { if (good.length >= 3) break; const k = t[0].replace(/\s/g, ''); if (seen.has(k)) continue; seen.add(k); good.push({ tex: t[0], ok: false, why: t[1] }); }
+      while (good.length < 3 && bad.length) good.push(bad.shift());
+      g.opts = shuffle([c, ...good]);
     }
     // pytania tak/nie: zawsze najpierw „tak”, potem „nie”
     const isYN = o => /\\text\{(tak|nie)\}\s*$/.test(o.tex);
