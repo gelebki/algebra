@@ -307,8 +307,8 @@
       keys: ['brak'], sol: trigSteps(p, q),
     };
   }
-  function gen212() { const q = R.pick([6, 4, 3, 2, 6, 4]); const p = R.int(-q, 3 * q); return Object.assign(trigItem(p, q), { steps: trigSteps(p, q) }); }
-  function gen214() { const q = R.pick([12, 8]); let p; do { p = R.int(1, 2 * q - 1); } while (A.gcd(p, q) !== 1); return Object.assign(trigItem(p, q), { steps: trigSteps(p, q) }); }
+  function gen212() { const q = R.pick([6, 4, 3, 2, 6, 4]); let p; do { p = R.int(-2 * q, 4 * q); } while (A.gcd(Math.abs(p) || q, q) !== 1 && p !== 0); return Object.assign(trigItem(p, q), { steps: trigSteps(p, q) }); }
+  function gen214() { const q = R.pick([12, 8]); let p; do { p = R.int(-2 * q, 4 * q); } while (!p || A.gcd(Math.abs(p), q) !== 1); return Object.assign(trigItem(p, q), { steps: trigSteps(p, q) }); }
   function trigSteps(p, q) {
     const t = p * Math.PI / q; let u = ((t % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
     const quadN = Math.min(4, Math.floor(u / (Math.PI / 2) + 1e-9) + 1), quad = ['I', 'II', 'III', 'IV'][quadN - 1];
@@ -342,7 +342,7 @@
       T`W ćwiartce ${quad}: <b>$\alpha=${A.niceAngle(t)}$</b>.`];
   }
   function gen215() {
-    const q = R.pick([12, 8, 12]); let p; do { p = R.int(1, 2 * q - 1); } while (A.gcd(p, q) !== 1);
+    const q = R.pick([12, 8, 12, 6, 4, 3]); let p; do { p = R.int(1, 2 * q - 1); } while (A.gcd(p, q) !== 1);
     const it = angleFromItem(p, q, '');
     const t = p * Math.PI / q, u = ((t % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI); const ref = Math.min(u % Math.PI, Math.PI - (u % Math.PI)); const rr = A.ratApprox(ref / Math.PI, 48);
     it.steps = angSteps(p, q); return it;
