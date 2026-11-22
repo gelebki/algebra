@@ -101,7 +101,7 @@
     for (const d of divs(k + 1)) { const p = d + 1, q = (k + 1) / d + 1; if (p <= q && isP(p) && isP(q)) sol.push([p, q, k].sort((x, y) => x - y)); }
     const tex = T`${tripT(sol)}`;
     const cands = divs(k + 1).filter(d => d <= (k + 1) / d).map(d => [d + 1, (k + 1) / d + 1]);
-    return mk({ gk: 'trip', field: txtField(), q: T`Wyznacz wszystkie trójki liczb pierwszych, których iloczyn jest ${({ 2: 'dwu', 3: 'trzy', 5: 'pięcio', 7: 'siedmio', 11: 'jedenasto', 13: 'trzynasto' })[k]}krotnie większy od ich sumy.`, tex,
+    return mk({ gk: 'trip', field: txtField(), q: T`Wyznacz wszystkie trójki liczb pierwszych, których iloczyn jest ${({ 2: 'dwu', 3: 'trzy', 5: 'pięcio', 7: 'siedmio', 11: 'jedenasto', 13: 'trzynasto', 17: 'siedemnasto', 19: 'dziewiętnasto' })[k] || k + '-'}krotnie większy od ich sumy.`, tex,
       steps: [T`$pqr=${k}(p+q+r)$, więc $${k}\mid pqr$; $${k}$ jest pierwsza, więc dzieli jeden z czynników — np. $r=${k}$.`,
         T`Wtedy $pq=p+q+${k}$, czyli $pq-p-q+1=${k + 1}$, $(p-1)(q-1)=${k + 1}$.`,
         T`Rozkłady $${k + 1}$ (z $p\leq q$): ` + cands.map(([p, q]) => T`$p=${p},q=${q}$ ${isP(p) && isP(q) ? '✓' : '✗'}`).join('; ') + T`. Odpowiedź: $${tex}$ (z dokładnością do kolejności).`],
@@ -148,7 +148,7 @@
       : [[sol.length ? T`\text{nie istnieje}` : T`n=1`, sol.length ? 'Sprawdź $n=' + sol[0] + '$.' : T`$${val(1)}$ jest złożona albo $\leq1$.`], [T`n=${(sol[0] || 1) + 1}`, T`$${val((sol[0] || 1) + 1)}$ dzieli się przez $${a * ((sol[0] || 1) + 1) - b}$.`], [T`n=${sol.length ? sol[0] + ',\\ ' + (sol[0] + 2) : '2'}`, 'Dla większych $n$ pierwszy czynnik jest większy od 1 — liczba złożona.']];
     return whenPrime(plus ? 'c3p' : 'c3m', q, steps, plus ? [] : sol, wrong);
   }
-  const genC3 = plus => { for (;;) { const a = R.pick([2, 3, 4, 5]), b = R.int(1, 6); if (gcd(a, b) !== 1) continue; if (!plus && !((b + 1) % a === 0 && isP(a * a * ((b + 1) / a) ** 2 + a * b * (b + 1) / a + b * b))) continue; return cubeMinus(a, b, plus); } };
+  const genC3 = plus => { for (;;) { const a = R.pick([2, 3, 4, 5, 6, 7]), b = R.int(1, 13); if (gcd(a, b) !== 1) continue; if (!plus && !((b + 1) % a === 0 && isP(a * a * ((b + 1) / a) ** 2 + a * b * (b + 1) / a + b * b))) continue; return cubeMinus(a, b, plus); } };
 
   /* ===== 13. n | (n−1)! + 1 ⇒ n pierwsza ===== */
   const it13 = proof('2.13', 'wilson', T`Udowodnij, że jeżeli $n\geq2$ jest taką liczbą naturalną, że $n\mid(n-1)!+1$, to $n$ jest liczbą pierwszą.`, [
@@ -183,6 +183,41 @@
       // błędne: przedziały długości n, w których jest liczba pierwsza (podajemy którą)
       wrong: [f - n, f + 1, f / (n + 1) + 1, f / (n + 1) + 2, f + 2 - n, f - 2 * n, f + n + 2, ...Array.from({ length: 80 }, (_, i) => f - 40 + i)].map(s => [s, [...Array(n).keys()].map(i => s + i).find(isP)]).filter(([s, pr]) => pr && s !== f + 2).slice(0, 3)
         .map(([s, pr]) => [T`${s},\ldots,${s + n - 1}`, T`$${pr}$ jest pierwsza. Konstrukcja: $(n+1)!+2,\ldots,(n+1)!+(n+1)$ — każda z tych liczb ma dzielnik $k$.`]) });
+  }
+
+
+  /* ===== generatory dla 2.7, 2.9, 2.10 ===== */
+  // kiedy wyrażenie od n jest pierwsze — rodziny, które rozkładają się na iloczyn
+  function polyPrime(kind, m) {
+    let E, f1, f2, val, why;
+    if (kind === 'sg') { // n^4 + 4m^4
+      E = T`n^4+${4 * m ** 4}`; f1 = T`n^2-${2 * m}n+${2 * m * m}`; f2 = T`n^2+${2 * m}n+${2 * m * m}`; val = n => n ** 4 + 4 * m ** 4;
+      why = T`Dopisujemy i odejmujemy $${4 * m * m}n^2$: $${E}=(n^2+${2 * m * m})^2-(${2 * m}n)^2=(${f1})(${f2})$. Pierwszy czynnik to $(n-${m})^2+${m * m}$.`;
+    } else if (kind === 'tri') { // n^4 + m^2 n^2 + m^4
+      E = T`n^4+${m === 1 ? '' : m * m}n^2+${m ** 4}`; f1 = T`n^2-${m === 1 ? '' : m}n+${m * m}`; f2 = T`n^2+${m === 1 ? '' : m}n+${m * m}`; val = n => n ** 4 + m * m * n * n + m ** 4;
+      why = T`$${E}=(n^2+${m * m})^2-${m === 1 ? '' : m * m}n^2=(${f1})(${f2})$.`;
+    } else { // (n-a)(n+b)
+      const [a, b] = m; E = T`n^2${b - a === 0 ? '' : (b - a > 0 ? '+' : '-') + (Math.abs(b - a) === 1 ? '' : Math.abs(b - a)) + 'n'}-${a * b}`; f1 = T`n-${a}`; f2 = T`n+${b}`; val = n => (n - a) * (n + b);
+      why = T`Trójmian ma pierwiastki $${a}$ i $${-b}$: $${E}=(${f1})(${f2})$. Dla $n<${a}$ iloczyn jest ujemny, dla $n=${a}$ równy $0$.`;
+    }
+    const isPr = x => { if (x < 2) return false; for (let i = 2; i * i <= x; i++) if (x % i === 0) return false; return true; };
+    const sol = []; for (let n = 1; n < 400; n++) if (isPr(val(n))) sol.push(n);
+    const steps = [why, sol.length ? T`Liczba pierwsza ma tylko rozkład $1\cdot p$, więc mniejszy czynnik musi być równy $1$: $${f1}=1$ daje $n=${sol[0]}$, a wtedy $${E}=${val(sol[0])}$ — pierwsza ✓.` : T`Mniejszy czynnik jest zawsze większy od $1$ (dla każdego $n\in\mathbb N$), więc liczba jest złożona.`, sol.length ? T`Odpowiedź: $n=${sol.join(',')}$.` : 'Odpowiedź: dla żadnego $n$.'];
+    const near = [1, 2, 3, 4, 5].map(k => (sol[0] || 1) + k).filter(n => !sol.includes(n));
+    const wrong = sol.length ? [[T`\text{nie istnieje}`, T`Sprawdź $n=${sol[0]}$: $${val(sol[0])}$ jest pierwsza.`], [T`n=${sol[0]},\ ${near[0]}`, T`$${val(near[0])}$ jest złożona.`], [T`n=${near[0]}`, T`$${val(near[0])}$ dzieli się przez $${f1.replace(/n/g, '(' + near[0] + ')')}$ — złożona.`]]
+      : [[T`n=1`, T`$${val(1)}$ jest złożona.`], [T`n=2`, T`$${val(2)}$ jest złożona.`], [T`n=1,\ 2`, 'Obie wartości dają liczby złożone.']];
+    return mk({ gk: 'pp', field: txtField(), q: T`Dla jakich $n\in\mathbb N$ liczba $${E}$ jest pierwsza?`, tex: sol.length ? T`n=${sol.join(',\\ ')}` : T`\text{nie istnieje}`, steps, wrong });
+  }
+  const genPolyPrime = () => { for (;;) { const k = R.pick(['sg', 'sg', 'tri', 'tri', 'quad', 'quad']); const m = k === 'quad' ? [R.int(1, 9), R.int(1, 12)] : R.int(1, 3); if (k === 'quad' && m[0] === m[1]) continue; return polyPrime(k, m); } };
+  // 2.7: jedna liczba pierwsza jest różnicą potęg dwóch pozostałych
+  function diffPow(e) {
+    const isPr = x => { if (x < 2) return false; for (let i = 2; i * i <= x; i++) if (x % i === 0) return false; return true; };
+    const v = 3 ** e - 2 ** e, ok = isPr(v), name = { 2: 'kwadratów', 3: 'sześcianów', 4: 'czwartych potęg' }[e];
+    const fac = { 2: T`(q-r)(q+r)`, 3: T`(q-r)(q^2+qr+r^2)`, 4: T`(q-r)(q+r)(q^2+r^2)` }[e];
+    return mk({ gk: 'dpow', field: txtField(), q: T`Wyznacz trzy liczby pierwsze, z których jedna jest różnicą ${name} dwóch pozostałych.`, tex: ok ? T`${v},\ 3,\ 2\quad(${v}=3^{${e}}-2^{${e}})` : T`\text{takie liczby nie istnieją}`,
+      steps: [T`$p=q^{${e}}-r^{${e}}=${fac}$, a drugi czynnik jest większy od $1$, więc musi być $q-r=1$.`, T`Dwie liczby pierwsze różniące się o $1$ to tylko $3$ i $2$.`, ok ? T`$p=3^{${e}}-2^{${e}}=${v}$ — pierwsza ✓.` : T`$3^{${e}}-2^{${e}}=${v}=${e === 4 ? '5\\cdot13' : ''}$ — złożona, więc takich liczb nie ma.`],
+      wrong: ok ? [[T`${2 ** e - 1},\ 2,\ 1`, '$1$ nie jest liczbą pierwszą.'], [T`${5 ** e - 3 ** e},\ 5,\ 3`, T`$${5 ** e - 3 ** e}$ nie jest pierwsza — warunek $q-r=1$ nie jest spełniony.`], [T`${4 ** e - 3 ** e},\ 4,\ 3`, '$4$ nie jest pierwsza.'], [T`\text{takie liczby nie istnieją}`, T`$${v}=3^{${e}}-2^{${e}}$ jest pierwsza.`]]
+        : [[T`${v},\ 3,\ 2`, T`$${v}$ nie jest pierwsza.`], [T`${2 ** e - 1},\ 2,\ 1`, '$1$ nie jest liczbą pierwszą.'], [T`${5 ** e - 3 ** e},\ 5,\ 3`, T`$${5 ** e - 3 ** e}$ nie jest pierwsza.`]] });
   }
 
   /* ===== opracowanie ===== */
@@ -237,16 +272,16 @@
       { id: 'E2.3', name: '$6p-22q=12$', statement: T`Wyznaczyć wszystkie liczby pierwsze $p,q$ takie, że $6p-22q=12$.`, wzIds: ['m_podz', 'm_gen', 'pierwsza'], gen: genLin, items: [P('2.3', linPrime(3, 11, 2, 2))] },
       { id: 'E2.4', name: '$pq=140-p^2$', statement: T`Wyznaczyć wszystkie pary różnych liczb pierwszych $p,q$ spełniających równanie $pq=140-p^2$.`, wzIds: ['m_rozkP', 'pierwsza'], gen: genPq, items: [P('2.4', pqEq(140))] },
       { id: 'E2.5', name: '$a^3+b^3$ pierwsza', statement: T`Wyznacz wszystkie $a,b\in\mathbb N$, dla których liczba $a^3+b^3$ jest pierwsza.`, wzIds: ['m_rozkP', 'wzory', 'pierwsza'], items: [it5] },
-      { id: 'E2.6', name: 'Iloczyn = 5 · suma', statement: T`Wyznacz wszystkie trójki liczb pierwszych, których iloczyn jest pięciokrotnie większy od ich sumy.`, wzIds: ['m_rozkP', 'pierwsza'], gen: () => triple(R.pick([3, 5, 7, 11])), items: [P('2.6', triple(5))] },
-      { id: 'E2.7', name: 'Różnica sześcianów', statement: T`Wyznacz trzy liczby pierwsze, z których jedna jest różnicą sześcianów dwóch pozostałych.`, wzIds: ['m_rozkP', 'wzory', 'pierwsza'], items: [P('2.7', it7)] },
+      { id: 'E2.6', name: 'Iloczyn = 5 · suma', statement: T`Wyznacz wszystkie trójki liczb pierwszych, których iloczyn jest pięciokrotnie większy od ich sumy.`, wzIds: ['m_rozkP', 'pierwsza'], gen: () => triple(R.pick([3, 5, 7, 11, 17, 19, 23, 29, 41, 47])), items: [P('2.6', triple(5))] },
+      { id: 'E2.7', name: 'Różnica sześcianów', statement: T`Wyznacz trzy liczby pierwsze, z których jedna jest różnicą sześcianów dwóch pozostałych.`, wzIds: ['m_rozkP', 'wzory', 'pierwsza'], gen: () => diffPow(R.pick([2, 4, 3])), items: [P('2.7', it7)] },
       { id: 'E2.8', name: '$a^4-b^4$ nie jest pierwsza', statement: T`Wykaż, że nie istnieją liczby całkowite $a,b$, dla których liczba $a^4-b^4$ jest pierwsza.`, wzIds: ['m_rozkP', 'wzory', 'pierwsza'], items: [it8] },
-      { id: 'E2.9', name: '$n^4+4$', statement: T`Dla jakich $n\in\mathbb N$ liczba $n^4+4$ jest pierwsza?`, wzIds: ['m_rozkP', 'pierwsza'], items: [P('2.9', it9)] },
-      { id: 'E2.10', name: '$n^4+n^2+1$', statement: T`Dla jakich $n\in\mathbb N$ liczba $n^4+n^2+1$ jest pierwsza?`, wzIds: ['m_rozkP', 'pierwsza'], items: [P('2.10', it10)] },
+      { id: 'E2.9', name: '$n^4+4$', statement: T`Dla jakich $n\in\mathbb N$ liczba $n^4+4$ jest pierwsza?`, wzIds: ['m_rozkP', 'pierwsza'], gen: genPolyPrime, items: [P('2.9', it9)] },
+      { id: 'E2.10', name: '$n^4+n^2+1$', statement: T`Dla jakich $n\in\mathbb N$ liczba $n^4+n^2+1$ jest pierwsza?`, wzIds: ['m_rozkP', 'pierwsza'], gen: genPolyPrime, items: [P('2.10', it10)] },
       { id: 'E2.11', name: '$27n^3-8$', statement: T`Dla jakich $n\in\mathbb N$ liczba $27n^3-8$ jest pierwsza?`, wzIds: ['m_rozkP', 'wzory', 'pierwsza'], gen: () => genC3(false), items: [P('2.11', cubeMinus(3, 2, false))] },
       { id: 'E2.12', name: '$27n^3+8$', statement: T`Czy istnieje liczba naturalna $n$ taka, że $27n^3+8$ jest pierwsza?`, wzIds: ['m_rozkP', 'wzory', 'pierwsza'], gen: () => genC3(true), items: [P('2.12', cubeMinus(3, 2, true))] },
       { id: 'E2.13', name: '$n\\mid(n-1)!+1$', statement: T`Udowodnij, że jeżeli $n$ jest taką liczbą naturalną, że $n\mid(n-1)!+1$, to $n$ jest liczbą pierwszą.`, wzIds: ['m_nwp', 'm_sil', 'pierwsza'], items: [it13] },
       { id: 'E2.14', name: 'Pierwsza w $[n,n!+1]$', statement: T`Udowodnij, że dla dowolnej liczby naturalnej $n$ w przedziale $[n,n!+1]$ znajduje się pewna liczba pierwsza. Wyprowadź stąd wniosek, że liczb pierwszych jest nieskończenie wiele.`, wzIds: ['m_sil', 'm_nwp', 'pierwsza'], items: [it14] },
-      { id: 'E2.15', name: 'Przedział bez liczb pierwszych', statement: T`Dla dowolnej liczby naturalnej $n$ wskaż przedział długości $n$ niezawierający liczb pierwszych.`, wzIds: ['m_sil', 'pierwsza'], gen: gk => (gk === 'gapn' ? gapEx(R.int(3, 7)) : it15), items: [P('(dowód)', it15), P('(n = 5)', gapEx(5))] },
+      { id: 'E2.15', name: 'Przedział bez liczb pierwszych', statement: T`Dla dowolnej liczby naturalnej $n$ wskaż przedział długości $n$ niezawierający liczb pierwszych.`, wzIds: ['m_sil', 'pierwsza'], gen: () => gapEx(R.int(3, 9)), items: [P('(dowód)', it15), P('(n = 5)', gapEx(5))] },
     ],
   });
   for (const t of A.lists.find(l => l.id === 'e2').tasks) t.wzLib = F;
