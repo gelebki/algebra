@@ -164,14 +164,14 @@
     return proof('', 'frac', q, [
       M('Kombinacja liniowa', 'Dobierz mnożniki tak, żeby $n$ się skróciło — zostanie stała.', T`$${c}(${num})-${a}(${den})=${-D}$, więc wspólny dzielnik licznika i mianownika dzieli $${Math.abs(D)}=1$.`,
         [S('Wspólny dzielnik', 'Co zakładamy?', T`$d$ dzieli $${num}$ i $${den}$`, T`Niech $d=(${num},${den})$. Wtedy $d$ dzieli każdą kombinację całkowitą tych liczb.`, 'Ułamek jest nieskracalny $\\iff$ NWD licznika i mianownika to 1.', ['$d$ dzieli $n$', 'Nie wiemy tego.'], ['$d=n$', 'Nic tego nie sugeruje.']),
-         S('Kombinacja', 'Jaką kombinację wziąć?', T`$${c}(${num})-${a}(${den})=${-D}$`, T`$${c}(${num})-${a}(${den})=${linV([a * c, b * c], ['n', ''])}-${'(' + linV([a * c, a * d], ['n', '']) + ')'}=${-D}$.`, 'Mnożymy licznik przez współczynnik przy $n$ w mianowniku i odwrotnie.', [T`$(${den})-(${num})$`, T`Zostaje $${linV([c - a, d - b], ['n', ''])}$ — $n$ się nie skróciło.`], [T`$${d}(${num})-${b}(${den})$`, 'Tak skraca się wyraz wolny, a nie $n$.']),
+         S('Kombinacja', 'Jaką kombinację wziąć?', T`$${c}(${num})-${a}(${den})=${-D}$`, T`$${c}(${num})-${a}(${den})=${linV([a * c, b * c], ['n', ''])}-${'(' + linV([a * c, a * d], ['n', '']) + ')'}=${-D}$.`, 'Mnożymy licznik przez współczynnik przy $n$ w mianowniku i odwrotnie.', [T`$(${den})-(${num})$`, T`Zostaje $${linV([c - a, d - b], ['n', ''])}$ — $n$ się nie skróciło.`], [T`$${d === 1 ? '' : d}(${num})-${b === 1 ? '' : b}(${den})$`, 'Tak skraca się wyraz wolny, a nie $n$.']),
          S('Wniosek', 'Co z tego wynika?', '$d\\mid1$, więc $d=1$', T`$d\mid ${-D}$, więc $d=1$ i ułamek jest nieskracalny dla każdego $n$. $\blacksquare$`, 'Jedyny dodatni dzielnik 1 to 1.', ['$d\\mid n$', 'Kombinacja dała stałą, nie $n$.'], ['$d=2$', '2 nie dzieli 1.'])],
         [[T`$d=(${num},${den})$ dzieli każdą kombinację.`, 'oznaczenie'], [T`$${c}(${num})-${a}(${den})=${-D}$.`, 'kombinacja (sprawdzona)'], [T`$d\mid1\Rightarrow d=1$. $\blacksquare$`, 'wniosek']],
         ['Rachunek kombinacji bez wymnożenia — łatwo o błąd znaku.']),
       M('Algorytm Euklidesa', 'Odejmuj wielokrotności jednego wyrażenia od drugiego, aż zostanie stała.', T`$(x,y)=(x,y-kx)$: $${chainT(seq, ['n', ''])}$.`,
         [S('Zasada', 'Jaka własność NWD?', '$(x,y)=(x,y-kx)$', T`Korzystamy z $(x,y)=(x,y-kx)$ dla całkowitych $x,y,k$.`, 'Wspólne dzielniki par $(x,y)$ i $(x,y-kx)$ są te same.', ['$(x,y)=(x+1,y)$', 'Dodanie 1 zmienia NWD.'], ['$(x,y)=(x/n,y/n)$', 'Nie wolno dzielić.']),
          S('Redukcja', 'Jak redukować?', T`$${chainT(seq, ['n', ''])}$`, T`$${chainT(seq, ['n', ''], '=1')}$.`, 'Ostatnia para zawiera $\\pm1$, a $(x,\\pm1)=1$.', ['$(' + num + ',' + den + ')=(' + num + ',n)$ i koniec', 'Trzeba doprowadzić do stałej.'], ['Podzielić przez $n$', 'Dzielenie nie zachowuje NWD.']),
-         S('Wniosek', 'Wniosek?', 'NWD $=1$ — ułamek nieskracalny', T`$(${num},${den})=1$, więc ułamek jest nieskracalny dla każdego $n\in\mathbb N$. $\blacksquare$`, 'NWD równe 1 oznacza brak wspólnych dzielników $>1$.', ['Tylko dla nieparzystych $n$', 'Rachunek nie zależał od $n$.'], ['NWD $=n$', 'Zeszło do stałej 1.'])],
+         S('Wniosek', 'Wniosek?', 'NWD $=1$ — ułamek nieskracalny', T`$(${num},${den})=1$, więc ułamek jest nieskracalny dla każdego $n\in\mathbb N$. $\blacksquare$`, 'NWD równe 1 oznacza brak wspólnych dzielników $>1$.', ['NWD $=2$', 'Na końcu jest para z $\\pm1$, a $(x,\\pm1)=1$.'], ['NWD $=n$', 'Zeszło do stałej 1.'])],
         [[T`$${chainT(seq, ['n', ''], '=1')}$.`, 'redukcja'], [T`Zatem ułamek jest nieskracalny. $\blacksquare$`, 'wniosek']],
         ['Brak informacji, z jakiej własności NWD korzystamy.'])]);
     void last;
@@ -226,12 +226,12 @@
 
   const it10 = proof('3.10', 'sumdiff', T`Niech $a,b\in\mathbb Z$. Pokaż, że jeżeli $(a,b)=1$, to $(a+b,a-b)$ jest równe $1$ lub $2$.`, [
     M('Wspólny dzielnik', 'Dodaj i odejmij oba wyrażenia — dostaniesz $2a$ i $2b$.', T`$d=(a+b,a-b)$ dzieli $2a$ i $2b$, więc $d\mid(2a,2b)=2(a,b)=2$.`,
-      [S('Suma i różnica', 'Co dzieli $d$?', '$2a$ i $2b$', T`Niech $d=(a+b,a-b)$. $d\mid(a+b)+(a-b)=2a$ i $d\mid(a+b)-(a-b)=2b$.`, 'Dzielnik dwóch liczb dzieli ich sumę i różnicę.', ['$a$ i $b$', 'Tylko $2a$ i $2b$.'], ['$a+b$ tylko', 'Też $2a$, $2b$.']),
+      [S('Suma i różnica', 'Co dzieli $d$?', '$2a$ i $2b$', T`Niech $d=(a+b,a-b)$. $d\mid(a+b)+(a-b)=2a$ i $d\mid(a+b)-(a-b)=2b$.`, 'Dzielnik dwóch liczb dzieli ich sumę i różnicę.', ['$a$ i $b$', 'Tylko $2a$ i $2b$.'], ['$ab$', 'Z sumy i różnicy dostajemy $2a$ i $2b$, a nie iloczyn.']),
        S('NWD', 'Co dalej?', '$d\\mid(2a,2b)=2$', T`$d$ jest wspólnym dzielnikiem $2a$ i $2b$, więc $d\mid(2a,2b)=2(a,b)=2$. Zatem $d\in\{1,2\}$. $\blacksquare$`, '$(ka,kb)=k(a,b)$.', ['$d\\mid(a,b)=1$', 'Nie: dzielimy tylko $2a$, $2b$.'], ['$d=2$ zawsze', 'Dla $a=2,b=1$: $(3,1)=1$.'])],
       [[T`$d\mid 2a$, $d\mid 2b$.`, 'suma i różnica'], [T`$d\mid(2a,2b)=2(a,b)=2$, więc $d\in\{1,2\}$. $\blacksquare$`, 'wniosek z $(ka,kb)=k(a,b)$']],
       ['Wniosek $d\\mid(a,b)$ zamiast $d\\mid2(a,b)$.']),
     M('Liczba pierwsza', 'Sprawdź, jaka liczba pierwsza może dzielić oba wyrażenia, a potem wyklucz $4$.', T`Liczba pierwsza $p$ dzieląca oba dzieli $2a$ i $2b$; dla nieparzystej $p$ to $p\mid a,b$. Zostaje $p=2$, a $4$ nie może dzielić obu.`,
-      [S('Nieparzyste p', 'Czy nieparzysta liczba pierwsza $p$ może dzielić $a+b$ i $a-b$?', 'Nie — wtedy $p\\mid a$ i $p\\mid b$', T`Gdyby nieparzysta pierwsza $p$ dzieliła oba, to $p\mid2a$ i $p\mid2b$, a skoro $p\nmid2$, to $p\mid a$ i $p\mid b$ — sprzeczność z $(a,b)=1$.`, 'Lemat: $p\\mid xy$, $p\\nmid x\\Rightarrow p\\mid y$.', ['Tak', '$(a,b)=1$ to wyklucza.'], ['Tylko $p=3$', 'Żadna nieparzysta.']),
+      [S('Nieparzyste p', 'Czy nieparzysta liczba pierwsza $p$ może dzielić $a+b$ i $a-b$?', 'Nie — wtedy $p\\mid a$ i $p\\mid b$', T`Gdyby nieparzysta pierwsza $p$ dzieliła oba, to $p\mid2a$ i $p\mid2b$, a skoro $p\nmid2$, to $p\mid a$ i $p\mid b$ — sprzeczność z $(a,b)=1$.`, 'Lemat: $p\\mid xy$, $p\\nmid x\\Rightarrow p\\mid y$.', ['Tak', '$(a,b)=1$ to wyklucza.'], ['Tak, np. $p=3$', 'Wtedy $3\\mid a$ i $3\\mid b$ — sprzeczność z $(a,b)=1$.']),
        S('Potęga 2', 'Czy $4$ może dzielić oba?', 'Nie — wtedy $2\\mid a$ i $2\\mid b$', T`Gdyby $4\mid a+b$ i $4\mid a-b$, to $4\mid 2a$, $4\mid 2b$, czyli $2\mid a$, $2\mid b$ — sprzeczność. Zatem $(a+b,a-b)\in\{1,2\}$. $\blacksquare$`, 'NWD to iloczyn wspólnych potęg liczb pierwszych.', ['Tak', 'Wtedy $a,b$ byłyby parzyste.'], ['Tylko dla $a=b$', 'Wtedy $(a,b)=|a|$.'])],
       [[T`Nieparzysta pierwsza $p\mid a\pm b\Rightarrow p\mid a,b$ — sprzeczność.`, 'nieparzyste dzielniki'], [T`$4\mid a\pm b\Rightarrow 2\mid a,b$ — sprzeczność. Więc NWD $\in\{1,2\}$. $\blacksquare$`, 'wykluczenie 4']],
       ['Pominięcie przypadku $4$.'])]);
@@ -292,7 +292,7 @@
         T`$(${d1},${Math.abs(c)})=${g}\mid ${e}$. Rozwiązanie: $w=${aff(w0, [[cw, 's']])},\ z=${aff(z0, [[cz, 's']])}$, $s\in\mathbb Z$.`,
         T`$${linV([a, b], ['x', 'y'])}=${linV([d1], ['w'])}$: skoro $${linV([a, b], ['x', 'y'])}=${d1}$ dla $x=${sx},\ y=${sy}$, to $x=${linV([sx, b / d1], ['w', 't'])},\ y=${linV([sy, -a / d1], ['w', 't'])}$, $t\in\mathbb Z$.`,
         T`Podstawiamy $w$: $${tex}$.`],
-      wrong: [[alt(X, Y, [z0, -cz, 0]), 'Zły znak przy $s$ w $z$ — sprawdź podstawiając.'], [alt([X[0], X[1], 0], [Y[0], Y[1], 0], Z), 'Brakuje drugiego parametru — równanie z trzema niewiadomymi ma rodzinę dwuparametrową.'], [alt([X[0] + 1, X[1], X[2]], Y, Z), 'Złe rozwiązanie szczególne: dla $s=t=0$ nie wychodzi ' + e + '.']] });
+      wrong: [[alt(X, Y, [z0, -cz, 0]), 'Zły znak przy $s$ w $z$ — sprawdź podstawiając.'], [alt([X[0], X[1], 0], [Y[0], Y[1], 0], Z).replace('s,t\\in', 's\\in'), 'Brakuje drugiego parametru — równanie z trzema niewiadomymi ma rodzinę dwuparametrową.'], [alt([X[0] + 1, X[1], X[2]], Y, Z), 'Złe rozwiązanie szczególne: dla $s=t=0$ nie wychodzi ' + e + '.']] });
   }
 
   /* ===== 14. czy istnieją rozwiązania naturalne ===== */
