@@ -292,7 +292,7 @@
       steps: [T`Grupa dla $k$: $\frac{1+2+\ldots+k+\ldots+2+1}{k}=\frac{k^2}{k}=k$.`, T`Suma: $1+2+\ldots+${n}=\frac{${n}\cdot ${n + 1}}2=${v}$.`],
       wrong: [[String(n * n), T`Każda grupa daje $k$, a nie $${n}$.`], [String(2 * v), 'Zgubiona dwójka we wzorze na sumę.'], [String(v - n), 'Pominięta ostatnia grupa.']] });
   }
-  const gen119 = gk => (gk === 'gen' ? e119gen() : e119(R.int(8, 60)));
+  const gen119 = () => e119(R.int(8, 60)); // dla ogólnego podpunktu też liczbowy przykład
 
   /* ---------- 1.20 ---------- */
   function e120(n) {
