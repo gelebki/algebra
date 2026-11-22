@@ -437,7 +437,7 @@
           { label: '6.4', gk: 'sq', q: T`$$z^2=5-12i$$`, fields: [{ label: 'z', kind: 'set', ans: ['3-2i', '-3+2i'], restrict: ['alg'] }], keys: [';'], sol: [sqrtSteps([5, -12], [3, -2])] },
           quadItem('6.5', '1', '-4', '5', T`z^2-4z+5=0`),
           { label: '6.6', gk: 'biq', q: T`$$z^4-4z^2+5=0$$`, fields: [{ label: 'z', kind: 'set', ans: () => [...Cx.allRoots(Cx.C(2, 1), 2), ...Cx.allRoots(Cx.C(2, -1), 2)], restrict: ['alg'], show: T`\pm\left(\sqrt{\tfrac{\sqrt5+2}{2}}+i\sqrt{\tfrac{\sqrt5-2}{2}}\right),\quad \pm\left(\sqrt{\tfrac{\sqrt5+2}{2}}-i\sqrt{\tfrac{\sqrt5-2}{2}}\right)` }], keys: [';'], mc: [
-            { tex: T`\pm\sqrt{2+i},\ \text{i nic więcej}`, why: 'Zgubione rozwiązania z $z^2=2-i$.' },
+            { tex: T`\pm\sqrt{2+i}`, why: 'Zgubione rozwiązania z $z^2=2-i$.' },
             { tex: T`\pm\left(\sqrt{\tfrac{\sqrt5-2}{2}}\pm i\sqrt{\tfrac{\sqrt5+2}{2}}\right)`, why: T`Zamienione $x^2$ i $y^2$: część rzeczywista to $\sqrt{\frac{\sqrt5+2}{2}}$.` },
             { tex: T`\pm\sqrt{2},\ \pm i\sqrt{2}`, why: T`Potraktowano $w=2\pm i$ jak $w=2$ — zgubiona część urojona.` }], sol: [T`$w=z^2$: $w^2-4w+5=0$, $w=2\pm i$.`, T`$\sqrt{2+i}$: $x^2-y^2=2$, $x^2+y^2=\sqrt5$, więc $x^2=\frac{\sqrt5+2}{2}$, $y^2=\frac{\sqrt5-2}{2}$, $xy>0$.`] },
           quadItem('6.7', '1', '-5', '4+10i', T`z^2-5z+4+10i=0`),
