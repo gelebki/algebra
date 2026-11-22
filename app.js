@@ -751,7 +751,7 @@
     const kick = h('div', { class: 'kicker' });
     if (quick) kick.append(h('span', { class: 'badge q' }, 'Zad. ' + tid(task)), mdEl('span', task.name));
     else if (T.mode === 'var') kick.append(h('span', { class: 'badge var' }, 'Podobny przykład'), md('do ' + (task.items[T.idx].label || tid(task))), pdots());
-    else kick.append(h('span', { class: 'badge' }, tid(task) + (it.label ? ' · ' : '')), it.label ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', !['order', 'guided'].includes(it.type || 'fields') && T.task.gen ? pdots() : '');
+    else kick.append(h('span', { class: 'badge' }, tid(task) + (it.label ? ' · ' : '')), it.label ? md(it.label) : '', S.items[T.origKey] ? h('span', { class: 'badge', style: 'background:var(--ok-bg);color:var(--ok)' }, 'zaliczone') : '', !['order', 'guided'].includes(it.type || 'fields') && hasVar() ? pdots() : '');
     card.append(kick); if (it.q !== task.statement) card.append(mdEl('div', it.q, { class: 'question' }));
     const type = it.type || 'fields';
     if (type === 'fields') card.append(mcUI(it));
@@ -800,6 +800,16 @@
     box.append(list);
     if (T.status === 'answering' && it.fields.some(f => f.kind !== 'yesno')) box.append(keypad(it));
     return box;
+  }
+  // czy dla tego podpunktu generator daje coś innego niż oryginał (inaczej nie pokazujemy „Podobne” ani „Przykład”)
+  const varCache = {};
+  function hasVar() {
+    const task = T && T.task; if (!task || !task.gen) return false;
+    const orig = task.items[T.idx] || T.item, gk = orig && orig.gk, key = task.id + '|' + gk;
+    if (key in varCache) return varCache[key];
+    const sig = it => JSON.stringify([it.q, it.mcCorrect, it.choice && it.choice.opts]);
+    let ok = false; try { for (let k = 0; k < 6 && !ok; k++) { const g = task.gen(gk); if (g && sig(g) !== sig(orig)) ok = true; } } catch (e) { ok = false; }
+    return (varCache[key] = ok);
   }
   function pdots() {
     const n = practiceN();
@@ -1062,7 +1072,7 @@
       bar.append(h('div', { class: 'spacer' }));
       bar.append(h('div', { class: 'life' },
         h('button', { class: 'btn small' + (T.usedW ? ' used' : ''), onclick: showWzory, title: 'Koło ratunkowe 1: wzory i definicje' }, h('span', { html: IC.bulb }), 'Wzory'),
-        T.task.gen ? h('button', { class: 'btn small' + (T.usedP ? ' used' : ''), onclick: showPrzyklad, title: 'Koło ratunkowe 2: podobny przykład z rozwiązaniem' }, h('span', { html: IC.book }), 'Przykład') : ''));
+        hasVar() ? h('button', { class: 'btn small' + (T.usedP ? ' used' : ''), onclick: showPrzyklad, title: 'Koło ratunkowe 2: podobny przykład z rozwiązaniem' }, h('span', { html: IC.book }), 'Przykład') : ''));
     }
     return bar;
   }
@@ -1082,7 +1092,7 @@
     if (ok && T.redeemed) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Podpunkt ' + (T.task.items[T.idx].label || '') + ' zaliczony.'));
     if (!ok) {
       if (T.partial) fb.append(h('p', { class: 'partial' }, h('b', {}, 'Zaliczone części: ' + T.partial.done + ' z ' + T.partial.n + '. '), 'Dobre odpowiedzi zostają zapisane — przy kolejnym podejściu odpowiadasz tylko na błędne.'));
-      if (T.mode === 'orig' && T.task.gen && type !== 'guided' && !T.partial) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Rozwiąż podobny przykład — wtedy ten podpunkt się zaliczy.'));
+      if (T.mode === 'orig' && hasVar() && type !== 'guided' && !T.partial) fb.append(h('p', { style: 'margin:6px 0 0' }, 'Rozwiąż podobny przykład — wtedy ten podpunkt się zaliczy.'));
       const ans = h('div', { class: 'ans' }, h('b', {}, 'Poprawna odpowiedź:'));
       if (type === 'fields') { /* zaznaczona na zielono */ } else if (false) {
         if (it.check) ans.append(mdEl('div', it.showAns));
@@ -1099,13 +1109,13 @@
     const row = h('div', { class: 'row' });
     if (T.mode === 'quick') row.append(h('button', { class: 'btn primary', onclick: goNext }, T.quick.i >= 9 ? 'Podsumowanie' : 'Dalej', h('span', { html: IC.next })));
     else {
-      const n = practiceN(), canP = !!T.task.gen && n < 3;
+      const n = practiceN(), canP = hasVar() && n < 3;
       const pBtn = cls => h('button', { class: 'btn ' + cls, onclick: startVariant }, h('span', { html: IC.dice }), 'Podobny przykład' + (canP ? ' (' + (n + 1) + '/3)' : ''));
       const nextBtn = cls => h('button', { class: 'btn ' + cls, onclick: goNext }, 'Dalej', h('span', { html: IC.next }));
-      if (ok) { row.append(nextBtn('primary')); if (T.task.gen) row.append(pBtn('')); }
+      if (ok) { row.append(nextBtn('primary')); if (hasVar()) row.append(pBtn('')); }
       else if (type === 'guided') { row.append(h('button', { class: 'btn primary', onclick: () => { resetAttempt(); render(); } }, 'Spróbuj jeszcze raz')); row.append(nextBtn('')); }
       else if (T.partial) { row.append(h('button', { class: 'btn primary', onclick: () => { delete T.item._mc; resetAttempt(); render(); window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' }); } }, 'Popraw ' + (T.partial.n - T.partial.done === 1 ? 'błędną część' : 'błędne części'))); if (T.task.gen) row.append(pBtn('')); row.append(nextBtn('')); }
-      else { if (T.task.gen) row.append(pBtn('primary')); row.append(nextBtn(T.task.gen ? '' : 'primary')); }
+      else { if (hasVar()) row.append(pBtn('primary')); row.append(nextBtn(hasVar() ? '' : 'primary')); }
     }
     fb.append(row);
     setTimeout(() => { const b = row.querySelector('button'); if (b) b.focus({ preventScroll: true }); }, 50);
