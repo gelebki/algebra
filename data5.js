@@ -161,7 +161,7 @@
       steps: [T`$x^2=x+1$, więc każdą potęgę obniżamy: $x^{k+1}=x\cdot x^k$.`, T`${Array.from({ length: n - 1 }, (_, k) => T`$x^{${k + 2}}=${poly([[fib(k + 2), 'x', ''], [fib(k + 1), '', '']]).tex}$`).join(', ')}.`, T`Współczynniki to kolejne liczby Fibonacciego: $x^{${n}}=${res.tex}$.`],
       wrong: [[poly([[fib(n + 1), 'x', ''], [fib(n), '', '']]).tex, T`Przesunięcie o jeden — to $x^{${n + 1}}$.`], [poly([[b, 'x', ''], [a, '', '']]).tex, 'Zamienione współczynniki.'], [poly([[a, 'x', ''], [-b, '', '']]).tex, T`$x^2=x+1$ — z plusem.`]] });
   }
-  const gen29 = gk => (gk === 'orig' ? e29() : e29p(R.int(3, 11)));
+  const gen29 = () => e29p(R.int(3, 11));
 
   /* ---------- 2.10 ---------- */
   const MONO = [[T`\frac x5`, 1], [T`-0{,}5\left(1+\frac1x\right)`, 0], [T`\frac3{x^2}`, 0], [T`7x^3y`, 1], [T`\sqrt2\,x^2`, 1], [T`\sqrt x`, 0], [T`x^{-1}`, 0], [T`2^x`, 0], [T`-\frac34`, 1], [T`x+y`, 0], [T`0{,}2x^2y^5`, 1], [T`(2x)^3`, 1], [T`\frac{x^2}{y}`, 0], [T`\pi x`, 1]];
@@ -278,7 +278,7 @@
       steps: [T`$x^2=\frac{(xy)(xz)}{yz}=\frac{${a}\cdot ${b}}{${c}}=${x * x}$, $\ y^2=\frac{${a}\cdot ${c}}{${b}}=${y * y}$, $\ z^2=\frac{${b}\cdot ${c}}{${a}}=${z * z}$.`, T`Suma: $${x * x}+${y * y}+${z * z}=${v}$.`],
       wrong: [[String(a * a + b * b + c * c), T`$a=xy$, więc $a^2=x^2y^2$ — to nie $x^2$.`], [String(Math.abs(x) + Math.abs(y) + Math.abs(z)), 'Policzono $|x|+|y|+|z|$ zamiast sumy kwadratów.'], [String(v + 2 * (a + b + c)), 'To $(x+y+z)^2$.']] });
   }
-  const gen222 = gk => (gk === 'gen' ? e222gen() : e222(R.nz(-6, 6), R.nz(-6, 6), R.nz(-6, 6)));
+  const gen222 = () => (e222(R.nz(-6, 6), R.nz(-6, 6), R.nz(-6, 6)));
 
   /* ---------- 2.23 ---------- */
   function e223(es) {
@@ -303,7 +303,7 @@
       wrong: [[String(W1), 'To suma wszystkich współczynników.'], [String((W1 - Wm) / 2), 'To suma współczynników przy nieparzystych potęgach.'], [String(W1 + Wm), 'Zapomniano podzielić przez 2.']] });
   }
   const par = x => (x < 0 ? '(' + x + ')' : String(x));
-  const gen224 = gk => { if (gk === 'gen') return e224gen(); for (;;) { const p = R.int(-2, 2), q0 = R.int(-2, 2), n = R.int(2, 6); if (q0 !== 0 && Math.abs(1 + p + q0) <= 3 && Math.abs(1 - p + q0) <= 3 && (1 + p + q0 + 1 - p + q0) !== 0) return e224(p, q0, n); } };
+  const gen224 = () => { for (;;) { const p = R.int(-2, 2), q0 = R.int(-2, 2), n = R.int(2, 6); if (q0 !== 0 && Math.abs(1 + p + q0) <= 3 && Math.abs(1 - p + q0) <= 3 && (1 + p + q0 + 1 - p + q0) !== 0) return e224(p, q0, n); } };
 
   /* ---------- 2.6, 2.19, 2.21 — zadania bez losowania ---------- */
   const it26 = mk({ field: txtField(), q: T`Dane są $P(x)=nx^{n+4}+3x^{4-n}-2x^3+4x-5$ oraz $Q(x)=3x^{n+4}-x^4+x^3+2nx^2+x-2$. Dla jakiej liczby całkowitej $n$ różnica $P-Q$ jest wielomianem stopnia $5$ o dokładnie sześciu wyrazach?`, tex: 'n=-1',
