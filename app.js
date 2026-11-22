@@ -859,7 +859,6 @@
           h('span', { class: 'letter' }, 'ABCD'[oi]), optTxt(o.tex));
         if (reveal && sel) b.classList.add('picked');
         grp.append(b);
-        if (reveal && sel && !o.ok && o.why) grp.append(mdEl('div', '<b>Skąd ten wynik:</b> ' + o.why, { class: 'why hit' }));
       });
       return grp;
     };
@@ -1065,7 +1064,7 @@
           const nb = guidedUI(it); box.replaceWith(nb);
           const tgt = nb.querySelector(o.ok ? '.gline.new' : '.why.hit'); if (tgt) tgt.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' });
         } }, h('span', { class: 'letter' }, 'ABC'[oi]), mdEl('span', o.t, { class: 'txt' })));
-        if (bad && o.why) cur.append(mdEl('div', '<b>Ten pomysł nie zadziała.</b> ' + o.why + ' Spróbuj innej opcji.', { class: 'why hit' }));
+        if (bad) cur.append(mdEl('div', '<b>Ten pomysł nie zadziała.</b> Spróbuj innej opcji.', { class: 'why hit' }));
       });
       box.append(cur);
     }
