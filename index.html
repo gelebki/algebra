@@ -456,6 +456,7 @@ canvas.fx { position: fixed; inset: 0; z-index: 55; pointer-events: none; }
 .lprow b { font-family: var(--f-display); }
 .lprow .tasks { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
 .tpill { font: 600 11.5px var(--f-mono); padding: 3px 8px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); }
+.tpill { cursor: pointer; transition: transform .12s, border-color .15s; } .tpill:hover { border-color: var(--hue); color: var(--ink); transform: translateY(-1px); }
 .tpill.s1 { border-color: color-mix(in srgb, var(--hue) 40%, var(--line)); color: var(--ink); }
 .tpill.s3 { background: color-mix(in srgb, var(--hue) 16%, transparent); border-color: var(--hue); color: var(--hue); }
 .chart { padding: 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); overflow-x: auto; }
