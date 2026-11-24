@@ -799,6 +799,53 @@ body.s-mat .top { background: color-mix(in srgb, #ffffff 90%, transparent); }
   .mstat svg { width: 46px; height: 46px; }
   .mtask { padding: 10px; margin-inline: -6px; } .mlab { min-width: 0; } .mtitle { align-items: flex-start; }
 }
+/* ===== Matura: narzędzia przy zadaniu, podobny przykład, ciemny motyw ===== */
+.mhr { display: flex; align-items: center; gap: 12px; }
+.mtools { margin-top: 10px; display: grid; gap: 10px; }
+.mtoolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+.mtool { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: 600 13.5px var(--f-body); cursor: pointer; }
+.mtool span { display: grid; width: 17px; height: 17px; color: var(--accent); } .mtool svg { width: 17px; height: 17px; }
+.mtool:hover { border-color: #c9a6e6; } .mtool.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); } .mtool.on span { color: inherit; }
+.mwzbox { display: grid; gap: 10px; }
+.msnip { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--surface); }
+.msnh { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.msnh b { font: 700 14.5px var(--f-display); color: #5a2a91; }
+.mqbtn { width: 28px; height: 28px; flex: none; border-radius: 50%; border: 1.5px solid #c9a6e6; background: #f6effc; color: #5a2a91; font: 800 15px var(--f-display); cursor: pointer; }
+.mqbtn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.msnip .mpaper { cursor: default; } .msnip .mpaper img { max-width: 640px; }
+.msnx { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: #f6effc; border-left: 3px solid #b98ae0; font-size: 14.5px; line-height: 1.55; }
+.mvar { border: 1.5px dashed #c9a6e6; border-radius: 14px; padding: 14px; background: var(--surface); display: grid; gap: 12px; }
+.mvh { display: flex; justify-content: space-between; align-items: center; } .mvh small { color: #5a2a91; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; font-size: 11.5px; }
+.mvq { font-size: 16px; line-height: 1.6; } .mvq .maxis, .mvopt .maxis { display: block; max-width: 100%; height: auto; color: var(--ink); }
+.mvopts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 8px; } .mvopts.pics { grid-template-columns: 1fr; }
+.mvo { display: grid; gap: 6px; align-content: start; }
+.mvopt { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 12px; text-align: left; border-radius: 11px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-size: 16px; }
+.mvopt .letter { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 8px; background: var(--surface-2); font: 800 14px var(--f-display); }
+.mvopt .txt { min-width: 0; overflow-x: auto; }
+.mvopt:hover:not(:disabled) { border-color: #a874e0; } .mvopt.sel { border-color: #7b3fbf; background: #efe4fa; }
+.mvopt.good { border-color: var(--ok); background: var(--ok-bg); } .mvopt.wrong { border-color: var(--bad); background: var(--bad-bg); } .mvopt.right { border-color: var(--ok); border-style: dashed; }
+.mvopt:disabled { cursor: default; }
+.mvwhy { font-size: 13.5px; color: var(--bad); padding: 0 4px; line-height: 1.45; }
+.mvsteps { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); display: grid; gap: 4px; } .mvsteps small { color: var(--muted); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; } .mvsteps p { margin: 0; line-height: 1.55; }
+.mpfrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .mpft { flex: 1 1 240px; line-height: 1.5; }
+/* ciemny motyw z fioletowym akcentem */
+body.s-mat.mat-dark { --bg: #141219; --surface: #1c1923; --surface-2: #25212e; --ink: #eceaf2; --muted: #a49eb3; --line: #332e3e;
+  --accent: #b98ae0; --accent-ink: #1a0f26; --accent-soft: rgba(185, 138, 224, .14); --xp: #b98ae0; --xp-soft: rgba(185, 138, 224, .14);
+  --ok: #62cf96; --ok-bg: rgba(98, 207, 150, .1); --bad: #f08a9a; --bad-bg: rgba(240, 138, 154, .08); --shadow: 0 10px 28px -18px rgba(0, 0, 0, .75); color-scheme: dark; }
+body.s-mat.mat-dark .top { background: color-mix(in srgb, var(--surface) 88%, transparent); }
+body.s-mat.mat-dark .mtab.on { background: var(--surface); box-shadow: none; }
+body.s-mat.mat-dark .mcard:hover, body.s-mat.mat-dark .mchip:hover { border-color: #6d4a92; background: var(--surface-2); }
+body.s-mat.mat-dark .msub, body.s-mat.mat-dark .msnh b, body.s-mat.mat-dark .mkey small, body.s-mat.mat-dark .mvh small { color: #cfa9f0; }
+body.s-mat.mat-dark .msub { border-color: #4a3563; }
+body.s-mat.mat-dark .mpts { background: #2c2238; color: #d6b6f2; }
+body.s-mat.mat-dark .mopt { background: var(--surface-2); }
+body.s-mat.mat-dark .mopt.sel, body.s-mat.mat-dark .mvopt.sel { background: #3a2a4f; border-color: #b98ae0; }
+body.s-mat.mat-dark .mkey { background: #211c29; border-color: #3a3047; }
+body.s-mat.mat-dark .mqbtn { background: #2c2238; color: #e2c8f7; border-color: #6d4a92; } body.s-mat.mat-dark .mqbtn.on { background: var(--accent); color: var(--accent-ink); }
+body.s-mat.mat-dark .msnx { background: #241d2e; border-color: #8a5cc0; }
+body.s-mat.mat-dark .mvar { border-color: #5b3f7c; }
+body.s-mat.mat-dark .mpaper { background: #fff; }
+body.s-mat.mat-dark .mpaper img, body.s-mat.mat-dark .mkey img { border-radius: 6px; }
 </style>
 </head>
 <body>
@@ -832,6 +879,8 @@ window.MathJax = { tex: { packages: { '[+]': ['ams'] } }, svg: { fontCache: 'loc
 <script src="xp.js"></script>
 <script src="matura-data.js"></script>
 <script src="matura-wzory.js"></script>
+<script src="matura-snip.js"></script>
+<script src="matura-gen.js"></script>
 <script src="cloud.js"></script>
 <script src="app.js"></script>
 </body>

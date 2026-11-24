@@ -18,6 +18,8 @@
 
   /* ---------------- ikony ---------------- */
   const IC = {
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.8 6.8 0 0 0 10.7 10.7Z"/></svg>',
+    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
     sheet: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 2.8h8.2L19 7.6V20a1.2 1.2 0 0 1-1.2 1.2H6A1.2 1.2 0 0 1 4.8 20V4A1.2 1.2 0 0 1 6 2.8Z" fill="#fff" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 2.8V7a.8.8 0 0 0 .8.8H19" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="7" y="9.4" width="9.8" height="2.8" rx=".6" fill="#b98ae0"/><path d="M7.4 15.2h9M7.4 18.2h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
     star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg>',
     solved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/></svg>',
@@ -600,7 +602,9 @@
     page.append(h('div', { class: 'mhead' },
       h('div', { class: 'mtitle' }, h('span', { class: 'mico', html: IC.sheet }),
         h('div', {}, h('h1', {}, 'Matura'), h('p', {}, 'Matematyka · poziom podstawowy · formuła 2023. Zadania zamknięte z ' + nS + ' arkuszy CKE: maj, czerwiec i sierpień 2023–2026.'))),
-      h('div', { class: 'mstat', html: ringSVG(all.done / Math.max(1, all.total), 54, 5, 'var(--accent)') + `<span><b>${all.done}</b><small>/${all.total}</small></span>` })));
+      h('div', { class: 'mhr' },
+        h('button', { class: 'iconbtn mdark', 'aria-label': S.matDark ? 'Jasny motyw' : 'Ciemny motyw', title: S.matDark ? 'Jasny motyw' : 'Ciemny motyw', html: S.matDark ? IC.sun : IC.moon, onclick: () => { S.matDark = !S.matDark; save(); render(); } }),
+        h('div', { class: 'mstat', html: ringSVG(all.done / Math.max(1, all.total), 54, 5, 'var(--accent)') + `<span><b>${all.done}</b><small>/${all.total}</small></span>` }))));
     page.append(h('div', { class: 'mtabs', role: 'tablist' },
       h('button', { class: 'mtab' + (!V.wz ? ' on' : ''), role: 'tab', 'aria-selected': !V.wz ? 'true' : 'false', onclick: () => goMatura(null) }, 'Zadania zamknięte'),
       h('button', { class: 'mtab' + (V.wz ? ' on' : ''), role: 'tab', 'aria-selected': V.wz ? 'true' : 'false', onclick: () => goMatura(null, true) }, 'Tablice wzorów')));
@@ -643,8 +647,53 @@
     card.append(h('div', { class: 'mmeta' }, h('span', { class: 'mn' }, String(n)), h('span', { class: 'mses' }, 'Matura ' + it.ses + ' · zad. ' + it.nr), h('span', { class: 'mpts' }, it.pts.split('-')[1] + ' pkt'),
       h('span', { class: 'mst' }, st ? (st.ok ? 'zrobione' : 'do powtórki') : '')),
       h('button', { class: 'mpaper', 'aria-label': 'Powiększ zadanie', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, ...imgs.map(([o, alt]) => mImg(o, alt))),
-      matAnswer(it, card));
+      matAnswer(it, card), matTools(it));
     return card;
+  }
+  // wzory z tablic potrzebne do zadania + podobny przykład z generatora
+  function matTools(it) {
+    const SN = A.MATURA_SNIP || {}, G = A.MGEN, wz = (G ? G.wz(it.id) : []).filter(id => SN[id]);
+    const box = h('div', { class: 'mtools' }), slot = h('div', {}), bar = h('div', { class: 'mtoolbar' });
+    let open = null;
+    const toggle = (k, make) => { slot.innerHTML = ''; open = open === k ? null : k; if (open) slot.append(make()); bar.querySelectorAll('.mtool').forEach(b => b.classList.toggle('on', b.dataset.k === open)); };
+    if (wz.length) bar.append(h('button', { class: 'mtool', 'data-k': 'wz', onclick: () => toggle('wz', () => h('div', { class: 'mwzbox' }, ...wz.map(id => matSnip(SN[id])))) }, h('span', { html: IC.book }), 'Wzory z tablic (' + wz.length + ')'));
+    if (G && G.MAP[it.id]) bar.append(h('button', { class: 'mtool', 'data-k': 'var', onclick: () => toggle('var', () => matVariant(it)) }, h('span', { html: IC.dice }), 'Podobny przykład'));
+    box.append(bar, slot);
+    return bar.children.length ? box : '';
+  }
+  function matSnip(s) {
+    const ex = h('div', { class: 'msnx', hidden: true }); ex.append(md(s.x));
+    return h('div', { class: 'msnip' }, h('div', { class: 'msnh' }, h('b', {}, s.t),
+      h('button', { class: 'mqbtn', 'aria-label': 'Wyjaśnij ten wzór', title: 'Wyjaśnij własnymi słowami', onclick: e => { ex.hidden = !ex.hidden; e.currentTarget.classList.toggle('on', !ex.hidden); } }, '?')),
+      h('div', { class: 'mpaper' }, mImg(s.img, s.t)), ex);
+  }
+  function matVariant(it) {
+    const r = A.MGEN.gen(it.id), box = h('div', { class: 'mvar' });
+    if (!r) return h('p', { class: 'mq' }, 'Nie udało się wylosować przykładu — spróbuj jeszcze raz.');
+    const again = () => box.replaceWith(matVariant(it));
+    const steps = () => { const s = h('div', { class: 'mvsteps' }, h('small', {}, 'Rozwiązanie')); (r.steps || []).forEach(x => s.append(mdEl('p', x))); return s; };
+    const done = ok => { box.querySelectorAll('.mvopt, .mopt').forEach(b => { b.disabled = true; }); if (ok) { SFX.correct(); bumpDay(true); gainXP(1, box); } else { SFX.wrong(); bumpDay(false); } save(); renderTop(); box.append(steps(), h('button', { class: 'btn small primary', onclick: again }, 'Kolejny przykład', h('span', { html: IC.dice }))); };
+    box.append(h('div', { class: 'mvh' }, h('small', {}, 'Podobny przykład · inne liczby'), h('button', { class: 'btn small ghost', onclick: again }, 'Losuj')), mdEl('div', r.q, { class: 'mvq' }));
+    if (r.opts) {
+      const list = h('div', { class: 'mvopts' + (r.opts.some(o => o.html) ? ' pics' : '') });
+      r.opts.forEach((o, i) => {
+        const why = h('div', { class: 'mvwhy', hidden: true }); if (o.why) why.append(md(o.why));
+        const b = h('button', { class: 'mvopt', onclick: () => { b.classList.add(o.ok ? 'good' : 'wrong'); if (!o.ok) { why.hidden = false; const g = list.children[r.opts.findIndex(x => x.ok)]; if (g) g.querySelector('.mvopt').classList.add('right'); } done(o.ok); } }, h('span', { class: 'letter' }, 'ABCD'[i]), o.html ? h('span', { class: 'txt', html: o.html }) : mdEl('span', '$' + o.t + '$', { class: 'txt' }));
+        list.append(h('div', { class: 'mvo' }, b, why));
+      });
+      box.append(list);
+    } else if (r.pf) {
+      const ch = [];
+      const rows = r.pf.map(([t], k) => { const rw = h('div', { class: 'mpfrow' }, mdEl('span', t, { class: 'mpft' }), ...['P', 'F'].map(v => h('button', { class: 'mopt', 'data-v': v, onclick: e => { ch[k] = v; rw.querySelectorAll('.mopt').forEach(x => x.classList.toggle('sel', x === e.currentTarget)); chk.disabled = ch.filter(Boolean).length < r.pf.length; } }, v))); return rw; });
+      const chk = h('button', { class: 'btn primary small', disabled: true, onclick: () => { chk.remove(); let all = true; rows.forEach((rw, k) => { const want = r.pf[k][1] ? 'P' : 'F', ok = ch[k] === want; all = all && ok; rw.querySelector('.sel').classList.add(ok ? 'good' : 'wrong'); if (!ok) rw.querySelector(`.mopt[data-v="${want}"]`).classList.add('right'); }); done(all); } }, 'Sprawdź');
+      box.append(...rows, chk);
+    } else if (r.multi) {
+      const set = new Set(), need = r.multi.filter(o => o.ok).length, list = h('div', { class: 'mvopts' });
+      r.multi.forEach((o, i) => list.append(h('div', { class: 'mvo' }, h('button', { class: 'mvopt', onclick: () => { if (set.has(i)) set.delete(i); else if (set.size < need) set.add(i); list.querySelectorAll('.mvopt').forEach((x, j) => x.classList.toggle('sel', set.has(j))); chk.disabled = set.size !== need; } }, h('span', { class: 'letter' }, 'ABCDEF'[i]), mdEl('span', '$' + o.t + '$', { class: 'txt' })))));
+      const chk = h('button', { class: 'btn primary small', disabled: true, onclick: () => { chk.remove(); let all = true; list.querySelectorAll('.mvopt').forEach((x, j) => { const o = r.multi[j]; if (set.has(j)) x.classList.add(o.ok ? 'good' : 'wrong'); else if (o.ok) x.classList.add('right'); if (set.has(j) !== o.ok) all = false; }); done(all); } }, 'Sprawdź');
+      box.append(list, chk);
+    }
+    return box;
   }
   function matAnswer(it, card) {
     const box = h('div', { class: 'mans' });
@@ -726,7 +775,7 @@
   function render() {
     const root = app(); root.innerHTML = '';
     const hue = ['stats', 'rank', 'home', 'subj', 'matura'].includes(V.view) ? 'st' : LISTS[V.list].hue;
-    document.body.className = 'h-' + hue + (V.view === 'matura' ? ' s-mat' : navSubj() && navSubj() !== 'alg' ? ' s-' + navSubj() : '');
+    document.body.className = 'h-' + hue + (V.view === 'matura' ? ' s-mat' + (S.matDark ? ' mat-dark' : '') : navSubj() && navSubj() !== 'alg' ? ' s-' + navSubj() : '');
     const pageKey = V.view + ':' + (V.view === 'subj' ? V.subj : V.view === 'list' ? V.list : V.view === 'task' && T ? T.ti : '');
     const page = V.view === 'home' ? homeView() : V.view === 'subj' ? subjView(V.subj) : V.view === 'list' ? listView() : V.view === 'stats' ? statsView() : V.view === 'rank' ? rankView() : V.view === 'matura' ? maturaView() : taskView();
     if (pageKey !== lastPage) page.classList.add('pagein');
