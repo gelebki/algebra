@@ -44,21 +44,58 @@
     return { g: r0, x: x0, y: y0, out };
   }
   const combT = (a, b, x, y) => T`${a}\cdot ${x < 0 ? '(' + x + ')' : x}+${b}\cdot ${y < 0 ? '(' + y + ')' : y}`;
-  function bezout(nums) {
-    const vars = ['x', 'y', 'z', 't'].slice(0, nums.length), eq = linV(nums, vars), g = gcdN(nums);
+  // kombinacja w „ludzkiej” postaci: 29·990 − 7·4095 (najpierw wyraz dodatni)
+  const termsT = ps => { const q = ps.filter(([k]) => k).sort((u, v) => (v[0] > 0) - (u[0] > 0)); let s = ''; for (const [k, n] of q) { const m = Math.abs(k); s += (k < 0 ? '-' : s ? '+' : '') + (m === 1 ? '' : m + '\\cdot ') + n; } return s || '0'; };
+  // algorytm Euklidesa + cofanie: każdą resztę zapisujemy przez a i b (w kolejności z zadania); każdy krok to osobna linijka
+  function backSub(a, b) {
+    const big = Math.max(a, b), small = Math.min(a, b), co = n => (n === a ? [1, 0] : [0, 1]);
+    let r0 = big, r1 = small, c0 = a === b ? [1, 0] : co(big), c1 = a === b ? [0, 1] : co(small), o0 = true, o1 = true;
+    const rows = [], lines = [], cT = c => termsT([[c[0], a], [c[1], b]]);
+    for (;;) {
+      const q = Math.floor(r0 / r1), r = r0 - q * r1; rows.push([r0, r1, q, r]);
+      if (!r) break;
+      const c = [c0[0] - q * c1[0], c0[1] - q * c1[1]];
+      let ln = T`$${r}=${r0}-${q === 1 ? '' : q + '\\cdot '}${r1}$`;
+      if (!(o0 && o1)) ln += T` $=${o0 ? r0 : T`\left(${cT(c0)}\right)`}-${o1 ? (q === 1 ? '' : q + '\\cdot ') + r1 : (q === 1 ? '' : q) + T`\left(${cT(c1)}\right)`}$ $=${cT(c)}$`;
+      lines.push(ln);
+      r0 = r1; r1 = r; c0 = c1; c1 = c; o0 = o1; o1 = false;
+    }
+    return { rows, lines, g: r1, x: c1[0], y: c1[1] };
+  }
+  // opis: Euklides w przód, potem cofanie
+  const backSubSteps = (a, b) => {
+    const bs = backSub(a, b), lo = Math.min(a, b), hi = Math.max(a, b);
+    const out = [T`Algorytm Euklidesa dla $${a}$ i $${b}$: ` + rowsT(bs.rows) + T`. Ostatnia niezerowa reszta: $(${a},${b})=${bs.g}$.`];
+    if (bs.lines.length) out.push(T`Cofamy się od góry: z każdej równości wyznaczamy resztę i wstawiamy za wcześniejsze reszty ich zapis przez $${a}$ i $${b}$. Potem wymnażamy nawias i zbieramy osobno wielokrotności $${a}$ i $${b}$.`, ...bs.lines);
+    else out.push(T`$${lo}$ dzieli $${hi}$, więc $(${a},${b})=${lo}=${lo === a ? combT(a, b, 1, 0) : combT(a, b, 0, 1)}$ — nie ma czego cofać.`);
+    return { bs, out };
+  };
+  function bezSteps(nums) {
+    const vars = ['x', 'y', 'z', 't'].slice(0, nums.length), g = gcdN(nums);
     let sol, steps;
-    const pairSteps = (a, b) => { const { g: gg, x, y, out } = bezoutRows(a, b); return { gg, x, y, text: T`Rozszerzony algorytm Euklidesa dla $${a},${b}$ — każdą resztę zapisujemy przez $${a}$ i $${b}$: ` + out.map(([r, xx, yy]) => T`$${r}=${combT(a, b, xx, yy)}$`).join(', ') + '.' }; };
-    if (nums.length === 2) { const r = pairSteps(nums[0], nums[1]); sol = [r.x, r.y]; steps = [r.text, T`Ostatnia niezerowa reszta to $(${nums[0]},${nums[1]})=${g}$, więc $x=${r.x},\ y=${r.y}$.`]; }
+    const pairSteps = null;
+    void pairSteps;
+    if (nums.length === 2) { const { bs, out } = backSubSteps(nums[0], nums[1]); sol = [bs.x, bs.y]; steps = [...out, T`Zatem $${combT(nums[0], nums[1], bs.x, bs.y)}=${g}$, czyli $x=${bs.x},\ y=${bs.y}$.`]; }
     else {
       // redukcja: d_k = (d_{k-1}, a_k) = d_{k-1}·u + a_k·v
-      let d = nums[0], co = [1]; steps = [T`Liczymy po kolei: $(${nums.join(',')})=(\ldots((${nums[0]},${nums[1]}),${nums[2]})\ldots)$ i za każdym razem zapisujemy NWD jako kombinację.`];
+      const cmb = (ns, cs) => ns.map((a, i) => (i ? '+' : '') + a + '\\cdot ' + (cs[i] < 0 ? '(' + cs[i] + ')' : cs[i])).join('');
+      let d = nums[0], co = [1]; steps = [T`NWD kilku liczb liczymy po kolei: $(${nums.join(',')})=${'('.repeat(nums.length - 2)}(${nums[0]},${nums[1]})${nums.slice(2).map(n => ',' + n + ')').join('')}$. Za każdym razem zapisujemy otrzymany NWD jako kombinację.`];
       for (let k = 1; k < nums.length; k++) {
-        const { g: gg, x: u, y: v } = (() => { const r = bezoutRows(d, nums[k]); return r; })();
-        steps.push(T`$${gg}=(${d},${nums[k]})=${combT(d, nums[k], u, v)}$` + (k > 1 ? T`, a $${d}=${nums.slice(0, k).map((a, i) => a + '\\cdot ' + (co[i] < 0 ? '(' + co[i] + ')' : co[i])).join('+')}$ — podstawiamy.` : '.'));
-        co = co.map(c => c * u).concat([v]); d = gg;
+        const bs = backSub(d, nums[k]);
+        steps.push(T`<b>Krok ${k}:</b> $(${d},${nums[k]})$. ` + rowsT(bs.rows) + T`, więc $(${d},${nums[k]})=${bs.g}$.`);
+        if (bs.lines.length) steps.push(...bs.lines);
+        const natT = (ns, cs) => termsT(ns.map((a, i) => [cs[i], a]));
+        steps.push(T`Czyli $${bs.g}=${natT([d, nums[k]], [bs.x, bs.y])}$.` + (k > 1 && bs.x ? T` Za $${d}$ wstawiamy zapis z poprzedniego kroku: $${d}=${natT(nums.slice(0, k), co)}$.` : ''));
+        if (k > 1 && bs.x) steps.push(T`$${bs.g}=${bs.x === 1 ? '' : bs.x === -1 ? '-' : bs.x}\left(${natT(nums.slice(0, k), co)}\right)$ $${bs.y < 0 ? '-' : '+'}${Math.abs(bs.y) === 1 ? '' : Math.abs(bs.y) + '\\cdot '}${nums[k]}$ $=${natT(nums.slice(0, k + 1), co.map(c => c * bs.x).concat([bs.y]))}$`);
+        co = co.map(c => c * bs.x).concat([bs.y]); d = bs.g;
       }
-      sol = co; steps.push(T`Stąd $${vars.map((v, i) => v + '=' + sol[i]).join(',\\ ')}$. Sprawdzenie: $${nums.map((a, i) => (i ? '+' : '') + a + '\\cdot ' + (sol[i] < 0 ? '(' + sol[i] + ')' : sol[i])).join('')}=${g}$ ✓.`);
+      sol = co; steps.push(T`Stąd $${vars.map((v, i) => v + '=' + sol[i]).join(',\\ ')}$. Sprawdzenie: $${cmb(nums, sol)}$ $=${nums.map((a, i) => a * sol[i]).map((v, i) => (i && v >= 0 ? '+' : '') + v).join('')}$ $=${g}$ ✓.`);
     }
+    return { sol, steps };
+  }
+  function bezout(nums) {
+    const vars = ['x', 'y', 'z', 't'].slice(0, nums.length), eq = linV(nums, vars), g = gcdN(nums);
+    const { sol, steps } = bezSteps(nums);
     const val = xs => nums.reduce((s, a, i) => s + a * xs[i], 0);
     const solT = xs => vars.map((v, i) => v + '=' + xs[i]).join(',\\ ');
     const cands = [[sol.map((x, i) => (i === 0 ? -x : x)), 'Zły znak przy $x$ — sprawdź podstawiając.'], [sol.map((x, i) => (i === 1 ? -x : x)), 'Zły znak przy $y$ — sprawdź podstawiając.'], [sol.slice().reverse(), 'Zamienione wartości — każda liczba ma swój współczynnik.'], [sol.map((x, i) => x + (i === 0 ? nums[1] / g : i === 1 ? nums[0] / g : 0)), 'Przesunięcie rozwiązania robimy z przeciwnymi znakami: $x+\\frac bd t,\\ y-\\frac ad t$.'], [sol.map((x, i) => (i === 0 ? x + 1 : x)), 'Błąd przy cofaniu się w algorytmie.']]
@@ -69,7 +106,7 @@
 
   /* ===== 1. pociągi: NWD trzech liczb ===== */
   function trains(xs) {
-    const g = gcdN(xs), w = xs.map(x => x / g), steps = [T`Liczba żołnierzy w wagonie dzieli każdą z liczb $${xs.join(',')}$; największa taka liczba to $(${xs.join(',')})$.`, T`$(${xs[0]},${xs[1]})=${gcd(xs[0], xs[1])}$, $(${gcd(xs[0], xs[1])},${xs[2]})=${g}$ (algorytm Euklidesa).`];
+    const g = gcdN(xs), w = xs.map(x => x / g), steps = [T`Liczba żołnierzy w wagonie dzieli każdą z liczb $${xs.join(',')}$; największa taka liczba to $(${xs.join(',')})$.`, T`Algorytm Euklidesa dla $${xs[0]}$ i $${xs[1]}$: ` + rowsT(euclidRows(xs[1], xs[0])) + T`, więc $(${xs[0]},${xs[1]})=${gcd(xs[0], xs[1])}$.`, T`Teraz $(${gcd(xs[0], xs[1])},${xs[2]})$: ` + rowsT(euclidRows(Math.max(xs[2], gcd(xs[0], xs[1])), Math.min(xs[2], gcd(xs[0], xs[1])))) + T`, więc $(${xs.join(',')})=${g}$.`];
     return [mk({ gk: 'trainG', ans: g, tex: String(g), flabel: 'żołnierzy', q: T`Przez stację przejechały trzy pociągi: z $${xs[0]}$, $${xs[1]}$ i $${xs[2]}$ żołnierzami. W każdym wagonie była ta sama, największa możliwa liczba żołnierzy. Ilu żołnierzy było w wagonie?`, steps: steps.concat([T`W każdym wagonie: $${g}$ żołnierzy.`]),
       wrong: [[String(gcd(xs[0], xs[1])) === String(g) ? String(g * 2) : String(gcd(xs[0], xs[1])), 'Trzeba uwzględnić wszystkie trzy pociągi.'], [String(lcm(lcm(xs[0], xs[1]), xs[2])), 'To NWW — a liczba w wagonie ma dzielić liczby żołnierzy.']] }),
     mk({ gk: 'trainW', field: txtField(), q: T`Pociągi wiozły $${xs[0]}$, $${xs[1]}$ i $${xs[2]}$ żołnierzy, w każdym wagonie tyle samo — największa możliwa liczba. Z ilu wagonów składały się pociągi?`, tex: T`${w.join(',\\ ')}`,
@@ -82,7 +119,7 @@
   function sameRem(a, r1, b, r2) {
     const x = a - r1, y = b - r2, g = gcd(x, y), mx = Math.max(r1, r2), sol = divs(g).filter(d => d > mx);
     return mk({ gk: 'rem', ans: sol[0], tex: String(sol[0]), flabel: 'dzielnik', q: T`Liczby $${a}$ oraz $${b}$ podzielono przez tę samą liczbę naturalną i otrzymano odpowiednio reszty $${r1}$ i $${r2}$. Znajdź tę liczbę.`,
-      steps: [T`Szukana liczba $d$ dzieli $${a}-${r1}=${x}$ i $${b}-${r2}=${y}$, więc $d\mid(${x},${y})$.`, 'Algorytm Euklidesa: ' + rowsT(euclidRows(Math.max(x, y), Math.min(x, y))) + T`, więc $(${x},${y})=${g}$.`, T`Reszta jest mniejsza od dzielnika, więc $d>${mx}$. Dzielniki $${g}$ większe od $${mx}$: $${sol.join(',')}$. Odpowiedź: $d=${sol.join(',')}$.`],
+      steps: [T`Z definicji reszty: $${a}=d\cdot q_1+${r1}$ i $${b}=d\cdot q_2+${r2}$. Zatem $d\cdot q_1=${a}-${r1}=${x}$ i $d\cdot q_2=${b}-${r2}=${y}$, czyli $d$ dzieli obie liczby, a więc dzieli ich NWD: $d\mid(${x},${y})$.`, 'Algorytm Euklidesa: ' + rowsT(euclidRows(Math.max(x, y), Math.min(x, y))) + T`, więc $(${x},${y})=${g}$.`, T`Reszta jest mniejsza od dzielnika, więc $d>${mx}$. Dzielniki $${g}$ większe od $${mx}$: $${sol.join(',')}$. Odpowiedź: $d=${sol.join(',')}$.`],
       wrong: [[String(gcd(a, b)), 'Najpierw trzeba odjąć reszty — dzielnik dzieli $' + a + '-' + r1 + '$, a nie $' + a + '$.'], [String(divs(g).filter(d => d <= mx).pop() || g * 3), T`Reszta musi być mniejsza od dzielnika, a tu $${mx}$ by nie pasowało.`], [String(gcd(a - r2, b - r1)), 'Reszty zamienione miejscami.']] });
   }
   const genRem = () => { for (;;) { const d = R.int(9, 40), r1 = R.int(1, d - 1), r2 = R.int(1, d - 1); const a = d * R.int(20, 300) + r1, b = d * R.int(20, 300) + r2; const g = gcd(a - r1, b - r2); if (divs(g).filter(x => x > Math.max(r1, r2)).length !== 1) continue; return sameRem(a, r1, b, r2); } };
@@ -108,11 +145,15 @@
     wrong: [[pairsT([[315, 495]]), 'Sprawdź: $7\\cdot315\\neq11\\cdot495$.'], [pairsT([[11, 7]]), 'Wtedy $(x,y)=1$, a nie 45.'], [pairsT([[495, 315], [315, 495]]), 'Równanie $7x=11y$ nie jest symetryczne.']] });
   const sol5e = brute((x, y) => x + y === 667 && lcm(x, y) === 120 * gcd(x, y), 667, 667);
   const sys5e = mk({ gk: 'lcmsum', field: txtField(), q: T`Rozwiąż w liczbach naturalnych: $x+y=667,\ [x,y]=120\,(x,y)$.`, tex: pairsT(sol5e),
-    steps: [T`$x=da,\ y=db$, $(a,b)=1$, $d=(x,y)$. Wtedy $[x,y]=dab$, więc $dab=120d$, czyli $ab=120$.`, T`$d(a+b)=667=23\cdot29$, więc $a+b\in\{1,23,29,667\}$. Z $ab=120$: $a+b=23$ daje $\{8,15\}$ ($d=29$), $a+b=29$ daje $\{5,24\}$ ($d=23$); obie pary względnie pierwsze.`, T`Odpowiedź: $${pairsT(sol5e)}$.`],
+    steps: [T`$x=da,\ y=db$, $(a,b)=1$, $d=(x,y)$. Wtedy $[x,y]=dab$, więc $dab=120d$, czyli $ab=120$.`, T`$x+y=d(a+b)=667=23\cdot29$, więc $a+b$ dzieli $667$: $a+b\in\{1,23,29,667\}$. Szukamy $a,b$ o danej sumie i iloczynie $120$ (to pierwiastki $u^2-(a+b)u+120=0$).`, T`$a+b=23$: $8\cdot15=120$ ✓, wtedy $d=667:23=29$. $\ a+b=29$: $5\cdot24=120$ ✓, $d=23$. Sumy $1$ i $667$ nie dają iloczynu $120$. Obie pary są względnie pierwsze, więc $(x,y)=(29\cdot8,29\cdot15)$ lub $(23\cdot5,23\cdot24)$ i pary zamienione.`, 'Odpowiedź: ' + sol5e.map(([x, y]) => `$(${x},${y})$`).join(', ') + '.'],
     wrong: [[pairsT(sol5e.filter(([x, y]) => x < y)), 'Pary uporządkowane — dopisz zamienione.'], [pairsT([[232, 435], [435, 232]]), T`Brakuje przypadku $a+b=29$.`], [pairsT([[8, 15], [5, 24]]), 'To pary $(a,b)$ — trzeba pomnożyć przez $d$.']] });
   const sol5f = brute((x, y) => lcm(x, 2 * y) === 308 && gcd(3 * x, 5 * y) === 7, 308, 154);
   const sys5f = mk({ gk: 'lcm2', field: txtField(), q: T`Rozwiąż w liczbach naturalnych: $[x,2y]=308,\ (3x,5y)=7$.`, tex: pairsT(sol5f),
-    steps: [T`$(3x,5y)=7$, więc $7\mid 3x$ i $7\mid 5y$, czyli $7\mid x$ i $7\mid y$. Ponadto $3$ i $5$ nie mogą być wspólnymi dzielnikami $3x$ i $5y$.`, T`$308=2^2\cdot7\cdot11$. Z $[x,2y]=308$: $x\mid308$ i $2y\mid308$, czyli $y\mid154$. Kandydaci (wielokrotności 7): $x\in\{7,14,28,77,154,308\}$, $y\in\{7,14,77,154\}$.`, T`Sprawdzamy oba warunki dla par kandydatów: zostają ` + sol5f.map(([x, y]) => `$(${x},${y})$`).join(', ') + '.', T`Odpowiedź: $${pairsT(sol5f)}$.`],
+    steps: [T`$(3x,5y)=7$, więc $7\mid 3x$ i $7\mid 5y$; ponieważ $(7,3)=(7,5)=1$, to $7\mid x$ i $7\mid y$. Piszemy $x=7a$, $y=7b$.`,
+      T`Wtedy $(3x,5y)=7\cdot(3a,5b)=7$, czyli $(3a,5b)=1$: liczby $a,b$ są względnie pierwsze, $3\nmid b$ i $5\nmid a$.`,
+      T`$[x,2y]=[7a,14b]=7\cdot[a,2b]=308$, czyli $[a,2b]=44=2^2\cdot11$. Zatem $a\mid44$ i $2b\mid44$, czyli $a\in\{1,2,4,11,22,44\}$, $b\in\{1,2,11,22\}$.`,
+      T`Sprawdzamy pary z $(a,b)=1$: $a=1,b=22$: $[1,44]=44$ ✓; $a=4,b=11$: $[4,22]=44$ ✓; $a=11,b=2$: $[11,4]=44$ ✓; $a=44,b=1$: $[44,2]=44$ ✓. Pozostałe dają $[a,2b]<44$ (np. $a=2,b=11$: $[2,22]=22$) albo mają wspólny dzielnik.`,
+      T`Mnożymy przez $7$. Odpowiedź: $${pairsT(sol5f)}$.`],
     wrong: [[pairsT(brute((x, y) => lcm(x, 2 * y) === 308 && x % 7 === 0 && y % 7 === 0, 308, 154).filter(([x, y], i) => sol5f.some(([a, b]) => a === x && b === y) || i % 4 === 1)), 'Nie sprawdzono warunku $(3x,5y)=7$ — np. $3$ albo $5$ też mogą być wspólnym dzielnikiem.'], [pairsT(sol5f.map(([x, y]) => [y, x])), 'Zamienione $x$ i $y$ — warunki nie są symetryczne.'], [pairsT(sol5f.slice(0, 1)), 'Brakuje rozwiązań — sprawdź wszystkich kandydatów.']] });
 
   /* ===== 6. (pa+qb, ra+sb) = (a,b) ===== */
@@ -141,7 +182,7 @@
       M('Wzajemna podzielność', 'Pokaż, że $d=(a,b)$ i $e=(' + u + ',' + v + ')$ dzielą się nawzajem.', T`$d$ dzieli obie kombinacje, a $a$ i $b$ dają się wyrazić przez $${u}$ i $${v}$: $a=${combU(aC)}$, $b=${combU(bC)}$.`,
         [S('Oznaczenia', 'Co oznaczyć?', T`$d=(a,b)$, $e=(${u},${v})$`, T`Niech $d=(a,b)$ i $e=(${u},${v})$. Pokażemy, że $d\mid e$ i $e\mid d$.`, 'Dwie liczby naturalne dzielące się nawzajem są równe.', ['$d=a+b$', 'NWD, a nie suma.'], ['$d=ab$', 'NWD, a nie iloczyn.']),
          S('d | e', T`Dlaczego $d\mid e$?`, T`$d$ dzieli $${u}$ i $${v}$`, T`$d\mid a$ i $d\mid b$, więc $d$ dzieli każdą kombinację: $d\mid ${u}$ i $d\mid ${v}$. Zatem $d\mid e$.`, 'Wspólny dzielnik dzieli NWD.', ['Bo $d\\leq e$', 'Nierówność nie daje podzielności.'], ['Bo $e$ jest pierwsze', 'Nie wiemy tego.']),
-         S('Odwrócenie', T`Jak wyrazić $a$ i $b$ przez $${u}$ i $${v}$?`, T`$a=${combU(aC)}$, $b=${combU(bC)}$`, T`$a=${combU(aC)}$, $\ b=${combU(bC)}$ (sprawdź wymnażając).`, T`Rozwiązujemy układ dla $a,b$ — wyznacznik $${p}\cdot ${s}-${q}\cdot ${r}=${D}$ to $\pm1$, więc współczynniki są całkowite.`, [T`$a=${combU([s, q])}$`, 'Sprawdź wymnażając — znaki się nie zgadzają.'], ['Nie da się', 'Da się, bo wyznacznik układu to $\\pm1$.']),
+         S('Odwrócenie', T`Jak wyrazić $a$ i $b$ przez $${u}$ i $${v}$?`, T`$a=${combU(aC)}$, $b=${combU(bC)}$`, T`$a=${combU(aC)}$, $\ b=${combU(bC)}$. Sprawdzenie dla $a$: $${combU(aC)}$ $=${linV([aC[0] * p + aC[1] * r, 0], ['a', 'b']) === 'a' ? linV([aC[0] * p, aC[0] * q], ['a', 'b']) + (aC[1] * r >= 0 ? '+' : '') + linV([aC[1] * r, aC[1] * s], ['a', 'b']) : ''}$ $=a$ ✓ (dla $b$ tak samo).`, T`Rozwiązujemy układ dla $a,b$ — wyznacznik $${p}\cdot ${s}-${q}\cdot ${r}=${D}$ to $\pm1$, więc współczynniki są całkowite.`, [T`$a=${combU([s, q])}$`, 'Sprawdź wymnażając — znaki się nie zgadzają.'], ['Nie da się', 'Da się, bo wyznacznik układu to $\\pm1$.']),
          S('e | d i wniosek', T`Co wynika z $e\mid ${u}$, $e\mid ${v}$?`, T`$e\mid a$, $e\mid b$, więc $e\mid d$, czyli $e=d$`, T`$e$ dzieli obie kombinacje, więc $e\mid a$ i $e\mid b$, czyli $e\mid d$. Skoro $d\mid e$, $e\mid d$ i $d,e>0$, to $d=e$. $\blacksquare$`, 'Dodatniość NWD jest potrzebna — inaczej mogłoby być $d=-e$.', ['$e=2d$', 'Wzajemna podzielność daje równość.'], ['$e\\leq d$ tylko', 'Mamy też $d\\mid e$.'])],
         [[T`$d=(a,b)$ dzieli $${u}$ i $${v}$, więc $d\mid e$.`, 'pierwsza podzielność'], [T`$a=${combU(aC)}$, $b=${combU(bC)}$.`, 'odwrócenie (z wymnożeniem)'], [T`Stąd $e\mid a$, $e\mid b$, więc $e\mid d$; $d,e>0\Rightarrow d=e$. $\blacksquare$`, 'druga podzielność i wniosek']],
         ['Pokazanie tylko jednej podzielności.', 'Wzory na $a$, $b$ bez sprawdzenia.']),
@@ -189,7 +230,7 @@
     for (const k of [2, 3, 4, 5, 7]) { const nn = (ce ? ce[0] : 0) + k; if (gcd(a * nn + b, c * nn + d) === 1) wrong.push([fake(nn), T`$(${a * nn + b},${c * nn + d})=1$ — ten ułamek jest nieskracalny.`]); }
     return mk({ gk: 'fcheck', field: txtField(), q: T`Czy dla każdej liczby naturalnej $n$ ułamek $\dfrac{${num}}{${den}}$ jest nieskracalny?`, tex,
       steps: [T`Niech $d$ dzieli licznik i mianownik. Kombinacja: $${c}(${num})-${a}(${den})=${-D}$, więc $d\mid ${Math.abs(D)}$.`,
-        Math.abs(D) === 1 ? T`Zatem $d=1$ — ułamek jest zawsze nieskracalny.` : T`$${Math.abs(D)}$ nie jest jedynką, więc skracanie przez $${Math.abs(D)}$ jest możliwe. Szukamy $n$ z $${Math.abs(D)}\mid ${num}$: najmniejsze to $n=${ce[0]}$.`,
+        Math.abs(D) === 1 ? T`Zatem $d=1$ — ułamek jest zawsze nieskracalny.` : T`$${Math.abs(D)}$ nie jest jedynką, więc skracanie przez $${Math.abs(D)}$ jest możliwe. Szukamy $n$ z $${Math.abs(D)}\mid ${num}$, czyli $${num}\equiv0\pmod{${Math.abs(D)}}$ — sprawdzamy $n=1,2,3,\ldots$ albo rozwiązujemy kongruencję: najmniejsze takie $n$ to $${ce[0]}$ ($${a}\cdot ${ce[0]}${b < 0 ? '' : '+'}${b}=${ce[1]}=${Math.abs(D)}\cdot ${ce[1] / Math.abs(D)}$).`,
         ce ? T`Dla $n=${ce[0]}$: $\frac{${ce[1]}}{${ce[2]}}$, a $(${ce[1]},${ce[2]})=${gcd(ce[1], ce[2])}$. Odpowiedź: nie zawsze.` : T`Odpowiedź: tak, dla każdego $n$.`],
       wrong });
   }
@@ -254,7 +295,7 @@
       ['Brak części dla $(c,b)$.'])]);
 
   const it12 = mk({ gk: 'a2b2', field: txtField(), q: T`Niech $a,b\in\mathbb Z$, $(a,b)=1$. Znajdź wszystkie możliwe wartości $(a^2+b^2,\ a+b)$.`, tex: T`1\text{ lub }2`,
-    steps: [T`Niech $d=(a^2+b^2,a+b)$. $a^2+b^2=(a+b)^2-2ab$, więc $d\mid 2ab$.`, T`Z zad. 3.11: $d\mid a+b$ i $(a,b)=1$ daje $(d,a)=(d,b)=1$, więc $(d,ab)=1$ i z $d\mid 2ab$ wynika $d\mid2$.`, T`Obie wartości występują: $a=2,b=1$: $(5,3)=1$; $a=b=1$: $(2,2)=2$. Odpowiedź: $1$ lub $2$.`],
+    steps: [T`Niech $d=(a^2+b^2,a+b)$. $a^2+b^2=(a+b)^2-2ab$, więc $d\mid 2ab$.`, T`Z zad. 3.11: $d\mid a+b$ i $(a,b)=1$ daje $(d,a)=(d,b)=1$. Liczba $d$ nie ma więc wspólnego dzielnika pierwszego ani z $a$, ani z $b$, czyli też z iloczynem $ab$: $(d,ab)=1$.`, T`Skoro $d\mid 2\cdot ab$ i $(d,ab)=1$, to $d\mid 2$ (lemat: $m\mid xy$ i $(m,y)=1$ daje $m\mid x$). Zatem $d\in\{1,2\}$.`, T`Obie wartości występują: $a=2,b=1$: $(5,3)=1$; $a=b=1$: $(2,2)=2$. Odpowiedź: $1$ lub $2$.`],
     wrong: [[T`1`, 'Dla $a=b=1$: $(2,2)=2$ — dwójka też występuje.'], [T`2`, 'Dla $a=2,b=1$: $(5,3)=1$.'], [T`1,\ 2\text{ lub }4`, 'Z $d\\mid2$ — więc 4 jest niemożliwe.']] });
 
   /* ===== 13. równania diofantyczne ===== */
@@ -262,20 +303,27 @@
     const g = gcd(a, b), eq = linV([a, b], ['x', 'y']);
     const q = T`Rozwiąż w liczbach całkowitych: $${eq}=${c}$.`;
     if (c % g) return mk({ gk: 'dio', field: txtField(), q, tex: T`\text{brak rozwiązań}`,
-      steps: [T`$(${Math.abs(a)},${Math.abs(b)})=${g}$, a $${g}\nmid ${c}$.`, T`Lewa strona dzieli się przez $${g}$ dla każdych całkowitych $x,y$, prawa nie — brak rozwiązań.`],
+      steps: [T`$(${Math.abs(a)},${Math.abs(b)})=${g}$, a $${g}\nmid ${c}$.`, T`$${Math.abs(a)}=${g}\cdot ${Math.abs(a) / g}$ i $${Math.abs(b)}=${g}\cdot ${Math.abs(b) / g}$, więc lewa strona to $${g}\cdot(\ldots)$ — dzieli się przez $${g}$ dla każdych całkowitych $x,y$. Prawa strona $${c}$ nie dzieli się przez $${g}$, więc równość jest niemożliwa — brak rozwiązań.`],
       wrong: [[T`x=${c}+${Math.abs(b)}t,\ y=${-c}${tsign(-a, 't')}`, 'Sprawdź: najpierw warunek $(a,b)\\mid c$.'], [T`x=0,\ y=${(c / b).toFixed(2).replace('.', '{,}')}`, 'Szukamy liczb całkowitych.'], [T`x=${c}${tsign(Math.abs(b) / gcd(a, b), 't')},\ y=${-c}${tsign(-a / gcd(a, b), 't')},\ t\in\mathbb Z`, 'Podstaw $t=0$ — nie spełnia równania; najpierw warunek $(a,b)\\mid c$.']] });
-    const { x: x1, y: y1 } = bezoutRows(Math.abs(a), Math.abs(b));
+    const A_ = Math.abs(a), B_ = Math.abs(b), { bs, out: euSteps } = backSubSteps(A_, B_), x1 = bs.x, y1 = bs.y, mul = c / g;
     let X = x1 * Math.sign(a) * (c / g), Y = y1 * Math.sign(b) * (c / g);
+    const X1 = X, Y1 = Y;
     let kx = b / g, ky = -a / g; if (kx < 0) { kx = -kx; ky = -ky; }
     const t0 = Math.floor(X / kx); X -= t0 * kx; Y -= t0 * ky;
     const solT = (x0, kx_, y0, ky_) => T`x=${aff(x0, [[kx_, 't']])},\ y=${aff(y0, [[ky_, 't']])},\ t\in\mathbb Z`;
+    const pv = v => (v < 0 ? '(' + v + ')' : v), eqT = (u, v) => T`${a}\cdot ${pv(u)}${b < 0 ? '-' : '+'}${B_}\cdot ${pv(v)}`;
+    const signNote = a < 0 || b < 0 ? T` W równaniu stoi $${a < 0 ? '-' + A_ + 'x' : ''}${a < 0 && b < 0 ? '\\ \\text{i}\\ ' : ''}${b < 0 ? '-' + B_ + 'y' : ''}$, więc ${a < 0 && b < 0 ? 'obie niewiadome bierzemy' : (a < 0 ? '$x$' : '$y$') + ' bierzemy'} z przeciwnym znakiem (np. $${b < 0 ? T`-${B_}\cdot ${pv(Y1)}=${B_}\cdot ${pv(-Y1)}` : T`-${A_}\cdot ${pv(X1)}=${A_}\cdot ${pv(-X1)}`}$).` : '';
+    const dioSteps = [T`$(${A_},${B_})=${g}$ i $${g}\mid ${c}$ — rozwiązania istnieją.`, ...euSteps,
+      T`Mamy $${combT(A_, B_, x1, y1)}=${g}$. Mnożymy obie strony przez $${mul}$: $\ ${combT(A_, B_, x1 * mul, y1 * mul)}=${c}$.${signNote} Rozwiązanie szczególne: $x_0=${X1},\ y_0=${Y1}$.`,
+      T`Wszystkie rozwiązania: $x=x_0${tsign(kx, 't')},\ y=y_0${tsign(ky, 't')}$, $t\in\mathbb Z$. Przy $t$ stoją $\frac{${B_}}{${g}}=${Math.abs(kx)}$ i $\frac{${A_}}{${g}}=${Math.abs(ky)}$ ze znakami dobranymi tak, żeby zmiany się znosiły. Czyli $x=${aff(X1, [[kx, 't']])},\ y=${aff(Y1, [[ky, 't']])}$.`];
+    if (t0) dioSteps.push(T`Liczby są niewygodne, więc wybieramy prostsze rozwiązanie szczególne: dla $t=${-t0}$ wychodzi $x=${X},\ y=${Y}$. Ten sam zbiór rozwiązań zapisujemy więc jako $${solT(X, kx, Y, ky)}$.`);
+    dioSteps.push(T`Sprawdzenie: dla $t=0$: $${eqT(X, Y)}=${a * X}${b * Y < 0 ? '-' : '+'}${Math.abs(b * Y)}=${c}$ ✓, a wyrazy z $t$ się znoszą: $${a}\cdot ${kx}t${b < 0 ? '-' : '+'}${B_}\cdot ${ky < 0 ? '(' + ky + 't)' : ky + 't'}=${a * kx}t${b * ky < 0 ? '-' : '+'}${Math.abs(b * ky)}t=0$.`);
     const tex = solT(X, kx, Y, ky);
     const wrong = [[solT(X, kx, Y, -ky), 'Zły znak przy $t$ w $y$ — podstaw i sprawdź: $t$ musi się skrócić.']];
     if (g > 1) wrong.push([solT(X, kx * g, Y, ky * g), T`Krok to $\frac{b}{d}$ i $\frac{a}{d}$ z $d=${g}$ — bez dzielenia gubimy rozwiązania.`]);
     wrong.push([solT(X + 1, kx, Y, ky), T`Dla $t=0$: $${a * (X + 1) + b * Y}\neq ${c}$ — złe rozwiązanie szczególne.`], [T`\text{brak rozwiązań}`, T`$(${Math.abs(a)},${Math.abs(b)})=${g}$ dzieli $${c}$, więc rozwiązania istnieją.`]);
     return mk({ gk: 'dio', field: txtField(), q, tex, extra: { _gs: [X, kx, Y, ky] },
-      steps: [T`$(${Math.abs(a)},${Math.abs(b)})=${g}$ i $${g}\mid ${c}$ — rozwiązania istnieją.`, T`Z algorytmu Euklidesa: $${combT(Math.abs(a), Math.abs(b), x1, y1)}=${g}$. Mnożąc przez $${c / g}$ (i poprawiając znaki): $x_0=${x1 * Math.sign(a) * (c / g)},\ y_0=${y1 * Math.sign(b) * (c / g)}$.`,
-        T`Wszystkie rozwiązania: $x=x_0+\frac{b}{d}t,\ y=y_0-\frac{a}{d}t$; po przesunięciu $t$, żeby $x_0$ było małe: $${tex}$.`, T`Sprawdzenie dla $t=0$: $${a}\cdot ${X < 0 ? '(' + X + ')' : X}${b < 0 ? '-' : '+'}${Math.abs(b)}\cdot ${Y < 0 ? '(' + Y + ')' : Y}=${c}$ ✓.`],
+      steps: dioSteps,
       wrong });
   }
   const genDio = () => { for (;;) { const g = R.pick([1, 1, 2, 3, 3, 4, 6]); const a = g * R.int(2, 25) * R.pick([1, 1, -1]), b = g * R.int(2, 25) * R.pick([1, -1]); if (gcd(a, b) !== g || Math.abs(a) === Math.abs(b)) continue; const c = R.pick([g * R.int(-20, 30), R.int(-30, 40)]); if (!c) continue; return dio2(a, b, c); } };
@@ -292,10 +340,10 @@
     const tex = T`x=${fT(X)},\quad y=${fT(Y)},\quad z=${fT(Z)}\ (s,t\in\mathbb Z)`;
     const alt = (Xa, Ya, Za) => T`x=${fT(Xa)},\quad y=${fT(Ya)},\quad z=${fT(Za)}\ (s,t\in\mathbb Z)`;
     return mk({ gk: 'dio3', field: txtField(), q, tex,
-      steps: [T`$(${Math.abs(a)},${Math.abs(b)})=${d1}$, więc $${linV([a, b], ['x', 'y'])}=${linV([d1], ['w'])}$ dla pewnego $w\in\mathbb Z$, a równanie to $${linV([d1, c], ['w', 'z'])}=${e}$.`,
-        T`$(${d1},${Math.abs(c)})=${g}\mid ${e}$. Rozwiązanie: $w=${aff(w0, [[cw, 's']])},\ z=${aff(z0, [[cz, 's']])}$, $s\in\mathbb Z$.`,
-        T`$${linV([a, b], ['x', 'y'])}=${linV([d1], ['w'])}$: skoro $${linV([a, b], ['x', 'y'])}=${d1}$ dla $x=${sx},\ y=${sy}$, to $x=${linV([sx, b / d1], ['w', 't'])},\ y=${linV([sy, -a / d1], ['w', 't'])}$, $t\in\mathbb Z$.`,
-        T`Podstawiamy $w$: $${tex}$.`],
+      steps: [T`Pomysł: dwie pierwsze niewiadome łączymy w jedną. $(${Math.abs(a)},${Math.abs(b)})=${d1}$, więc wyrażenie $${linV([a, b], ['x', 'y'])}$ przyjmuje ${d1 === 1 ? 'każdą wartość całkowitą' : T`dokładnie wszystkie wielokrotności $${d1}$`} (tożsamość Bézout). Piszemy $${linV([a, b], ['x', 'y'])}=${linV([d1], ['w'])}$, $w\in\mathbb Z$, i równanie staje się równaniem z dwiema niewiadomymi: $${linV([d1, c], ['w', 'z'])}=${e}$.`,
+        T`$(${d1},${Math.abs(c)})=${g}\mid ${e}$. Jedno rozwiązanie: $w=${w0},\ z=${z0}$ (sprawdzenie: $${d1 === 1 ? '' : d1 + '\\cdot '}${w0 < 0 ? '(' + w0 + ')' : w0}${c < 0 ? '-' : '+'}${Math.abs(c)}\cdot ${z0 < 0 ? '(' + z0 + ')' : z0}=${e}$). Wszystkie: $w=${aff(w0, [[cw, 's']])},\ z=${aff(z0, [[cz, 's']])}$, $s\in\mathbb Z$.`,
+        T`Teraz $${linV([a, b], ['x', 'y'])}=${linV([d1], ['w'])}$. Dla $x=${sx},\ y=${sy}$ mamy $${a}\cdot ${sx < 0 ? '(' + sx + ')' : sx}${b < 0 ? '-' : '+'}${Math.abs(b)}\cdot ${sy < 0 ? '(' + sy + ')' : sy}=${d1}$; mnożymy przez $w$ i dokładamy wszystkie rozwiązania jednorodne: $x=${linV([sx, b / d1], ['w', 't'])}$, $\ y=${linV([sy, -a / d1], ['w', 't'])}$, $\ t\in\mathbb Z$.`,
+        T`Podstawiamy $w$: $x=${fT(X)}$, $\ y=${fT(Y)}$, $\ z=${fT(Z)}$, $\ s,t\in\mathbb Z$.`],
       wrong: [[alt(X, Y, [z0, -cz, 0]), 'Zły znak przy $s$ w $z$ — sprawdź podstawiając.'], [alt([X[0], X[1], 0], [Y[0], Y[1], 0], Z).replace('s,t\\in', 's\\in'), 'Brakuje drugiego parametru — równanie z trzema niewiadomymi ma rodzinę dwuparametrową.'], [alt([X[0] + 1, X[1], X[2]], Y, Z), 'Złe rozwiązanie szczególne: dla $s=t=0$ nie wychodzi ' + e + '.']] });
   }
 
@@ -314,8 +362,9 @@
     if (e % gg) steps.push(T`$(${cs.map(Math.abs).join(',')})=${gg}\nmid ${e}$ — nie ma nawet rozwiązań całkowitych.`);
     else if (allPos && minV > e) steps.push(T`Współczynniki są dodatnie, więc dla $${vars.join(',')}\geq1$: $${eq}\geq ${minV}>${e}$ — brak rozwiązań naturalnych.`);
     else if (found) steps.push(T`Szukamy w rozwiązaniu ogólnym parametru, dla którego wszystkie niewiadome są $\geq1$, np. $${solT(found)}$: $${cs.map((c, i) => (i && c > 0 ? '+' : '') + (c < 0 ? '-' : '') + Math.abs(c) + '\\cdot ' + found[i]).join('')}=${e}$ ✓.`, inf ? 'Współczynniki mają różne znaki — takich rozwiązań jest nieskończenie wiele.' : 'Przyjmujemy $\\mathbb N=\\{1,2,\\ldots\\}$.');
-    else if (n === 2) { const it = dio2(cs[0], cs[1], e), [X0, KX, Y0, KY] = it._gs; steps.push(T`Rozwiązanie ogólne: $${it.mcCorrect}$.`, T`$x\geq1\iff t\geq ${((1 - X0) / KX).toFixed(2).replace('.', '{,}')}$, a $y\geq1\iff t${KY < 0 ? '\\leq' : '\\geq'} ${((1 - Y0) / KY).toFixed(2).replace('.', '{,}')}$ — żadna liczba całkowita $t$ nie spełnia obu warunków.`); }
-    else steps.push(T`Współczynniki są dodatnie, więc niewiadome są ograniczone: $${vars[2]}\leq ${Math.floor((e - cs[0] - cs[1]) / cs[2])}$, $${vars[1]}\leq ${Math.floor((e - cs[0] - cs[2]) / cs[1])}$. Sprawdzamy te przypadki — żaden nie daje $${e}$ przy $x\geq1$.`);
+    else if (n === 2) { const it = dio2(cs[0], cs[1], e), [X0, KX, Y0, KY] = it._gs; const dec = v => v.toFixed(2).replace('.', '{,}'); steps.push(T`Rozwiązanie ogólne w liczbach całkowitych (zad. 3.13): $${it.mcCorrect}$. Szukamy $t$, dla którego obie liczby są $\geq1$.`, T`$x\geq1$: $\ ${aff(X0, [[KX, 't']])}\geq1$ $\iff ${KX}t\geq ${1 - X0}$ $\iff t\geq\frac{${1 - X0}}{${KX}}\approx ${dec((1 - X0) / KX)}$.`, KY < 0 ? T`$y\geq1$: $\ ${aff(Y0, [[KY, 't']])}\geq1$ $\iff ${-KY}t\leq ${Y0 - 1}$ $\iff t\leq\frac{${Y0 - 1}}{${-KY}}\approx ${dec((Y0 - 1) / -KY)}$.` : T`$y\geq1\iff t\geq ${dec((1 - Y0) / KY)}$.`, T`Między $${dec((1 - X0) / KX)}$ a $${dec(KY < 0 ? (Y0 - 1) / -KY : (1 - Y0) / KY)}$ nie ma żadnej liczby całkowitej, więc żadne $t$ nie daje obu liczb naturalnych.`); }
+    else { const cases = []; for (let z = 1; cs[0] + cs[1] + cs[2] * z <= e; z++) for (let y = 1; cs[0] + cs[1] * y + cs[2] * z <= e; y++) { const r = e - cs[1] * y - cs[2] * z; cases.push(T`$${vars[1]}=${y},\ ${vars[2]}=${z}$: $${cs[0]}${vars[0]}=${r}$ ✗`); }
+      steps.push(T`Współczynniki są dodatnie, więc przy $${vars.join(',')}\geq1$ żadna niewiadoma nie może być duża: $${vars[1]}\leq ${Math.floor((e - cs[0] - cs[2]) / cs[1])}$ i $${vars[2]}\leq ${Math.floor((e - cs[0] - cs[1]) / cs[2])}$. Sprawdzamy wszystkie możliwości — w żadnej $${vars[0]}$ nie wychodzi naturalne:`, cases.join('; ') + '.'); }
     steps.push(found ? 'Odpowiedź: tak.' : 'Odpowiedź: nie.');
     let fakeInt = null; if (!found && e % gg === 0) { outer: for (let x = -60; x <= 60; x++) for (let y = -60; y <= 60; y++) { if (n === 2) { if (cs[0] * x + cs[1] * y === e) { fakeInt = [x, y]; break outer; } } else { const r = e - cs[0] * x - cs[1] * y; if (r % cs[2] === 0) { fakeInt = [x, y, r / cs[2]]; break outer; } } } }
     const wrong = found ? [[T`\text{Nie}`, T`Przykład: $${solT(found)}$.`], [T`\text{Tak, np. }${solT(found.map((v, i) => (i ? v : v + 1)))}`, (n === 3 ? 'Ta trójka' : 'Ta para') + ' nie spełnia równania — podstaw.'], [T`\text{Tak, np. }${solT(found.map((v, i) => (i === 1 ? v + 1 : v)))}`, (n === 3 ? 'Ta trójka' : 'Ta para') + ' nie spełnia równania — podstaw.']]
@@ -342,10 +391,10 @@
     { const { x: bx, y: by } = bezoutRows(Math.abs(ea), Math.abs(eb)); let X0 = bx * Math.sign(ea) * (elimE / gE), Y0 = by * Math.sign(eb) * (elimE / gE); let kx = eb / gE, ky = -ea / gE; if (kx < 0) { kx = -kx; ky = -ky; } const shE = Math.floor(X0 / kx); X0 -= shE * kx; Y0 -= shE * ky;
       const Pc = r1[3] - r1[o[0]] * X0 - r1[o[1]] * Y0, Qc = r1[o[0]] * kx + r1[o[1]] * ky, ck = r1[k];
       const nm = V[o[0]], nn = V[o[1]]; let s0 = 0, m = 1;
-      elimSteps.push(T`$(${Math.abs(ea)},${Math.abs(eb)})=${gE}$; rozwiązanie: $${nm}=${aff(X0, [[kx, 's']])},\ ${nn}=${aff(Y0, [[ky, 's']])}$, $s\in\mathbb Z$.`);
-      if (Math.abs(ck) === 1) elimSteps.push(T`Z (I): $${V[k]}=${aff(Pc * ck, [[-Qc * ck, 's']])}$ — zawsze całkowite (współczynnik przy $${V[k]}$ to $\pm1$).`);
-      else if (Math.abs(ck) / gcd(Qc, Math.abs(ck)) === 1 && Pc % ck === 0) elimSteps.push(T`Z (I): $${V[k]}=\frac{${aff(Pc, [[-Qc, 's']])}}{${ck}}=${aff(Pc / ck, [[-Qc / ck, 's']])}$ — całkowite dla każdego $s$.`);
-      else { m = Math.abs(ck) / gcd(Qc, Math.abs(ck)); while ((Pc - Qc * s0) % ck) s0++; elimSteps.push(T`Z (I): $${V[k]}=\frac{${aff(Pc, [[-Qc, 's']])}}{${ck}}$ — całkowite $\iff s\equiv ${s0}\pmod{${m}}$, czyli $s=${aff(s0, [[m, 't']])}$.`); }
+      elimSteps.push(T`$(${Math.abs(ea)},${Math.abs(eb)})=${gE}$. Jedno rozwiązanie: $${nm}=${X0},\ ${nn}=${Y0}$ (sprawdzenie: $${ea}\cdot ${X0 < 0 ? '(' + X0 + ')' : X0}${eb < 0 ? '-' : '+'}${Math.abs(eb)}\cdot ${Y0 < 0 ? '(' + Y0 + ')' : Y0}=${elimE}$; znajdujemy je jak w zad. 3.13). Wszystkie: $${nm}=${aff(X0, [[kx, 's']])},\ ${nn}=${aff(Y0, [[ky, 's']])}$, $s\in\mathbb Z$.`);
+      if (Math.abs(ck) === 1) elimSteps.push(T`Podstawiamy $${nm}$ i $${nn}$ do (I) i wyznaczamy $${V[k]}$: $${V[k]}=${aff(Pc * ck, [[-Qc * ck, 's']])}$ — zawsze całkowite (współczynnik przy $${V[k]}$ to $\pm1$).`);
+      else if (Math.abs(ck) / gcd(Qc, Math.abs(ck)) === 1 && Pc % ck === 0) elimSteps.push(T`Podstawiamy $${nm}$ i $${nn}$ do (I): $${ck}${V[k]}=${aff(Pc, [[-Qc, 's']])}$, czyli $${V[k]}=\frac{${aff(Pc, [[-Qc, 's']])}}{${ck}}=${aff(Pc / ck, [[-Qc / ck, 's']])}$ — całkowite dla każdego $s$.`);
+      else { m = Math.abs(ck) / gcd(Qc, Math.abs(ck)); while ((Pc - Qc * s0) % ck) s0++; elimSteps.push(T`Podstawiamy $${nm}$ i $${nn}$ do (I): $${V[k]}=\frac{${aff(Pc, [[-Qc, 's']])}}{${ck}}$. To jest całkowite tylko dla niektórych $s$: dokładnie gdy $s\equiv ${s0}\pmod{${m}}$, czyli $s=${aff(s0, [[m, 't']])}$, $t\in\mathbb Z$.`); }
       const pF = [0, 0, 0], vF = [0, 0, 0];
       pF[o[0]] = X0 + kx * s0; vF[o[0]] = kx * m; pF[o[1]] = Y0 + ky * s0; vF[o[1]] = ky * m; pF[k] = (Pc - Qc * s0) / ck; vF[k] = -Qc * m / ck;
       if (vF.every((c, i) => c === v[i] || c === -v[i]) && Math.abs(vF[0]) === Math.abs(v[0])) { p0 = pF; v = vF; }
@@ -356,10 +405,12 @@
     else wrong.push([solT(p0, v.map(c => 2 * c)), 'Krok $2t$ pomija co drugie rozwiązanie.']);
     wrong.push([solT(p0.map((c, i) => (i === 1 ? c - 1 : c)), v), 'Złe rozwiązanie szczególne — podstaw $t=0$ do obu równań.']);
     return mk({ gk: 'sys3', field: txtField(), q: T`Rozwiąż w liczbach całkowitych układ: $\begin{cases}${eqs[0]}\\${eqs[1]}\end{cases}$`, tex,
-      steps: [T`Eliminujemy $${V[k]}$: $${r1[k]}\cdot(\text{II})${r2[k] < 0 ? '+' + -r2[k] : '-' + r2[k]}\cdot(\text{I})$ daje $${linV(elim, V)}=${elimE}$ — równanie z dwiema niewiadomymi.`,
+      steps: [T`Eliminujemy $${V[k]}$ — w (I) stoi przy tej niewiadomej mały współczynnik $${r1[k]}$. ${r1[k] === 1 ? T`Mnożymy (I) przez $${r2[k]}$` : T`Mnożymy (II) przez $${r1[k]}$, a (I) przez $${r2[k]}$`}, żeby współczynniki przy $${V[k]}$ się zrównały:`,
+        T`${r1[k] === 1 ? '(II)' : T`$${r1[k]}\cdot(\text{II})$`}: $\ ${linV(r2.slice(0, 3).map(c => c * r1[k]), V)}=${r2[3] * r1[k]}$; $\ ${r2[k]}\cdot(\text{I})$: $\ ${linV(r1.slice(0, 3).map(c => c * r2[k]), V)}=${r1[3] * r2[k]}$.`,
+        T`Odejmujemy stronami — $${V[k]}$ znika: $${linV(elim, V)}=${elimE}$. To równanie z dwiema niewiadomymi.`,
         ...elimSteps,
-        T`Podstawiamy i dostajemy: $${tex}$. Kierunek $(${v.join(',')})$ jest prostopadły do $(${r1.slice(0, 3).join(',')})$ i $(${r2.slice(0, 3).join(',')})$ — sprawdź iloczyny skalarne: $0$ ✓.`,
-        T`Sprawdzenie dla $t=0$: $(${p0.join(',')})$ spełnia oba równania.`],
+        T`Zbieramy wynik (parametr oznaczamy $t$): $${tex}$.`,
+        T`Sprawdzenie dla $t=0$, czyli $(${p0.join(',')})$: (I) $${r1.slice(0, 3).map((c, i) => (i && c >= 0 ? '+' : '') + c + '\\cdot ' + (p0[i] < 0 ? '(' + p0[i] + ')' : p0[i])).join('')}=${r1[3]}$ ✓, (II) $${r2.slice(0, 3).map((c, i) => (i && c >= 0 ? '+' : '') + c + '\\cdot ' + (p0[i] < 0 ? '(' + p0[i] + ')' : p0[i])).join('')}=${r2[3]}$ ✓.`],
       wrong });
   }
 
@@ -368,7 +419,7 @@
     const sols = []; for (let n = 1; b * n < N; n++) { const r = N - b * n; if (r % a === 0 && r / a >= 1) sols.push(n); }
     const g = gcd(a, b);
     return mk({ gk: 'count', ans: sols.length, tex: String(sols.length), flabel: 'ile par', q: T`Ile jest par liczb naturalnych $m,n$ takich, że $${a}m+${b}n=${N}$?`,
-      steps: [T`$m=\frac{${N}-${b}n}{${a}}$ musi być naturalne: $${a}\mid ${N}-${b}n$ i $${N}-${b}n\geq ${a}$.`, T`Warunek podzielności: $${b}n\equiv ${N}\pmod{${a}}$, czyli $n\equiv ${sols.length ? sols[0] % (a / g) : 0}\pmod{${a / g}}$; warunek wielkości: $n\leq ${Math.floor((N - a) / b)}$.`,
+      steps: [T`$m=\frac{${N}-${b}n}{${a}}$ musi być naturalne: $${a}\mid ${N}-${b}n$ i $${N}-${b}n\geq ${a}$.`, T`Warunek podzielności: $${b}n\equiv ${N}\pmod{${a}}$, czyli $n\equiv ${sols.length ? sols[0] % (a / g) : 0}\pmod{${a / g}}$ (sprawdzamy reszty $n$ z dzielenia przez $${a / g}$). Warunek wielkości: $m\geq1\iff ${b}n\leq ${N}-${a}=${N - a}\iff n\leq ${Math.floor((N - a) / b)}$.`,
         sols.length ? T`$n\in\{${sols[0]},${sols[1] ?? ''}${sols.length > 2 ? ',\\ldots,' + sols[sols.length - 1] : ''}\}$ — to ciąg arytmetyczny o różnicy $${a / g}$: $\frac{${sols[sols.length - 1]}-${sols[0]}}{${a / g}}+1=${sols.length}$ par.` : 'Brak par.'],
       wrong: [[String(sols.length + 1), 'Sprawdź końce: $m$ i $n$ muszą być $\\geq1$.'], [String(sols.length - 1), 'Liczba wyrazów ciągu: $\\frac{\\text{ostatni}-\\text{pierwszy}}{r}+1$.'], [String(Math.floor((N - a) / b)), 'Nie każde $n$ daje całkowite $m$ — potrzebny warunek podzielności.']] });
   }
@@ -377,7 +428,7 @@
   /* ===== 17. podział 111 ===== */
   const sol17 = []; for (let x = 2; x < 111; x += 2) for (let y = 5; x + y < 111; y += 5) { const z = 111 - x - y; if (z % 7 === 0 && z > 0 && 3 * x + 4 * y + 5 * z === 490) sol17.push([x, y, z]); }
   const it17 = mk({ gk: 'split', field: txtField(), q: T`Podziel liczbę $111$ na trzy części tak, aby pierwsza była podzielna przez $2$, druga przez $5$, trzecia przez $7$, a potrójna pierwsza, poczwórna druga i pięciokrotna trzecia dawały w sumie $490$.`, tex: T`${sol17[0].join(',\\ ')}`,
-    steps: [T`$x+y+z=111$, $3x+4y+5z=490$. Odejmujemy potrojone pierwsze: $y+2z=157$.`, T`$5\mid y=157-2z$, więc $2z\equiv157\equiv2\pmod5$, $z\equiv1\pmod5$; a $7\mid z$. Zatem $z\equiv21\pmod{35}$: $z\in\{21,56,91,\ldots\}$.`, T`$z=21$: $y=115>111$ ✗; $z=56$: $y=45$, $x=111-45-56=10$ (parzyste ✓); $z=91$: $y<0$ ✗.`, T`Odpowiedź: $10,\ 45,\ 56$ (sprawdzenie: $30+180+280=490$ ✓).`],
+    steps: [T`Części to $x,y,z$: $\ x+y+z=111$ oraz $3x+4y+5z=490$. Od drugiego równania odejmujemy potrojone pierwsze: $(3x+4y+5z)-3(x+y+z)=490-333$, czyli $y+2z=157$.`, T`$y=157-2z$ ma dzielić się przez $5$: $2z\equiv157\equiv2\pmod5$, więc $z\equiv1\pmod5$. Do tego $7\mid z$.`, T`Wielokrotności $7$: $7,14,21,\ldots$ dają reszty $2,4,1,\ldots$ z dzielenia przez $5$ — pierwsza pasująca to $21$, a następne co $5\cdot7=35$: $z\in\{21,56,91,\ldots\}$.`, T`$z=21$: $y=115>111$ ✗; $z=56$: $y=45$, $x=111-45-56=10$ (parzyste ✓); $z=91$: $y<0$ ✗.`, T`Odpowiedź: $10,\ 45,\ 56$ (sprawdzenie: $30+180+280=490$ ✓).`],
     wrong: [[T`21,\ 35,\ 55`, '$55$ nie dzieli się przez 7.'], [T`10,\ 56,\ 45`, 'Kolejność ma znaczenie: druga część przez 5, trzecia przez 7.'], [T`16,\ 25,\ 70`, 'Sprawdź: $48+100+350=498\\neq490$.']] });
 
 
@@ -394,7 +445,7 @@
     const cases = []; for (const s of divs(S)) for (let a = 1; a < s; a++) { const b = s - a; if (a <= b && a * b === k) cases.push([s, a, b, S / s, gcd(a, b) === 1]); }
     return mk({ gk: 'lcmsum', field: txtField(), q: T`Rozwiąż w liczbach naturalnych: $x+y=${S},\ [x,y]=${k}\,(x,y)$.`, tex: pairsT(sol),
       steps: [T`$x=da,\ y=db$, $(a,b)=1$, $d=(x,y)$. Wtedy $[x,y]=dab$, więc $dab=${k}d$, czyli $ab=${k}$.`,
-        T`$d(a+b)=${S}$, więc $a+b$ dzieli $${S}$. Pary z $ab=${k}$: ` + (cases.length ? cases.map(([s, a, b, d, ok]) => T`$a+b=${s}$: $\{${a},${b}\}$, $d=${d}$${ok ? ' ✓' : ' (nie są względnie pierwsze ✗)'}`).join('; ') : 'brak') + '.',
+        T`$x+y=d(a+b)=${S}$, więc $a+b$ dzieli $${S}$. Dla każdego takiego dzielnika szukamy $a,b$ o tej sumie i iloczynie $${k}$ (pierwiastki $u^2-(a+b)u+${k}=0$); wtedy $d=${S}:(a+b)$. Pary: ` + (cases.length ? cases.map(([s, a, b, d, ok]) => T`$a+b=${s}$: $\{${a},${b}\}$, $d=${d}$${ok ? ' ✓' : ' (nie są względnie pierwsze ✗)'}`).join('; ') : 'brak') + '.',
         T`Odpowiedź: $${pairsT(sol)}$.`],
       wrong: [[pairsT(sol.filter(([x, y]) => x < y)), 'Pary uporządkowane — dopisz zamienione.'], [pairsT(sol.slice(0, Math.max(1, sol.length - 2))), 'Brakuje przypadku — sprawdź wszystkie dzielniki sumy.'], [pairsT(cases.filter(c => c[4]).map(([, a, b]) => [a, b])), 'To pary $(a,b)$ — trzeba pomnożyć przez $d$.'], [T`\text{brak rozwiązań}`, 'Rozwiązania istnieją.']] });
   }
@@ -520,6 +571,6 @@
     ],
   });
   for (const t of A.lists.find(l => l.id === 'e3').tasks) t.wzLib = F;
-  A.ETL3 = { gcdItem, genGcd, bezout, genBez, trains, genTrains, sameRem, genRem, nwdSys, genNwdSys, gcdComb, genGcomb, fracIrr, genFracIrr, fracCheck, genFracCheck, dio2, genDio, dio3, natExist, sys3, countNat, genCount, sol17, sol5e, sol5f, linV, egcd, lcm, gcdN, bezoutRows, euclidRows };
+  A.ETL3 = { bezSteps, gcdItem, genGcd, bezout, genBez, trains, genTrains, sameRem, genRem, nwdSys, genNwdSys, gcdComb, genGcomb, fracIrr, genFracIrr, fracCheck, genFracCheck, dio2, genDio, dio3, natExist, sys3, countNat, genCount, sol17, sol5e, sol5f, linV, egcd, lcm, gcdN, bezoutRows, euclidRows };
   void norm;
 })();

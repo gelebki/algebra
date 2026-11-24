@@ -29,18 +29,23 @@
     wrong.push([vT(Object.assign({}, v, { 2: (v[2] || 0) + 1 })), '$2$ nie występuje w tej liczbie w takiej potędze.']);
     return mk({ gk: 'vp', field: txtField(), q: T`Wyznacz wszystkie wykładniki liczb pierwszych (wykładniki $p$-adyczne) liczby $${xT}$.`, tex: vT(v),
       steps: [den === 1 ? T`Rozkład: $${Math.abs(num)}=${canonT(fa)}$${num < 0 ? ' (znak minus nie ma wpływu)' : ''}.` : T`${g > 1 ? T`Skracamy: $\frac{${Math.abs(num)}}{${den}}=\frac{${Math.abs(a)}}{${b}}$. ` : ''}Rozkłady: $${Math.abs(a)}=${canonT(fa)}$, $${b}=${canonT(fb)}$${num < 0 ? ' (znak minus nie ma wpływu)' : ''}.`,
-        T`$v_p(x)$ to wykładnik $p$ w rozkładzie; dla ułamka $v_p\left(\frac ab\right)=v_p(a)-v_p(b)$.`, T`Odpowiedź: $${vT(v)}$.`], wrong });
+        den === 1 ? T`$v_p(x)$ to wykładnik, w jakim liczba pierwsza $p$ występuje w rozkładzie. Odczytujemy wykładniki z rozkładu: ` + ps.map(q => T`$v_{${q}}=${v[q]}$`).join(', ') + '. Każda inna liczba pierwsza w rozkładzie nie występuje, więc ma wykładnik $0$.'
+          : T`Dla ułamka wykładniki z licznika liczymy z plusem, a z mianownika z minusem: $v_p\left(\frac ab\right)=v_p(a)-v_p(b)$. ` + ps.map(q => T`$v_{${q}}=${fa[q] || 0}-${fb[q] || 0}=${v[q]}$`).join(', ') + '. Pozostałe liczby pierwsze mają wykładnik $0$.',
+        T`Odpowiedź: $${vT(v)}$.`], wrong });
   }
   const genVp = () => { for (;;) { const num = R.int(2, 200) * R.pick([1, 1, -1]), den = R.pick([1, R.int(2, 120)]); if (Math.abs(num) === den) continue; const it = vpItem(num, den); if (it.mc.length >= 3) return it; } };
 
   /* ===== 2. postać kanoniczna, liczba i suma dzielników ===== */
+  // 120:2=60, 60:2=30, … — dzielenie przez kolejne liczby pierwsze
+  const divChain = n => { const out = []; let m = n; for (let p = 2; m > 1; p++) while (m % p === 0) { out.push(T`$${m}:${p}=${m / p}$`); m /= p; } return out.join(', '); };
   function canonItem(n) {
     const f = factor(n), t = tau(f), s = sigma(f), ps = primesOf(f);
     const ans = T`${canonT(f)};\ \ \tau=${t},\ \sigma=${s}`;
     const prodE = ps.reduce((x, p) => x * f[p], 1);
     return mk({ gk: 'canon', field: txtField(), q: T`Przedstaw $${n}$ w postaci kanonicznej i podaj liczbę $\tau$ oraz sumę $\sigma$ jej dzielników naturalnych.`, tex: ans,
-      steps: [T`Dzielimy przez kolejne liczby pierwsze: $${n}=${canonT(f)}$.`, T`$\tau(n)=\prod(\alpha_i+1)=${ps.map(p => '(' + f[p] + '+1)').join('')}=${t}$.`,
-        T`$\sigma(n)=\prod\frac{p^{\alpha+1}-1}{p-1}=${ps.map(p => '(' + Array.from({ length: f[p] + 1 }, (_, i) => (i ? powT(p, i) : '1')).join('+') + ')').join('\\cdot ')}=${s}$.`],
+      steps: [T`Dzielimy przez kolejne liczby pierwsze, dopóki się da: ` + divChain(n) + T`. Zatem $${n}=${canonT(f)}$.`,
+        T`Każdy dzielnik ma postać $${ps.map((p, i) => powT(p, 'abcd'[i])).join('\\cdot ')}$, gdzie ${ps.map((p, i) => T`$${'abcd'[i]}\in\{${f[p] === 1 ? '0,1' : f[p] === 2 ? '0,1,2' : '0,\\ldots,' + f[p]}\}$ (${f[p] + 1} możliwości)`).join(', ')}. Wszystkich wyborów jest $\tau=${ps.map(p => '(' + f[p] + '+1)').join('')}=${t}$.`,
+        T`Suma dzielników: wymnażamy nawiasy z potęgami każdej liczby pierwszej — każdy składnik iloczynu to jeden dzielnik: $\sigma=${ps.map(p => '(' + Array.from({ length: f[p] + 1 }, (_, i) => (i ? powT(p, i) : '1')).join('+') + ')').join('\\cdot ')}${ps.length > 1 ? '=' + ps.map(p => (p ** (f[p] + 1) - 1) / (p - 1)).join('\\cdot ') : ''}=${s}$.`],
       wrong: [[T`${canonT(f)};\ \ \tau=${prodE === t ? t + 1 : prodE},\ \sigma=${s}`, 'Liczba dzielników to iloczyn $(\\alpha_i+1)$, a nie samych wykładników.'], [T`${canonT(f)};\ \ \tau=${t},\ \sigma=${s - n}`, 'Do sumy dzielników wlicza się też sama liczba $n$.'], [T`${canonT(f)};\ \ \tau=${t - 1},\ \sigma=${s - 1}`, 'Dzielnik $1$ też się liczy.']] });
   }
   const genCanon = () => { for (;;) { const n = R.int(12, 400); const f = factor(n); if (primesOf(f).length >= 2 || Object.values(f)[0] >= 3) return canonItem(n); } };
@@ -51,7 +56,7 @@
     const exprT = parts.map(([b, e]) => powT(b, e)).join('\\cdot ');
     const wrongF = (() => { let g = {}; for (const [b, e] of parts) { const fb = factor(b); for (const p of primesOf(fb)) g[p] = (g[p] || 0) + fb[p] + e - 1; } return g; })();
     return mk({ gk: 'prod', field: txtField(), q: T`Zapisz w postaci kanonicznej liczbę $${exprT}$.`, tex: canonT(f),
-      steps: [T`Rozkładamy podstawy: ` + parts.map(([b, e]) => T`$${powT(b, e)}=${primesOf(factor(b)).length > 1 || Object.values(factor(b))[0] > 1 ? '(' + canonT(factor(b)) + ')^{' + e + '}=' : ''}${canonT(mul({}, factor(b), e))}$`).join(', ') + '.', T`Dodajemy wykładniki tych samych liczb pierwszych: $${canonT(f)}$.`],
+      steps: [T`Rozkładamy podstawy: ` + parts.map(([b, e]) => T`$${powT(b, e)}=${e > 1 && (primesOf(factor(b)).length > 1 || Object.values(factor(b))[0] > 1) ? '(' + canonT(factor(b)) + ')^{' + e + '}=' : ''}${canonT(mul({}, factor(b), e))}$`).join(', ') + '.', T`Dodajemy wykładniki tych samych liczb pierwszych: ` + primesOf(f).map(q => T`przy $${q}$: $${parts.map(([b, e]) => (factor(b)[q] || 0) * e).filter(x => x).join('+')}=${f[q]}$`).join(', ') + T`. Wynik: $${canonT(f)}$.`],
       wrong: [[canonT(wrongF), 'Potęgując iloczyn, mnożymy wykładniki: $(p^a)^e=p^{ae}$.'], [canonT(Object.fromEntries(primesOf(f).map((p, i) => [p, f[p] + (i ? 0 : 1)]))), 'Sprawdź sumę wykładników $2$.'], [canonT(Object.fromEntries(primesOf(f).map((p, i) => [p, f[p] - (i ? 1 : 0)]))), 'Sprawdź sumę wykładników — każdy czynnik się liczy.'], [canonT(Object.fromEntries(primesOf(f).map((p, i, arr) => [p, f[p] + (i === arr.length - 1 ? 1 : 0)]))), 'Sprawdź sumę wykładników ostatniej liczby pierwszej.'], [canonT(Object.fromEntries(primesOf(f).map(p => [p, Math.max(1, f[p] - 1)]))), 'Każdy czynnik dokłada swój wykładnik — policz jeszcze raz.'], [canonT(mul(f, { 3: 1 })), 'Sprawdź sumę wykładników $3$.'], [canonT(mul(f, { 5: 1 })), 'W rozkładzie nie ma tylu piątek — sprawdź podstawy.'], [canonT(mul(f, { 2: 2 })), 'Sprawdź sumę wykładników $2$ — każdy czynnik się liczy.']] });
   }
   const genProd = () => { const parts = []; const k = R.int(3, 4); for (let i = 0; i < k; i++) parts.push([R.pick([2, 3, 5, 6, 10, 12, 15, 18, 24]), R.int(1, 4)]); return prodCanon(parts); };
@@ -63,22 +68,21 @@
     const r = which === 'gcd' ? g : l, v = val(r), sym = which === 'gcd' ? '(' : '[', sym2 = which === 'gcd' ? ')' : ']';
     const other = which === 'gcd' ? val(l) : val(g);
     return mk({ label, gk: which, ans: v, tex: String(v), flabel: which === 'gcd' ? 'NWD' : 'NWW', q: T`Przy pomocy wykładników $p$-adycznych oblicz $${sym}${nums.join(',')}${sym2}$.`,
-      steps: [T`Rozkłady: ` + nums.map((n, i) => T`$${n}=${canonT(fs[i])}$`).join(', ') + '.', which === 'gcd' ? T`$v_p(\text{NWD})=\min$ wykładników: $${ps.map(p => T`v_{${p}}=${g[p]}`).join(',\\ ')}$.` : T`$v_p(\text{NWW})=\max$ wykładników: $${ps.map(p => T`v_{${p}}=${l[p]}`).join(',\\ ')}$.`, T`$${sym}${nums.join(',')}${sym2}=${canonT(r) === String(v) ? '' : canonT(r) + '='}${big(v)}$.`],
+      steps: [T`Rozkłady: ` + nums.map((n, i) => T`$${n}=${canonT(fs[i])}$`).join(', ') + '.', which === 'gcd' ? T`Wspólny dzielnik może mieć przy każdej liczbie pierwszej wykładnik co najwyżej taki jak w każdej z liczb — bierzemy najmniejszy: ` + ps.map(p => T`$v_{${p}}=\min(${fs.map(f => f[p] || 0).join(',')})=${g[p]}$`).join(', ') + '.' : T`Wspólna wielokrotność musi mieć przy każdej liczbie pierwszej wykładnik co najmniej taki jak w każdej z liczb — bierzemy największy: ` + ps.map(p => T`$v_{${p}}=\max(${fs.map(f => f[p] || 0).join(',')})=${l[p]}$`).join(', ') + '.', T`$${sym}${nums.join(',')}${sym2}=${canonT(r) === String(v) ? '' : canonT(r) + '='}${big(v)}$.`],
       wrong: [[String(other), which === 'gcd' ? 'To NWW — dla NWD bierzemy najmniejsze wykładniki.' : 'To NWD — dla NWW bierzemy największe wykładniki.'], ...(nums.length === 2 && which === 'lcm' ? [[String(nums[0] * nums[1]), 'Iloczyn to NWW tylko dla liczb względnie pierwszych.']] : []), [String(v * ps[0]), T`Za duży wykładnik przy $${ps[0]}$.`]] });
   }
 
   /* ===== 4(b). przykładowe rozwiązanie a₁x₁+…=NWD (albo inna prawa strona) ===== */
   function bezoutRHS(nums, rhs) {
     const vars = ['x', 'y', 'z', 't'].slice(0, nums.length), g = nums.reduce((a, b) => gcd(a, b));
-    let d = nums[0], co = [1];
-    const lines = [];
-    for (let k = 1; k < nums.length; k++) { const { g: gg, x: u, y: v } = E3.bezoutRows(d, nums[k]); lines.push(T`$${gg}=(${d},${nums[k]})=${d}\cdot ${u < 0 ? '(' + u + ')' : u}+${nums[k]}\cdot ${v < 0 ? '(' + v + ')' : v}$`); co = co.map(c => c * u).concat([v]); d = gg; }
+    const { sol: co, steps: bst } = E3.bezSteps(nums);
     const m = rhs / g, sol = co.map(c => c * m);
     const solT = xs => vars.map((v, i) => v + '=' + xs[i]).join(',\\ ');
     const valS = xs => nums.reduce((s, a, i) => s + a * xs[i], 0);
     const wrong = [[sol.map((x, i) => (i === 0 ? -x : x)), 'Zły znak przy $x$.'], [sol.map(x => -x), 'Wszystkie znaki odwrócone — wtedy suma to $-' + rhs + '$.'], [sol.map((x, i) => (i === 0 ? x + 1 : x)), 'Błąd przy cofaniu się w algorytmie.'], [sol.map((x, i) => (i === 1 ? x + 1 : x)), 'Błąd przy podstawianiu.'], [co, m !== 1 ? T`To kombinacja dająca $${g}$ — trzeba jeszcze pomnożyć przez $${m}$.` : 'Sprawdź podstawiając.'], [sol.slice().reverse(), 'Zamienione wartości.']].filter(([xs]) => valS(xs) !== rhs).map(([xs, w]) => [solT(xs), w]);
     return mk({ gk: 'bezR', field: txtField(), q: T`Podaj przykładowe rozwiązanie całkowite równania $${E3.linV(nums, vars)}=${rhs}$.`, tex: solT(sol),
-      steps: [T`$(${nums.join(',')})=${g}$${rhs !== g ? T`, a $${g}\mid ${rhs}$` : ''}. Liczymy NWD po kolei, zapisując je jako kombinacje (rozszerzony Euklides):`, lines.join(', ') + '.', T`Podstawiając wstecz: $${nums.map((a, i) => (i ? '+' : '') + a + '\\cdot ' + (co[i] < 0 ? '(' + co[i] + ')' : co[i])).join('')}=${g}$${m !== 1 ? T`; mnożymy przez $${m}$` : ''}.`, T`Rozwiązanie: $${solT(sol)}$ (sprawdzenie: suma $=${rhs}$ ✓).`],
+      steps: [T`Najpierw zapisujemy NWD $(${nums.join(',')})=${g}$ jako kombinację liczb (rozszerzony algorytm Euklidesa)${rhs !== g ? T`; potem pomnożymy ją przez $${m}$, bo $${rhs}=${g}\cdot ${m}$` : ''}.`, ...bst,
+        ...(m !== 1 ? [T`Mnożymy wszystkie współczynniki przez $${m}$: $${solT(sol)}$, bo $${g}\cdot ${m}=${rhs}$.`] : []), T`Rozwiązanie: $${solT(sol)}$.`],
       wrong });
   }
 
@@ -101,7 +105,7 @@
     const exprT = parts.map(([b, e]) => powT(b, e)).join('\\cdot '), t = tau(f), ps = primesOf(f);
     const naive = parts.reduce((s, [b, e]) => s * (e + 1), 1);
     return mk({ label, gk: 'tau', ans: t, tex: String(t), flabel: 'τ', q: T`Ile dzielników naturalnych ma liczba $${exprT}$?`,
-      steps: [T`Postać kanoniczna: ` + (parts.length > 1 || parts[0][1] > 1 ? parts.map(([b, e]) => T`$${powT(b, e)}=${canonT(mul({}, factor(b), e))}$`).join(', ') + ', więc ' : '') + T`$${exprT}=${canonT(f)}$.`, T`$\tau=${ps.map(p => '(' + f[p] + '+1)').join('')}=${t}$.`],
+      steps: [T`Postać kanoniczna: ` + (parts.length > 1 || parts[0][1] > 1 ? parts.map(([b, e]) => T`$${powT(b, e)}=${canonT(mul({}, factor(b), e))}$`).join(', ') + ', więc ' : '') + T`$${exprT}=${canonT(f)}$.`, T`Dzielnik wybieramy, ustalając wykładnik każdej liczby pierwszej: przy $p^{\alpha}$ mamy $\alpha+1$ możliwości ($0,1,\ldots,\alpha$). Zatem $\tau=${ps.map(p => '(' + f[p] + '+1)').join('')}=${t}$.`],
       wrong: [[String(naive === t ? t + 2 : naive), 'Najpierw postać kanoniczna — czynniki $' + parts.map(([b]) => b).join(',') + '$ nie muszą być pierwsze ani różne.'], [String(ps.reduce((s, p) => s * f[p], 1)), 'Iloczyn samych wykładników nie liczy dzielników — potrzebne $(\\alpha_i+1)$.'], [String(t - 1), 'Dzielniki $1$ i $n$ też się liczą.']] });
   }
   const genTau = () => { const k = R.int(1, 3), parts = []; for (let i = 0; i < k; i++) parts.push([R.pick([2, 3, 6, 10, 12, 14, 15, 26, 34, 52]), R.int(1, 5)]); return tauItem(parts, ''); };
@@ -115,7 +119,7 @@
     const tex = forms.map(formT).join(',\\quad ') + T`\ (p,q,r,\ldots\text{ różne pierwsze})`;
     const near = multParts(k + 2).map(fs => fs.map(f => f - 1));
     return mk({ gk: 'forms', field: txtField(), q: T`Jaką postać kanoniczną może mieć liczba naturalna o dokładnie $${k}$ dzielnikach?`, tex,
-      steps: [T`$\tau(p_1^{\alpha_1}\cdots p_m^{\alpha_m})=(\alpha_1+1)\cdots(\alpha_m+1)=${k}$.`, T`Rozkłady $${k}$ na czynniki $\geq2$: ` + multParts(k).map(fs => fs.join('\\cdot ')).map(x => '$' + x + '$').join(', ') + '.', T`Wykładniki to czynniki minus 1: $${forms.map(formT).join(',\\quad ')}$.`],
+      steps: [T`$\tau(p_1^{\alpha_1}\cdots p_m^{\alpha_m})=(\alpha_1+1)\cdots(\alpha_m+1)=${k}$. Każdy wykładnik $\alpha_i\geq1$, więc każdy czynnik $\alpha_i+1$ jest $\geq2$ — szukamy więc wszystkich rozkładów $${k}$ na czynniki $\geq2$ (kolejność nie gra roli).`, T`Rozkłady $${k}$ na czynniki $\geq2$: ` + multParts(k).map(fs => fs.join('\\cdot ')).map(x => '$' + x + '$').join(', ') + '.', T`Wykładniki to czynniki minus 1: $${forms.map(formT).join(',\\quad ')}$.`],
       wrong: [[forms.slice(0, -1).map(formT).join(',\\quad ') + T`\ (p,q,r,\ldots\text{ różne pierwsze})`, 'Brakuje jednego rozkładu ' + k + ' na czynniki.'], [multParts(k).map(fs => fs).map(formT).join(',\\quad ') + T`\ (p,q,r,\ldots\text{ różne pierwsze})`, 'Wykładnik to czynnik minus 1: $\\tau(p^a)=a+1$.'], [near.map(formT).join(',\\quad ') + T`\ (p,q,r,\ldots\text{ różne pierwsze})`, T`Te postacie mają $${k + 2}$ dzielników.`]] });
   }
   const PR = [2, 3, 5, 7, 11, 13];
@@ -124,7 +128,8 @@
     const best = cands[0][1];
     return mk({ gk: 'mink', ans: best, tex: String(best), flabel: 'n', q: T`Znajdź najmniejszą liczbę naturalną, która ma dokładnie $${k}$ dzielników naturalnych.`,
       steps: [T`$\tau(n)=(\alpha_1+1)(\alpha_2+1)\cdots=${k}$. Rozkłady $${k}$ na czynniki $\geq2$: ` + multParts(k).map(fs => '$' + fs.join('\\cdot ') + '$').join(', ') + '.',
-        'Największe wykładniki dajemy najmniejszym liczbom pierwszym. Kandydaci: ' + cands.map(([es, v]) => T`$${es.map((e, i) => powT(PR[i], e)).join('\\cdot ')}=${big(v)}$`).join(', ') + '.', T`Najmniejsza: $${big(best)}$.`],
+        T`Każdy rozkład daje wykładniki (czynnik minus 1). Żeby liczba była najmniejsza, największy wykładnik dajemy liczbie $2$, następny $3$, potem $5$ itd. (zamiana np. $2^1\cdot3^5$ na $2^5\cdot3^1$ zawsze zmniejsza liczbę).`,
+        'Kandydaci: ' + multParts(k).map(fs => { const es = fs.map(f => f - 1), v = es.reduce((s2, e, i) => s2 * PR[i] ** e, 1); return T`$${fs.join('\\cdot ')}\Rightarrow ${es.map((e, i) => powT(PR[i], e)).join('\\cdot ')}=${big(v)}$`; }).join(', ') + '.', T`Porównujemy kandydatów — najmniejsza: $${big(best)}$.`],
       wrong: [[String(cands[1] ? cands[1][1] : best * 2), 'To też ma ' + k + ' dzielników, ale nie jest najmniejsza.'], [String(cands[0][0].reduce((s, e, i) => s * PR[cands[0][0].length - 1 - i] ** e, 1)), 'Większe wykładniki dawaj mniejszym liczbom pierwszym.'], [String(2 ** (k - 1)), T`$2^{${k - 1}}$ ma ${k} dzielników, ale jest dużo większa.`].filter(([x]) => +x !== best)] });
   }
 
