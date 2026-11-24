@@ -386,7 +386,8 @@
   reg('wielomPF', ['2405-8'], ['f06-0'], () => {
     const a = R.int(2, 4), b = R.int(1, 3), c = R.int(2, 5), W = [a, a * b, a * c, 0], r = R.pick([-1, 1, 2, -2]), Wr = a * r ** 3 + a * b * r * r + a * c * r;
     const f1 = R.int(0, 1) ? [T`Wielomian $W$ jest iloczynem wielomianów $F(x)=${a}x$ i $G(x)=${poly([1, b, c])}$.`, true, T`$${a}x(${poly([1, b, c])})=${poly(W)}$.`] : [T`Wielomian $W$ jest iloczynem wielomianów $F(x)=${a}x$ i $G(x)=${poly([1, a * b, a * c])}$.`, false, T`Przed nawias wyłączamy $${a}x$ — w nawiasie zostaje $${poly([1, b, c])}$.`];
-    return { pf: [f1, [T`Liczba $${r < 0 ? '(' + r + ')' : r}$ jest rozwiązaniem równania $W(x)=0$.`, Wr === 0, T`$W(${r})=${Wr}$${Wr ? ' — nie zero' : ''}.`]], q: T`Dany jest wielomian $W(x)=${poly(W)}$. Oceń prawdziwość stwierdzeń.`, steps: [f1[2], T`Sprawdzamy, czy $${r}$ jest rozwiązaniem: podstawiamy $x=${pn(r)}$: $W(${r})=${a}\cdot ${pn(r)}^3+${a * b}\cdot ${pn(r)}^2+${a * c}\cdot ${pn(r)}=${a * r ** 3}+${pn(a * b * r * r)}+${pn(a * c * r)}=${Wr}$${Wr ? ' — to nie zero, więc $' + r + '$ nie jest rozwiązaniem' : ''}.`] };
+    const chk = T`Sprawdzamy, czy $${r}$ jest rozwiązaniem: podstawiamy $x=${pn(r)}$: $W(${r})=${a}\cdot ${pn(r)}^3+${a * b}\cdot ${pn(r)}^2+${a * c}\cdot ${pn(r)}=${a * r ** 3}+${pn(a * b * r * r)}+${pn(a * c * r)}=${Wr}$${Wr ? ' — to nie zero, więc $' + r + '$ nie jest rozwiązaniem' : ''}.`;
+    return { pf: [f1, [T`Liczba $${r < 0 ? '(' + r + ')' : r}$ jest rozwiązaniem równania $W(x)=0$.`, Wr === 0, chk]], q: T`Dany jest wielomian $W(x)=${poly(W)}$. Oceń prawdziwość stwierdzeń.`, steps: [f1[2], chk] };
   });
   reg('wielomWspol', ['2406-9'], ['f06-0'], () => {
     const p = R.int(1, 3), q = R.int(1, 4) * R.pick([1, -1]), r = R.int(1, 3), s = R.int(-4, 4) || 1; // (q − p x)² · (r x + s)
@@ -398,7 +399,7 @@
     const k = R.int(1, 3), c = R.int(1, 3) * R.pick([1, -1]), h = R.int(1, 4) * R.pick([1, -1]); // W = x^4, V = x^3 + c, H = x + h
     const Wp = [1, 0, 0, 0, 0], V = [1, 0, 0, c], H = [1, h], P = pmul(V, H), D = padd(Wp, pneg(P)); void k;
     return { q: T`Dane są wielomiany $W(x)=x^4$, $V(x)=${poly(V)}$, $H(x)=${poly(H)}$. Wielomian $W(x)-V(x)\cdot H(x)$ jest określony wzorem`, opts: opts(poly(D), [[poly(padd(Wp, P)), 'Iloczyn trzeba odjąć.'], [poly(padd(Wp, pneg(padd(P, [0, 0, 0, 0, 2 * P[4]])))), 'Minus zmienia znak każdego wyrazu iloczynu, także wyrazu wolnego.'], [poly(padd(D, [0, 0, 0, -2 * D[3], 0])), 'Zły znak wyrazu z $x$.'], [poly(padd(Wp, pneg(padd(V, H)))), 'Wielomiany $V$ i $H$ trzeba pomnożyć, nie dodać.']]),
-      steps: [T`Mnożymy każdy wyraz pierwszego nawiasu przez każdy wyraz drugiego: $(${poly(V)})(${poly(H)})=x^3\cdot x+x^3\cdot ${pn(h)}+${pn(c)}\cdot x+${pn(c)}\cdot ${pn(h)}$.`, T`$=x^4${sgn(h)}x^3${sgn(c)}x${sgn(c * h)}$.`, T`Odejmujemy od $x^4$ — minus zmienia znak każdego wyrazu: $x^4-x^4${sgn(-h)}x^3${sgn(-c)}x${sgn(-c * h)}$.`, T`$x^4$ się znosi: $${poly(D)}$.`] };
+      steps: [T`Mnożymy każdy wyraz pierwszego nawiasu przez każdy wyraz drugiego: $(${poly(V)})(${poly(H)})=x^3\cdot x+x^3\cdot ${pn(h)}+${pn(c)}\cdot x+${pn(c)}\cdot ${pn(h)}$.`, T`$=x^4${sgn(h)}x^3${c === 1 ? '+' : c === -1 ? '-' : sgn(c)}x${sgn(c * h)}$.`, T`Odejmujemy od $x^4$ — minus zmienia znak każdego wyrazu, a $x^4$ się znosi: $x^4-x^4${sgn(-h)}x^3${c === -1 ? '+' : c === 1 ? '-' : sgn(-c)}x${sgn(-c * h)}=${poly(D)}$.`] };
   });
   reg('wielomRozklad', ['2606-4'], ['f06-0'], () => {
     const a = R.int(1, 4), sq = R.int(0, 1) === 1; const P = sq ? pmul([1, 0], pmul([1, -a], [1, -a])) : pmul([1, 0], pmul([1, -a], [1, a]));
@@ -798,7 +799,7 @@
   reg('ciagSuma', ['2406-16.1', '2506-14.1', '2408-13'], ['f08-2'], () => {
     const t = sv('t', 3);
     if (t === 0) { const p = R.int(1, 3), q = R.int(1, 4), k = R.int(3, 5), S = n => p * n * n + q * n, v = S(k) - S(k - 1);
-      return { q: T`Suma $n$ początkowych wyrazów ciągu $(a_n)$ wyraża się wzorem $S_n=${p === 1 ? '' : p}n^2+${q}n$. Wyraz $${nth(k)}$ jest równy`, opts: opts(String(v), [[String(S(k)), 'To suma $S_{' + k + '}$, a $a_{' + k + '}=S_{' + k + '}-S_{' + (k - 1) + '}$.'], [String(S(k - 1)), 'To $S_{' + (k - 1) + '}$.'], [String(S(k) + S(k - 1)), 'Sumy się odejmuje.'], [String(S(k) - S(k - 2)), 'Odejmujemy $S_{' + (k - 1) + '}$, nie $S_{' + (k - 2) + '}$.']]), steps: [T`$S_{${k}}$ to suma $${k}$ pierwszych wyrazów, a $S_{${k - 1}}$ — suma $${k - 1}$ pierwszych. Ich różnica to dokładnie jeden wyraz: $${nth(k)}=S_{${k}}-S_{${k - 1}}$.`, T`$S_{${k}}=${p === 1 ? '' : p + '\\cdot '}${k}^2+${q}\cdot ${k}=${p === 1 ? '' : p + '\\cdot '}${k * k}+${q * k}=${p * k * k}+${q * k}=${S(k)}$.`, T`$S_{${k - 1}}=${p === 1 ? '' : p + '\\cdot '}${k - 1}^2+${q}\cdot ${k - 1}=${p === 1 ? '' : p + '\\cdot '}${(k - 1) ** 2}+${q * (k - 1)}=${p * (k - 1) ** 2}+${q * (k - 1)}=${S(k - 1)}$.`, T`$${nth(k)}=${S(k)}-${S(k - 1)}=${v}$.`] }; }
+      return { q: T`Suma $n$ początkowych wyrazów ciągu $(a_n)$ wyraża się wzorem $S_n=${p === 1 ? '' : p}n^2+${q}n$. Wyraz $${nth(k)}$ jest równy`, opts: opts(String(v), [[String(S(k)), 'To suma $S_{' + k + '}$, a $a_{' + k + '}=S_{' + k + '}-S_{' + (k - 1) + '}$.'], [String(S(k - 1)), 'To $S_{' + (k - 1) + '}$.'], [String(S(k) + S(k - 1)), 'Sumy się odejmuje.'], [String(S(k) - S(k - 2)), 'Odejmujemy $S_{' + (k - 1) + '}$, nie $S_{' + (k - 2) + '}$.']]), steps: [T`$S_{${k}}$ to suma $${k}$ pierwszych wyrazów, a $S_{${k - 1}}$ — suma $${k - 1}$ pierwszych. Ich różnica to dokładnie jeden wyraz: $${nth(k)}=S_{${k}}-S_{${k - 1}}$.`, T`$S_{${k}}=${p === 1 ? '' : p + '\\cdot '}${k}^2+${q}\cdot ${k}=${p === 1 ? '' : p + '\\cdot '}${k * k}+${q * k}${p === 1 ? '' : '=' + p * k * k + '+' + q * k}=${S(k)}$.`, T`$S_{${k - 1}}=${p === 1 ? '' : p + '\\cdot '}${k - 1}^2+${q}\cdot ${k - 1}=${p === 1 ? '' : p + '\\cdot '}${(k - 1) ** 2}+${q * (k - 1)}${p === 1 ? '' : '=' + p * (k - 1) ** 2 + '+' + q * (k - 1)}=${S(k - 1)}$.`, T`$${nth(k)}=${S(k)}-${S(k - 1)}=${v}$.`] }; }
     if (t === 1) { const c = R.int(1, 6), f = n => c * n * n - c * n, k = 3, v = f(1) + f(2) + f(3);
       return { q: T`Ciąg $(a_n)$ jest określony wzorem $a_n=${c}n^2-${c}n$. Suma trzech początkowych wyrazów jest równa`, opts: opts(String(v), [[String(f(3)), 'To tylko $a_3$, a potrzebna suma $a_1+a_2+a_3$.'], [String(f(1) + f(2)), 'Brakuje $a_3$.'], [String(3 * f(3)), 'Wyrazy są różne — trzeba policzyć każdy osobno.'], [String(f(2) + f(3) + f(4)), 'Zaczynamy od $a_1$.']]), steps: [T`Liczymy trzy pierwsze wyrazy ze wzoru: $a_1=${c}\cdot1^2-${c}\cdot1=${f(1)}$, $a_2=${c}\cdot2^2-${c}\cdot2=${f(2)}$, $a_3=${c}\cdot3^2-${c}\cdot3=${f(3)}$.`, T`Dodajemy: $${f(1)}+${f(2)}+${f(3)}=${v}$.`] }; }
     const p = R.int(1, 3), q = R.int(3, 7), n = R.pick([10, 20, 6]), v = q * n; // a_n = p(−1)^{n+1} + q, n parzyste → suma q n
@@ -1001,7 +1002,7 @@
     if (sv('sym', 1)) return { q: T`W trójkącie $KLM$: $|KM|=a$, $|LM|=b$, $a\neq b$. Dwusieczna kąta $KML$ przecina bok $KL$ w punkcie $N$, przy czym $|KN|=c$, $|NL|=d$, $|MN|=e$. Prawdziwa jest równość`, opts: R.shuffle([['a\\cdot d=b\\cdot c', true, ''], ['a\\cdot b=c\\cdot d', false, 'Z twierdzenia o dwusiecznej $\\frac ab=\\frac cd$ — mnożymy „na krzyż”: $ad=bc$.'], ['a\\cdot c=b\\cdot d', false, 'Odcinek $c$ przylega do boku $a$: $\\frac{c}{d}=\\frac{a}{b}$, więc $ad=bc$.'], ['a\\cdot b=e\\cdot e', false, 'Długość dwusiecznej $e$ nie występuje w tym twierdzeniu.']].map(([t2, ok, why]) => ({ t: t2, ok, why }))),
       fixed: true, steps: ['Twierdzenie o dwusiecznej: dwusieczna dzieli przeciwległy bok w stosunku długości boków przyległych: $\\frac{|KN|}{|NL|}=\\frac{|KM|}{|LM|}$, czyli $\\frac{c}{d}=\\frac{a}{b}$.', 'Mnożymy „na krzyż”: $a\\cdot d=b\\cdot c$.'] };
     const a = R.int(2, 9), b = R.int(2, 9); if (a === b) return null; const g = gcd(a, b), A2 = a / g, B2 = b / g, r = (x, y) => T`${x}:${y}`;
-    return { q: T`W trójkącie $ABC$: $|AC|=${a}$, $|BC|=${b}$. Dwusieczna kąta $ACB$ przecina bok $AB$ w punkcie $D$. Stosunek $|AD|:|DB|$ jest równy`, opts: opts(r(A2, B2), [[r(B2, A2), 'Odcinek $AD$ leży przy boku $AC$: $\\frac{|AD|}{|DB|}=\\frac{|AC|}{|BC|}$.'], [r(A2, A2 + B2), 'To stosunek $|AD|:|AB|$.'], [r(B2, A2 + B2), 'To $|DB|:|AB|$.'], [r(1, 1), 'Dwusieczna kąta nie dzieli boku na połowy (to robi środkowa).']]), steps: [T`Twierdzenie o dwusiecznej: dwusieczna dzieli przeciwległy bok w takim stosunku, w jakim są boki przy niej — odcinek przy boku $AC$ odpowiada $AC$.`, T`$\frac{|AD|}{|DB|}=\frac{|AC|}{|BC|}=\frac{${a}}{${b}}$${gcd(a, b) > 1 ? T`$=\frac{${a / gcd(a, b)}}{${b / gcd(a, b)}}$` : ''}.`, T`Czyli $|AD|:|DB|=${a / gcd(a, b)}:${b / gcd(a, b)}$.`] };
+    return { q: T`W trójkącie $ABC$: $|AC|=${a}$, $|BC|=${b}$. Dwusieczna kąta $ACB$ przecina bok $AB$ w punkcie $D$. Stosunek $|AD|:|DB|$ jest równy`, opts: opts(r(A2, B2), [[r(B2, A2), 'Odcinek $AD$ leży przy boku $AC$: $\\frac{|AD|}{|DB|}=\\frac{|AC|}{|BC|}$.'], [r(A2, A2 + B2), 'To stosunek $|AD|:|AB|$.'], [r(B2, A2 + B2), 'To $|DB|:|AB|$.'], [r(1, 1), 'Dwusieczna kąta nie dzieli boku na połowy (to robi środkowa).']]), steps: [T`Twierdzenie o dwusiecznej: dwusieczna dzieli przeciwległy bok w takim stosunku, w jakim są boki przy niej — odcinek przy boku $AC$ odpowiada $AC$.`, T`$\frac{|AD|}{|DB|}=\frac{|AC|}{|BC|}=\frac{${a}}{${b}}${gcd(a, b) > 1 ? T`=\frac{${a}:${gcd(a, b)}}{${b}:${gcd(a, b)}}=\frac{${a / gcd(a, b)}}{${b / gcd(a, b)}}` : ''}$.`, T`Czyli $|AD|:|DB|=${a / gcd(a, b)}:${b / gcd(a, b)}$.`] };
   });
   reg('tales', ['2605-20', '2606-19'], ['f10-10', 'f10-8'], () => {
     if (sv('rays', 2)) { const p = R.int(2, 9), q = R.int(2, 9), s = R.int(1, 6), v = Q(q * (p + s), p);
@@ -1580,5 +1581,39 @@
   });
 
   pinSub({ '2306-6': { t: 1 }, '2308-6': { t: 0 }, '2608-4': { t: 2 } });
-  A.MGEN = { G, MAP, snipTitles: {}, gen: id => { const g = G[MAP[id]]; if (!g) return null; CUR = id; for (let k = 0; k < 60; k++) { let r = null; try { r = g.gen(); } catch (e) { r = null; } if (r && (r.opts || r.pf || r.multi)) { if (r.pf) { const st0 = r.steps || []; r.steps = st0.concat(r.pf.map(x => x[2]).filter(x => x && !st0.includes(x))); } { const name = MAP[id], ok = r.opts && r.opts.find(o => o.ok), st = (r.steps || []).slice(); if (HOW[name]) st.unshift(HOW[name]); if (ok && ok.t && !st.some(x => /^Odpowiedź/.test(x))) st.push('Odpowiedź: $' + ok.t + '$' + (/\.\}$/.test(ok.t) ? '' : '.')); r = Object.assign({}, r, { steps: st }); } return Object.assign({ pattern: MAP[id] }, r); } } return null; }, wz: id => (G[MAP[id]] || {}).wz || [], noWz: id => !!G[MAP[id]] && G[MAP[id]].wz === null };
+  // Krok, który tylko dalej upraszcza poprzednie wyrażenie (zaczyna się od „=”), doklejamy do poprzedniego kroku.
+  // „…$17r=85$.” + „$r=5$.” → jeden krok: to samo równanie rozwiązane do końca.
+  const toks = m => (m.replace(/\\(?:operatorname|text)\{[^}]*\}|\\[A-Za-z]+/g, ' ').match(/[A-Za-z](?:_\{?[0-9A-Za-z]+\}?)?/g) || []).map(t => t.replace(/[{}]/g, ''));
+  function solves(prev, x) {
+    if (!/^\$[^$]*\$\.?\s*$/.test(x) || !/\$\.?\s*$/.test(prev)) return false;
+    const h = x.match(/^\$\s*([A-Za-z](?:_\{?[0-9A-Za-z]+\}?)?)\s*=/); if (!h) return false;
+    const blocks = prev.match(/\$[^$]*\$/g); if (!blocks) return false;
+    const last = blocks[blocks.length - 1], t = new Set(toks(last)), me = h[1].replace(/[{}]/g, '');
+    if (!/=/.test(last) || t.size !== 1 || !t.has(me)) return false;
+    const lhs = last.slice(1).split('=')[0].replace(/[{}\s]/g, '');
+    return lhs !== me;
+  }
+  // Współczynnik 1 przed zmienną piszemy bez jedynki: 1x → x, -1x → -x (tylko we wzorach $…$).
+  const one = str => typeof str !== 'string' ? str : str.replace(/\$[^$]*\$/g, m => m.replace(/(^\$|[=+\-(\s<>,]|\\leq|\\geq|\\cdot)1([a-z])(?![a-zA-Z])/g, (z, p, v) => p === '\\cdot' ? z : p + v));
+  function cleanOnes(r) {
+    if (r.q) r.q = one(r.q);
+    if (r.steps) r.steps = r.steps.map(one);
+    if (r.opts) r.opts = r.opts.map(o => Object.assign({}, o, { t: one(o.t), why: one(o.why) }));
+    if (r.multi) r.multi = r.multi.map(o => Object.assign({}, o, { t: one(o.t), why: one(o.why) }));
+    if (r.pf) r.pf = r.pf.map(x => [one(x[0]), x[1], one(x[2])]);
+    return r;
+  }
+  function mergeCont(steps) {
+    const out = [];
+    for (const x of steps) {
+      const m = /^\$\s*=/.test(x) && out.length;
+      if (!m && out.length && solves(out[out.length - 1], x)) { const pv = out[out.length - 1]; out[out.length - 1] = pv.replace(/\$\.?\s*$/, /więc \$[^$]*\$\.?\s*$/.test(pv) ? '$, a stąd ' : '$, więc ') + x; continue; }
+      if (!m) { out.push(x); continue; }
+      const prev = out[out.length - 1];
+      if (/\$\.?\s*$/.test(prev)) out[out.length - 1] = prev.replace(/\$\.?\s*$/, '') + x.slice(1);
+      else out[out.length - 1] = prev + ' ' + x;
+    }
+    return out;
+  }
+  A.MGEN = { G, MAP, snipTitles: {}, gen: id => { const g = G[MAP[id]]; if (!g) return null; CUR = id; for (let k = 0; k < 60; k++) { let r = null; try { r = g.gen(); } catch (e) { r = null; } if (r && (r.opts || r.pf || r.multi)) { if (r.pf) { const st0 = r.steps || []; r.steps = st0.concat(r.pf.map(x => x[2]).filter(x => x && !st0.includes(x))); } { const name = MAP[id], ok = r.opts && r.opts.find(o => o.ok), st = mergeCont(r.steps || []); if (HOW[name]) st.unshift(HOW[name]); if (ok && ok.t && !st.some(x => /^Odpowiedź/.test(x))) st.push('Odpowiedź: $' + ok.t + '$' + (/\.\}$/.test(ok.t) ? '' : '.')); r = Object.assign({}, r, { steps: st }); } return cleanOnes(Object.assign({ pattern: MAP[id] }, r)); } } return null; }, wz: id => (G[MAP[id]] || {}).wz || [], noWz: id => !!G[MAP[id]] && G[MAP[id]].wz === null };
 })();
