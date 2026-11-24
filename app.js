@@ -671,7 +671,7 @@
     const r = A.MGEN.gen(it.id), box = h('div', { class: 'mvar' });
     if (!r) return h('p', { class: 'mq' }, 'Nie udało się wylosować przykładu — spróbuj jeszcze raz.');
     const again = () => box.replaceWith(matVariant(it));
-    const steps = () => { const s = h('div', { class: 'mvsteps' }, h('small', {}, 'Rozwiązanie')); (r.steps || []).forEach(x => s.append(mdEl('p', x))); return s; };
+    const steps = () => { const s = h('div', { class: 'mvsteps' }, h('small', {}, 'Rozwiązanie')); if (r.fig) s.append(h('div', { class: 'mplotw mfigw', html: r.fig })); (r.steps || []).forEach(x => s.append(mdEl('p', x))); return s; };
     const done = ok => { box.querySelectorAll('.mvopt, .mopt').forEach(b => { b.disabled = true; }); if (ok) { SFX.correct(); bumpDay(true); S.correct++; S.matV = S.matV || {}; const k = S.matV[it.id] || 0; S.matV[it.id] = k + 1; gainXP(k < 3 ? 5 : 1, box); } else { SFX.wrong(); bumpDay(false); } save(); renderTop(); box.append(steps(), h('button', { class: 'btn small primary', onclick: again }, 'Kolejny przykład', h('span', { html: IC.dice }))); };
     box.append(h('div', { class: 'mvh' }, h('small', {}, 'Podobny przykład · inne liczby'), h('button', { class: 'btn small ghost', onclick: again }, 'Losuj')), mdEl('div', r.q, { class: 'mvq' }));
     if (r.opts) {
@@ -788,10 +788,10 @@
   }
   // szerokie wzory wyświetlane (treść, pytania, wzory) zmniejszamy, by mieściły się w szerokości ekranu
   function fitMath() {
-    document.querySelectorAll('mjx-container[display="true"], .opt .txt mjx-container, .gq mjx-container, .question mjx-container, .stx mjx-container, .exq mjx-container, .ftx mjx-container, .solsteps mjx-container, .exstep mjx-container, .gl mjx-container, .fwhy mjx-container, .exl mjx-container, .gwhy mjx-container').forEach(c => {
+    document.querySelectorAll('mjx-container[display="true"], .opt .txt mjx-container, .gq mjx-container, .question mjx-container, .stx mjx-container, .exq mjx-container, .ftx mjx-container, .solsteps mjx-container, .exstep mjx-container, .gl mjx-container, .fwhy mjx-container, .exl mjx-container, .gwhy mjx-container, .mvsteps mjx-container, .mvq mjx-container, .mvwhy mjx-container, .mpft mjx-container').forEach(c => {
       const svg = c.querySelector('svg'); if (!svg || !c.parentElement) return;
       c.style.fontSize = '';
-      let box = c.getAttribute('display') === 'true' ? c.parentElement : (c.closest('.txt, .gq, .question, .stx, .exq, .ftx, .solsteps li, .exstep > div, .gl, .fwhy li, .exl, .gwhy') || c.parentElement);
+      let box = c.getAttribute('display') === 'true' ? c.parentElement : (c.closest('.txt, .gq, .question, .stx, .exq, .ftx, .solsteps li, .exstep > div, .gl, .fwhy li, .exl, .gwhy, .mvsteps p, .mvq, .mvwhy, .mpft') || c.parentElement);
       while (box && box.parentElement && getComputedStyle(box).display.startsWith('inline')) box = box.parentElement;
       const cs = getComputedStyle(box), avail = box.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0), nat = svg.getBoundingClientRect().width;
       if (avail > 0 && nat > avail) c.style.fontSize = (Math.max(0.5, (avail / nat) * 0.97) * 100).toFixed(1) + '%';
