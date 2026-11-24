@@ -672,7 +672,7 @@
     if (!r) return h('p', { class: 'mq' }, 'Nie udało się wylosować przykładu — spróbuj jeszcze raz.');
     const again = () => box.replaceWith(matVariant(it));
     const steps = () => { const s = h('div', { class: 'mvsteps' }, h('small', {}, 'Rozwiązanie')); (r.steps || []).forEach(x => s.append(mdEl('p', x))); return s; };
-    const done = ok => { box.querySelectorAll('.mvopt, .mopt').forEach(b => { b.disabled = true; }); if (ok) { SFX.correct(); bumpDay(true); gainXP(1, box); } else { SFX.wrong(); bumpDay(false); } save(); renderTop(); box.append(steps(), h('button', { class: 'btn small primary', onclick: again }, 'Kolejny przykład', h('span', { html: IC.dice }))); };
+    const done = ok => { box.querySelectorAll('.mvopt, .mopt').forEach(b => { b.disabled = true; }); if (ok) { SFX.correct(); bumpDay(true); S.correct++; S.matV = S.matV || {}; const k = S.matV[it.id] || 0; S.matV[it.id] = k + 1; gainXP(k < 3 ? 5 : 1, box); } else { SFX.wrong(); bumpDay(false); } save(); renderTop(); box.append(steps(), h('button', { class: 'btn small primary', onclick: again }, 'Kolejny przykład', h('span', { html: IC.dice }))); };
     box.append(h('div', { class: 'mvh' }, h('small', {}, 'Podobny przykład · inne liczby'), h('button', { class: 'btn small ghost', onclick: again }, 'Losuj')), mdEl('div', r.q, { class: 'mvq' }));
     if (r.opts) {
       const list = h('div', { class: 'mvopts' + (r.opts.some(o => o.html) ? ' pics' : '') });
@@ -702,8 +702,8 @@
       // czy zaczął od matury (bez żadnych zadań ze studiów) — tylko wtedy matura liczy się do paska w rankingu
       if (S.matFirst == null) S.matFirst = !Object.keys(S.items || {}).length && !Object.keys(S.tried || {}).length;
       S.mat[it.id] = { ok, d: today() };
-      if (!prev) { bumpDay(ok); if (ok) { S.correct++; gainXP(3 * (+it.pts.split('-')[1] || 1), box); } }
-      else if (ok && !prev.ok) gainXP(1, box);
+      if (!prev) { bumpDay(ok); if (ok) { S.correct++; gainXP(8 * (+it.pts.split('-')[1] || 1), box); } }
+      else if (ok && !prev.ok) gainXP(3 * (+it.pts.split('-')[1] || 1), box);
       if (ok) SFX.correct(); else SFX.wrong();
       save(); checkBadges(); renderTop();
       card.className = 'mtask ' + (ok ? 'ok' : 'bad');
@@ -760,6 +760,8 @@
     if (hs === 'home' || hs === '') { V = { view: 'home', list: V.list }; return; }
     { const sb = SUBJ.find(x => x.id === hs); if (sb) { V = { view: 'list', list: lastListOf(sb.id) }; return; } }
     if (hs === 'stats') { V = { view: 'stats', list: V.list }; return; }
+    if (hs === 'matura-stats') { V = { view: 'stats', mat: true, list: V.list }; return; }
+    if (hs === 'matura-ranking') { V = { view: 'rank', mat: true, list: V.list }; return; }
     if (hs === 'matura' || hs === 'matura-wzory') { V = { view: 'matura', dz: null, wz: hs === 'matura-wzory', list: V.list }; return; }
     { const mm = hs.match(/^matura-(\d+)$/); if (mm && MAT().dz[+mm[1] - 1]) { V = { view: 'matura', dz: +mm[1] - 1, wz: false, list: V.list }; return; } }
     if (hs === 'ranking') { V = { view: 'rank', list: V.list }; return; }
@@ -775,12 +777,12 @@
   function render() {
     const root = app(); root.innerHTML = '';
     const hue = ['stats', 'rank', 'home', 'subj', 'matura'].includes(V.view) ? 'st' : LISTS[V.list].hue;
-    document.body.className = 'h-' + hue + (V.view === 'matura' ? ' s-mat' + (S.matDark ? ' mat-dark' : '') : navSubj() && navSubj() !== 'alg' ? ' s-' + navSubj() : '');
+    document.body.className = 'h-' + hue + (inMat() ? ' s-mat' + (S.matDark ? ' mat-dark' : '') : navSubj() && navSubj() !== 'alg' ? ' s-' + navSubj() : '');
     const pageKey = V.view + ':' + (V.view === 'subj' ? V.subj : V.view === 'list' ? V.list : V.view === 'task' && T ? T.ti : '');
     const page = V.view === 'home' ? homeView() : V.view === 'subj' ? subjView(V.subj) : V.view === 'list' ? listView() : V.view === 'stats' ? statsView() : V.view === 'rank' ? rankView() : V.view === 'matura' ? maturaView() : taskView();
     if (pageKey !== lastPage) page.classList.add('pagein');
     lastPage = pageKey;
-    root.append(topBar(), h('div', { class: 'wrap' }, V.view === 'matura' ? '' : navBar(), page));
+    root.append(topBar(), h('div', { class: 'wrap' }, inMat() ? matNav() : navBar(), page));
     if (V.view === 'list') requestAnimationFrame(drawTrail);
     if (V.view === 'task') requestAnimationFrame(() => { if (T && T.status === 'answering') focusField(T.focus || 0, true); });
   }
@@ -806,7 +808,7 @@
     const lv = levelInfo(S.xp);
     const top = h('header', { class: 'top' }, h('div', { class: 'wrap' },
       h('button', { class: 'logo', 'aria-label': 'Matematyka — strona główna', onclick: () => goHome() }, h('span', { html: logoSVG }), h('b', {}, 'Matematyka')),
-      h('button', { class: 'matbtn' + (V.view === 'matura' ? ' on' : ''), 'aria-label': 'Matura — zadania z arkuszy CKE', onclick: () => goMatura(null) }, h('span', { html: IC.sheet }), h('b', {}, 'Matura')),
+      h('button', { class: 'matbtn' + (inMat() ? ' on' : ''), 'aria-label': 'Matura — zadania z arkuszy CKE', onclick: () => goMatura(null) }, h('span', { html: IC.sheet }), h('b', {}, 'Matura')),
       h('div', { class: 'spacer' }),
       h('div', { class: 'player' },
         h('div', { class: 'lvl', title: 'Poziom ' + lv.L, html: ringSVG(lv.into / lv.need, 42, 4, 'var(--xp)') + `<span style="position:relative">${lv.L}</span>` }),
@@ -819,6 +821,20 @@
   const lastListOf = sid => { const m = S.subjList && S.subjList[sid]; return m != null && subjOf(m) === sid ? m : subjLists(sid)[0]; };
   function goSubject(sid) { SFX.click(); T = null; S.subj = sid; const li = lastListOf(sid); V = { view: 'list', list: li }; save(); setHash(lhash(li)); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
   function goList(i) { SFX.click(); T = null; V = { view: 'list', list: i }; S.tab = lhash(i); S.subj = LISTS[i].subject; S.subjList = Object.assign(S.subjList || {}, { [LISTS[i].subject]: i }); save(); setHash(lhash(i)); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
+  // tryb matury: widok matury albo statystyki/ranking otwarte z zakładek matury
+  const inMat = () => V.view === 'matura' || ((V.view === 'stats' || V.view === 'rank') && !!V.mat);
+  function matNav() {
+    const all = matProgress(), go = (v, hs) => { SFX.click(); T = null; V = { view: v, mat: true, list: V.list }; setHash(hs); render(); window.scrollTo({ top: 0, behavior: 'auto' }); };
+    const nav = h('nav', { class: 'tabs main mnav', role: 'tablist', 'aria-label': 'Matura' });
+    nav.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'matura' ? 'true' : 'false', onclick: () => { if (V.view === 'matura' && V.dz == null && !V.wz) return; goMatura(null); } },
+      h('span', { class: 'ring', html: ringSVG(all.done / Math.max(1, all.total), 30, 4, 'var(--accent)') }),
+      h('span', { class: 'lbl' }, h('b', {}, 'Matura'), h('small', {}, all.done + '/' + all.total + ' zadań'))));
+    nav.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'stats' ? 'true' : 'false', onclick: () => go('stats', 'matura-stats') },
+      h('span', { class: 'ring', html: IC.chart, style: 'color:var(--accent);display:grid;place-items:center' }), h('span', { class: 'lbl' }, h('b', {}, h('span', { class: 'full' }, 'Statystyki'), h('span', { class: 'short' }, 'Postęp')), h('small', {}, 'postępy i odznaki'))));
+    nav.append(h('button', { class: 'tab h-st', role: 'tab', 'aria-selected': V.view === 'rank' ? 'true' : 'false', onclick: () => go('rank', 'matura-ranking') },
+      h('span', { class: 'ring', html: IC.trophy, style: 'color:var(--accent);display:grid;place-items:center' }), h('span', { class: 'lbl' }, h('b', {}, 'Ranking'), h('small', {}, 'ze znajomymi'))));
+    return h('div', { class: 'navbox' }, nav);
+  }
   function navBar() {
     const cs = navSubj();
     const main = h('nav', { class: 'tabs main', role: 'tablist', 'aria-label': 'Przedmioty' });
@@ -1472,6 +1488,17 @@
   }
 
   /* ---- statystyki ---- */
+  function matStatDz() {
+    const M = MAT(), box = h('div', { class: 'lp' });
+    M.dz.forEach((d, i) => {
+      const p = matProgress(it => it.dz === i); if (!p.total) return;
+      const bar = h('i', { style: 'width:0' }); requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = (100 * p.done / p.total) + '%'; }));
+      box.append(h('button', { class: 'subjcard mstatrow', onclick: () => goMatura(i) },
+        h('div', { class: 'shead' }, h('b', {}, (i + 1) + '. ' + d.name), h('span', {}, p.done + '/' + p.total + ' zadań · ', h('b', {}, Math.round(100 * p.done / p.total) + '%'))),
+        h('div', { class: 'mbar' }, bar)));
+    });
+    return box;
+  }
   function statsView() {
     const lv = levelInfo(S.xp);
     const sec = h('section', { class: 'h-st' });
@@ -1481,12 +1508,12 @@
     sec.append(h('div', { class: 'kpis' },
       kpi('Poziom', String(lv.L), lv.title),
       kpi('Doświadczenie', S.xp + ' XP', lv.max ? 'poziom maksymalny' : (lv.need - lv.into) + ' XP do kolejnego'),
-      kpi('Zaliczone podpunkty', solved + '/' + totalItems, Math.round(100 * solved / totalItems) + '% obu przedmiotów'),
+      inMat() ? (mp => kpi('Zadania maturalne', mp.done + '/' + mp.total, Math.round(100 * mp.done / mp.total) + '% zadań z arkuszy CKE'))(matProgress()) : kpi('Zaliczone podpunkty', solved + '/' + totalItems, Math.round(100 * solved / totalItems) + '% obu przedmiotów'),
       kpi('Rozwiązane przykłady', String(S.correct), 'łącznie z podobnymi'),
-      kpi('Podobne przykłady', String(S.variants), (() => { const n = Object.values(S.practice || {}).filter(x => x > 0).length; return n ? 'ćwiczone w ' + n + (n === 1 ? ' podpunkcie' : ' podpunktach') : 'dodatkowe ćwiczenia do podpunktów'; })()),
+      inMat() ? (mv => kpi('Podobne przykłady', String(Object.values(mv).reduce((a, b) => a + b, 0)), Object.keys(mv).length ? 'ćwiczone przy ' + Object.keys(mv).length + (Object.keys(mv).length === 1 ? ' zadaniu' : ' zadaniach') : 'inne liczby, ten sam typ zadania'))(S.matV || {}) : kpi('Podobne przykłady', String(S.variants), (() => { const n = Object.values(S.practice || {}).filter(x => x > 0).length; return n ? 'ćwiczone w ' + n + (n === 1 ? ' podpunkcie' : ' podpunktach') : 'dodatkowe ćwiczenia do podpunktów'; })()),
       kpi('Dni nauki z rzędu', String(curStreak()), (() => { const n = (S.days[today()] || {}).ok || 0, m10 = n % 10, m100 = n % 100; return 'dzisiaj: ' + n + (n === 1 ? ' przykład' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? ' przykłady' : ' przykładów'); })())));
     sec.append(h('h2', { class: 'sec' }, 'Rozwiązane przykłady'), activityChart());
-    sec.append(h('h2', { class: 'sec' }, 'Przedmioty i listy'));
+    sec.append(h('h2', { class: 'sec' }, inMat() ? 'Działy matury' : 'Przedmioty i listy'));
     const lp = h('div', { class: 'lp' });
     SUBJ.forEach(sb => {
       const sp = subjProgress(sb.id), ids = subjLists(sb.id);
@@ -1520,7 +1547,7 @@
       requestAnimationFrame(() => { bi.style.width = bi.dataset.w; });
       return row;
     }
-    sec.append(lp);
+    if (inMat()) sec.append(matStatDz()); else sec.append(lp);
     sec.append(h('h2', { class: 'sec' }, 'Odznaki'));
     sec.append(h('div', { class: 'badges' }, BADGES.filter(b => !b.hidden).map(b => h('div', { class: 'bdg' + (S.badges[b.id] ? '' : ' locked') }, h('span', { class: 'ic', html: IC.trophy }), h('div', {}, h('b', {}, b.name), h('small', {}, b.desc))))));
     const HID = BADGES.filter(b => b.hidden), hidN = HID.filter(b => S.badges[b.id]).length;
