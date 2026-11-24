@@ -265,5 +265,423 @@
     return { multi: R.shuffle(all).map(([t, ok]) => ({ t, ok, why: ok ? '' : (t.includes(String(x + y)) ? 'Logarytm sumy to nie suma logarytmów.' : 'Suma logarytmów o tej samej podstawie to logarytm iloczynu.') })), q: 'Wybierz <b>dwie</b> prawdziwe równości.', steps: [T`$${L}=\log_{${b}}(${x}\cdot ${y})=\log_{${b}}${p}$, a $\log_{${b}}${x}=${m}$.`] };
   });
 
-  A.MGEN = { G, MAP, snipTitles: {}, gen: id => { const g = G[MAP[id]]; if (!g) return null; for (let k = 0; k < 60; k++) { let r = null; try { r = g.gen(); } catch (e) { r = null; } if (r && (r.opts || r.pf || r.multi)) return Object.assign({ pattern: MAP[id] }, r); } return null; }, wz: id => (G[MAP[id]] || {}).wz || [] };
+  /* ---------- wielomiany, przedziały, wykresy ---------- */
+  const ptrim = a => { const r = a.slice(); while (r.length > 1 && !r[0]) r.shift(); return r; };
+  const poly = (cs, v = 'x') => { const n = cs.length - 1; let s = ''; cs.forEach((c, i) => { if (!c) return; const e = n - i, a = Math.abs(c); s += (c < 0 ? '-' : s ? '+' : '') + (a === 1 && e > 0 ? '' : String(a)) + (e === 0 ? '' : e === 1 ? v : v + '^{' + e + '}'); }); return s || '0'; };
+  const pmul = (a, b) => { const r = Array(a.length + b.length - 1).fill(0); a.forEach((x, i) => b.forEach((y, j) => { r[i + j] += x * y; })); return r; };
+  const padd = (a, b) => { const n = Math.max(a.length, b.length), A2 = Array(n - a.length).fill(0).concat(a), B2 = Array(n - b.length).fill(0).concat(b); return ptrim(A2.map((x, i) => x + B2[i])); };
+  const pneg = a => a.map(x => -x);
+  const lin = (p, q, v = 'x') => poly([p, q], v); // px+q
+  const inf = v => (v === Infinity ? '+\\infty' : v === -Infinity ? '-\\infty' : (typeof v === 'object' ? qt(v) : String(v)));
+  const iv = (a, b, ca, cb) => (a === -Infinity || !ca ? '(' : '[') + inf(a) + ', ' + inf(b) + (b === Infinity || !cb ? ')' : ']');
+  // wykres prostych y = a x + b na siatce −6..6 (a może być ułamkiem {n,d})
+  function plotLines(ls) {
+    const S = 18, O = 6 * S + 8, W = 12 * S + 16; let s = `<svg class="maxis mplot" viewBox="0 0 ${W} ${W}" width="${W}" height="${W}" role="img">`;
+    for (let i = -6; i <= 6; i++) s += `<line x1="${O + i * S}" y1="8" x2="${O + i * S}" y2="${W - 8}" stroke="currentColor" stroke-opacity=".13"/><line x1="8" y1="${O + i * S}" x2="${W - 8}" y2="${O + i * S}" stroke="currentColor" stroke-opacity=".13"/>`;
+    s += `<line x1="4" y1="${O}" x2="${W - 4}" y2="${O}" stroke="currentColor"/><line x1="${O}" y1="${W - 4}" x2="${O}" y2="4" stroke="currentColor"/><text x="${W - 12}" y="${O - 5}" font-size="11" font-style="italic" fill="currentColor">x</text><text x="${O + 5}" y="13" font-size="11" font-style="italic" fill="currentColor">y</text>`;
+    for (const v of [-5, -3, -1, 1, 3, 5]) s += `<text x="${O + v * S}" y="${O + 13}" font-size="9.5" text-anchor="middle" fill="currentColor">${v < 0 ? '−' + -v : v}</text><text x="${O - 4}" y="${O - v * S + 3}" font-size="9.5" text-anchor="end" fill="currentColor">${v < 0 ? '−' + -v : v}</text>`;
+    const col = ['#7b3fbf', '#d0618a'], cid = 'mc' + Math.random().toString(36).slice(2, 8);
+    s += `<clipPath id="${cid}"><rect x="8" y="8" width="${W - 16}" height="${W - 16}"/></clipPath>`;
+    ls.forEach(([a, b], k) => { const av = typeof a === 'object' ? a.n / a.d : a, bv = typeof b === 'object' ? b.n / b.d : b; const y = x => av * x + bv; s += `<line x1="${O - 6.4 * S}" y1="${O - y(-6.4) * S}" x2="${O + 6.4 * S}" y2="${O - y(6.4) * S}" stroke="${col[k]}" stroke-width="2.4" clip-path="url(#${cid})"/>`; });
+    return `<div class="mplotw">${s}</svg></div>`;
+  }
+  const linEq = (a, b) => T`y=${(typeof a === 'object' ? (a.d === 1 ? (a.n === 1 ? '' : a.n === -1 ? '-' : a.n) : qt(a)) : a === 1 ? '' : a === -1 ? '-' : a)}x${(typeof b === 'object' ? b.n : b) === 0 ? '' : (typeof b === 'object' ? (b.n < 0 ? '-' + qt(Q(-b.n, b.d)) : '+' + qt(b)) : sgn(b))}`;
+  const sys = (e1, e2) => T`\begin{cases}${e1}\\${e2}\end{cases}`;
+
+  /* =================== DZIAŁ II: wyrażenia algebraiczne =================== */
+  // (px+q)² − (rx+s)²  oraz (ax+by)² − (ax−by)²  (2305-5, 2405-5, 2508-6, 2505-4)
+  reg('kwRoznKw', ['2305-5', '2405-5', '2508-6', '2505-4'], ['f06-0'], () => {
+    if (R.int(0, 1)) { // dwie zmienne
+      const a = R.int(1, 4), b = R.int(1, 3), sw = R.int(0, 1), first = sw ? '-' : '+', second = sw ? '+' : '-', c = 4 * a * b * (sw ? -1 : 1);
+      const A1 = (a === 1 ? '' : a) + 'x', B1 = (b === 1 ? '' : b) + 'y', mono = k => (k === 1 ? '' : k === -1 ? '-' : k) + 'xy';
+      return { q: T`Dla każdych liczb rzeczywistych $x$, $y$ wartość wyrażenia $(${A1}${first}${B1})^2-(${A1}${second}${B1})^2$ jest równa wartości wyrażenia`, opts: opts(opt(mono(c)), [[opt(mono(-c)), 'Zły znak: odejmujemy cały drugi kwadrat — jego wyraz $2ab$ zmienia znak.'], [T`${2 * b * b}y^2`, 'Wyrazy $a^2$ i $b^2$ się redukują — zostaje tylko podwojony iloczyn (dwa razy).'], [T`${2 * a * a}x^2`, 'Kwadraty się skracają, nie dodają.'], [opt(mono(c / 2)), 'Podwojony iloczyn występuje w obu kwadratach — razem $4ab$, a nie $2ab$.'], ['0', 'Kwadraty się nie znoszą — różnią się znakiem wyrazu $2ab$.']]),
+        steps: [T`$(${A1}${first}${B1})^2=${a * a}x^2${first}${2 * a * b}xy+${b * b}y^2$, $(${A1}${second}${B1})^2=${a * a}x^2${second}${2 * a * b}xy+${b * b}y^2$.`, T`Różnica: $${mono(c)}$.`] };
+    }
+    const p = R.int(1, 3), q = R.int(-4, 4) || 2, r = R.int(1, 3), s = R.int(-4, 4) || -3; if (p === r && Math.abs(q) === Math.abs(s) && q === s) return null;
+    const P1 = pmul([p, q], [p, q]), P2 = pmul([r, s], [r, s]), D = padd(P1, pneg(P2));
+    const noMid = padd([p * p, 0, q * q], pneg([r * r, 0, s * s])), halfSub = padd(P1, [-r * r, -2 * r * s, s * s]);
+    return { q: T`Dla każdej liczby rzeczywistej $x$ wartość wyrażenia $(${lin(p, q)})^2-(${lin(r, s)})^2$ jest równa wartości wyrażenia`, opts: opts(poly(D), [[poly(noMid), 'Pominięte wyrazy $2ab$: $(a+b)^2\\neq a^2+b^2$.'], [poly(halfSub), 'Minus przed nawiasem zmienia znaki <b>wszystkich</b> wyrazów drugiego kwadratu.'], [poly(padd(P1, P2)), 'Kwadraty trzeba odjąć, nie dodać.'], [poly(padd(D, [0, 0, 2 * s * s])), 'Zły znak przy wyrazie wolnym drugiego kwadratu.'], [poly(pmul([p - r, q - s], [p - r, q - s])), '$a^2-b^2\\neq(a-b)^2$.']]),
+      steps: [T`$(${lin(p, q)})^2=${poly(P1)}$, $(${lin(r, s)})^2=${poly(P2)}$.`, T`Różnica (minus zmienia znaki drugiego nawiasu): $${poly(D)}$.`] };
+  });
+  // (k+√s)² − (k−√s)² = 4k√s  i  (k−√s)² − (√s−k)² = 0  (2306-6, 2308-6, 2608-4)
+  reg('kwRoznKwLiczby', ['2306-6', '2308-6', '2608-4'], ['f06-0'], () => {
+    const k = R.int(1, 4), s = R.pick([2, 3, 5, 6, 7]), t = R.int(0, 2), rt = T`\sqrt{${s}}`;
+    if (t === 0) return { q: T`Wartość wyrażenia $(${k}-${rt})^2-(${rt}-${k})^2$ jest równa`, opts: opts('0', [[opt(T`-${4 * k}${rt}`), T`$(a-b)^2=(b-a)^2$ — obie różnice podniesione do kwadratu dają to samo.`], [String(2 * (k * k + s)), 'Kwadraty trzeba odjąć, a są równe.'], [T`${4 * k}${rt}`, T`$(${k}-${rt})^2$ i $(${rt}-${k})^2$ to ta sama liczba.`], [String(2 * k * k - 2 * s), 'Zgubione wyrazy z pierwiastkiem — a i tak kwadraty są równe.']]), steps: [T`$(a-b)^2=(b-a)^2$, więc oba kwadraty są równe i różnica to $0$.`] };
+    const pi = t === 2, x = pi ? '\\pi' : String(k), y = pi ? String(k) : rt, val = pi ? T`${4 * k}\pi` : T`${4 * k}${rt}`;
+    return { q: T`Liczba $(${x}+${y})^2-(${x}-${y})^2$ jest równa`, opts: opts(val, [['0', 'Kwadraty nie są równe — różnią się znakiem wyrazu $2ab$.'], [pi ? String(2 * k) : opt(String(-2 * s)), 'Wyrazy $a^2$ i $b^2$ się skracają, zostaje $2ab-(-2ab)=4ab$.'], [pi ? T`${4 * k}\pi+${2 * k * k}` : T`${2 * k}+${2 * k}${rt}`, 'Po odjęciu skracają się oba kwadraty $a^2$ i $b^2$.'], [pi ? T`${2 * k}\pi` : T`${2 * k}${rt}`, 'Podwojony iloczyn: $2ab$ w obu kwadratach — razem $4ab$.']]),
+      steps: [T`$(a+b)^2-(a-b)^2=4ab$, gdzie $a=${x}$, $b=${y}$.`, T`Wynik: $${val}$.`] };
+  });
+  reg('kwMinusPierw', ['2506-4'], ['f06-0', 'f02-2'], () => {
+    const s = R.pick([2, 3, 5, 6, 7]), k = R.int(1, 3); // (√s+k)² − √(4k²s) = s + k²
+    return { q: T`Liczba $(\sqrt{${s}}+${k})^2-\sqrt{${4 * k * k * s}}$ jest równa`, opts: opts(String(s + k * k), [[T`${s + k * k}-${2 * k}\sqrt{${s}}`, T`Pominięty wyraz $2ab=${2 * k}\sqrt{${s}}$ — a on właśnie skraca się z $\sqrt{${4 * k * k * s}}=${2 * k}\sqrt{${s}}$.`], [T`${s + k * k}-${4 * k}\sqrt{${s}}`, 'Zły znak przy $2ab$: $(a+b)^2=a^2+2ab+b^2$.'], [String(s + k * k - 2 * k), T`$\sqrt{${4 * k * k * s}}=${2 * k}\sqrt{${s}}$, a nie $${2 * k}$.`], [String(s), 'Zgubione $b^2$.']]),
+      steps: [T`$(\sqrt{${s}}+${k})^2=${s}+${2 * k}\sqrt{${s}}+${k * k}$, a $\sqrt{${4 * k * k * s}}=${2 * k}\sqrt{${s}}$.`, T`Różnica: $${s + k * k}$.`] };
+  });
+  reg('kwPodstaw', ['2605-6'], ['f06-0'], () => {
+    const a = R.int(2, 7), s = R.pick([2, 3, 5, 7]); // x²+2ax+a² dla x = √s − a
+    return { q: T`Wartość wyrażenia $x^2+${2 * a}x+${a * a}$ dla $x=\sqrt{${s}}-${a}$ jest równa`, opts: opts(String(s), [[T`\sqrt{${s}}`, T`$x^2+${2 * a}x+${a * a}=(x+${a})^2$, a $(\sqrt{${s}})^2=${s}$.`], [T`${s}-${4 * a}\sqrt{${s}}`, 'Pomyłka znaku przy podstawianiu — najpierw zwiń wyrażenie do kwadratu.'], [T`${s + a * a * 2}-${2 * a}\sqrt{${s}}`, 'Podstawiając, zgubiono część wyrazów — prościej zwinąć do $(x+' + a + ')^2$.'], [String(s + 2 * a * a), 'Zły znak w $(\\sqrt{' + s + '}-' + a + ')+' + a + '$.']]),
+      steps: [T`$x^2+${2 * a}x+${a * a}=(x+${a})^2$.`, T`Dla $x=\sqrt{${s}}-${a}$: $(\sqrt{${s}})^2=${s}$.`] };
+  });
+  reg('kanonOgolna', ['2608-13.2'], ['f07-5', 'f07-2', 'f06-0'], () => {
+    const a = R.pick([-3, -2, -1, 2, 3]), p = R.int(-4, 4) || 1, q = R.int(-5, 5); const G2 = padd(pmul([a], pmul([1, -p], [1, -p])), [q]);
+    const fx = T`f(x)=${a === 1 ? '' : a === -1 ? '-' : a}(x${sgn(-p)})^2${q ? sgn(q) : ''}`;
+    return { q: T`Funkcja kwadratowa $f$ jest określona wzorem $${fx}$. Wzorem tej funkcji w postaci ogólnej jest`, opts: opts(T`f(x)=${poly(G2)}`, [[T`f(x)=${poly([a, 0, a * p * p + q])}`, 'Pominięty wyraz $-2px$: $(x-p)^2=x^2-2px+p^2$.'], [T`f(x)=${poly([a, -2 * p, a * p * p + q])}`, 'Współczynnik $' + a + '$ mnoży wszystkie wyrazy nawiasu, także $-2px$.'], [T`f(x)=${poly([a, 2 * a * p, a * p * p + q])}`, 'Zły znak wyrazu z $x$.'], [T`f(x)=${poly([a, -2 * a * p, p * p + q])}`, 'Współczynnik $' + a + '$ mnoży też $p^2$.']]),
+      steps: [T`$(x${sgn(-p)})^2=x^2${sgn(-2 * p)}x+${p * p}$.`, T`$${a}\cdot(x^2${sgn(-2 * p)}x+${p * p})${q ? sgn(q) : ''}=${poly(G2)}$.`] };
+  });
+  reg('wielomPF', ['2405-8'], ['f06-0'], () => {
+    const a = R.int(2, 4), b = R.int(1, 3), c = R.int(2, 5), W = [a, a * b, a * c, 0], r = R.pick([-1, 1, 2, -2]), Wr = a * r ** 3 + a * b * r * r + a * c * r;
+    const f1 = R.int(0, 1) ? [T`Wielomian $W$ jest iloczynem wielomianów $F(x)=${a}x$ i $G(x)=${poly([1, b, c])}$.`, true, T`$${a}x(${poly([1, b, c])})=${poly(W)}$.`] : [T`Wielomian $W$ jest iloczynem wielomianów $F(x)=${a}x$ i $G(x)=${poly([1, a * b, a * c])}$.`, false, T`Przed nawias wyłączamy $${a}x$ — w nawiasie zostaje $${poly([1, b, c])}$.`];
+    return { pf: [f1, [T`Liczba $${r < 0 ? '(' + r + ')' : r}$ jest rozwiązaniem równania $W(x)=0$.`, Wr === 0, T`$W(${r})=${Wr}$${Wr ? ' — nie zero' : ''}.`]], q: T`Dany jest wielomian $W(x)=${poly(W)}$. Oceń prawdziwość stwierdzeń.`, steps: [f1[2], T`$W(${r})=${Wr}$.`] };
+  });
+  reg('wielomWspol', ['2406-9'], ['f06-0'], () => {
+    const p = R.int(1, 3), q = R.int(1, 4) * R.pick([1, -1]), r = R.int(1, 3), s = R.int(-4, 4) || 1; // (q − p x)² · (r x + s)
+    const F = pmul([-p, q], [-p, q]), W = pmul(F, [r, s]), sum = W.reduce((a, b) => a + b, 0);
+    return { q: T`Wielomian $W(x)=ax^3+bx^2+cx+d$ jest iloczynem wielomianów $F(x)=(${poly([-p, q]).replace(/^(-?\d*)x(.*)$/, (m0) => m0)})^2$ i $G(x)=${lin(r, s)}$. Suma $a+b+c+d$ jest równa`, opts: opts(no(sum), [[no(W[W.length - 1]), 'To tylko wyraz wolny $d=W(0)$, a suma współczynników to $W(1)$.'], [no(W.reduce((a2, b2, i) => a2 + b2 * (i % 2 ? -1 : 1) * ((W.length - 1) % 2 ? -1 : 1), 0)), 'To $W(-1)$, a suma współczynników to $W(1)$.'], [no(W[0]), 'To tylko współczynnik $a$.'], [no(sum + 2), 'Sprawdź rachunek $F(1)\\cdot G(1)$.']]),
+      steps: [T`Suma współczynników to $W(1)=F(1)\cdot G(1)$.`, T`$F(1)=(${q - p})^2=${(q - p) ** 2}$, $G(1)=${r + s}$, więc $W(1)=${sum}$.`] };
+  });
+  reg('wielomDzial', ['2606-6'], ['f06-0'], () => {
+    const k = R.int(1, 3), c = R.int(1, 3) * R.pick([1, -1]), h = R.int(1, 4) * R.pick([1, -1]); // W = x^4, V = x^3 + c, H = x + h
+    const Wp = [1, 0, 0, 0, 0], V = [1, 0, 0, c], H = [1, h], P = pmul(V, H), D = padd(Wp, pneg(P)); void k;
+    return { q: T`Dane są wielomiany $W(x)=x^4$, $V(x)=${poly(V)}$, $H(x)=${poly(H)}$. Wielomian $W(x)-V(x)\cdot H(x)$ jest określony wzorem`, opts: opts(poly(D), [[poly(padd(Wp, P)), 'Iloczyn trzeba odjąć.'], [poly(padd(Wp, pneg(padd(P, [0, 0, 0, 0, 2 * P[4]])))), 'Minus zmienia znak każdego wyrazu iloczynu, także wyrazu wolnego.'], [poly(padd(D, [0, 0, 0, -2 * D[3], 0])), 'Zły znak wyrazu z $x$.'], [poly(padd(Wp, pneg(padd(V, H)))), 'Wielomiany $V$ i $H$ trzeba pomnożyć, nie dodać.']]),
+      steps: [T`$V(x)\cdot H(x)=(${poly(V)})(${poly(H)})=${poly(P)}$.`, T`$x^4-(${poly(P)})=${poly(D)}$.`] };
+  });
+  reg('wielomRozklad', ['2606-4'], ['f06-0'], () => {
+    const a = R.int(1, 4), sq = R.int(0, 1) === 1; const P = sq ? pmul([1, 0], pmul([1, -a], [1, -a])) : pmul([1, 0], pmul([1, -a], [1, a]));
+    const c1 = sq ? T`x(x-${a})^2` : T`x(x-${a})(x+${a})`;
+    return { q: T`Dla każdej liczby rzeczywistej $x$ wartość wyrażenia $${poly(P)}$ jest równa wartości wyrażenia`, opts: opts(c1, [[sq ? T`x(x-${a})(x+${a})` : T`x(x-${a})^2`, sq ? 'To $x(x^2-' + a * a + ')$ — brakuje wyrazu z $x^2$.' : 'Kwadrat różnicy ma wyraz $-2ax$, którego tu nie ma.'], [T`(x-${a})(x^2+${a * a})`, 'Rozłóż najpierw, wyłączając $x$ przed nawias.'], [sq ? T`(x+${a})(x-${a})^2` : T`x(x+${a})^2`, 'Sprawdź, mnożąc nawiasy — wychodzi inny wielomian.'], [T`x(x+${a})^2`, 'Zły znak w nawiasie.']]),
+      steps: [T`$${poly(P)}=x(${poly(P.slice(0, -1))})$.`, sq ? T`$${poly(P.slice(0, -1))}=(x-${a})^2$ — wzór na kwadrat różnicy.` : T`$x^2-${a * a}=(x-${a})(x+${a})$ — różnica kwadratów.`] };
+  });
+  // wyrażenia wymierne: mnożenie / dzielenie / odejmowanie (2406-8, 2505-8, 2306-7, 2608-8, 2308-7)
+  reg('wymierne', ['2406-8', '2505-8', '2306-7', '2608-8', '2308-7'], ['f06-0'], () => {
+    const t = R.int(0, 2), a = R.int(1, 4);
+    if (t === 0) { // (x²+ax)/(x+a)² · (x+a)/x = 1  … wersja: (x²+x)/(x+2)² · (x+2)/x = (x+1)/(x+2)
+      const b = R.int(1, 5); if (a === b) return null;
+      return { q: T`Dla każdej liczby $x$ różnej od $0$ i $${-a}$ wartość wyrażenia $\dfrac{x^2+${b === 1 ? '' : b}x}{(x+${a})^2}\cdot\dfrac{x+${a}}{x}$ jest równa wartości wyrażenia`, opts: opts(T`\frac{x+${b}}{x+${a}}`, [[T`\frac{x+${b}}{(x+${a})^2}`, 'Jeden czynnik $(x+' + a + ')$ skraca się z licznikiem drugiego ułamka.'], [T`\frac{x^2+${b}}{x+${a}}`, 'Wyłącz $x$ z licznika: $x^2+' + b + 'x=x(x+' + b + ')$ — i dopiero skracaj.'], [T`\frac{${b === 1 ? '' : b}x}{x+${a}}`, 'Nie wolno skracać składnika sumy — tylko czynnik iloczynu.'], [T`\frac{x+${b}}{${a}x+${a * a}}`, 'Sprawdź, co zostaje w mianowniku po skróceniu.']]),
+        steps: [T`$x^2+${b === 1 ? '' : b}x=x(x+${b})$.`, T`$\frac{x(x+${b})}{(x+${a})^2}\cdot\frac{x+${a}}{x}=\frac{x+${b}}{x+${a}}$.`] };
+    }
+    if (t === 1) { // 4/(x²+2x) : 5x/(4−x²)
+      const m = R.int(2, 5), n = R.int(2, 6), num = m; // m/(x(x+a)) : n x / (a²−x²) = m(a−x)(a+x)/(x(x+a)·n x) = m(a−x)/(n x²)
+      return { q: T`Dla każdej liczby $x$ różnej od $${-a}$, $0$ i $${a}$ wartość wyrażenia $\dfrac{${num}}{x^2+${a === 1 ? '' : a}x}:\dfrac{${n}x}{${a * a}-x^2}$ jest równa wartości wyrażenia`, opts: opts(T`\frac{${m * a}-${m}x}{${n}x^2}`, [[T`\frac{${m}x-${m * a}}{${n}x^2}`, T`$${a * a}-x^2=(${a}-x)(${a}+x)$, a nie $(x-${a})(x+${a})$ — zły znak.`], [T`\frac{${m * n}}{(x+${a})^2(${a}-x)}`, 'Dzielenie to mnożenie przez <b>odwrotność</b> drugiego ułamka.'], [T`\frac{${m}}{${n}x^2}`, 'Zgubiony czynnik $(' + a + '-x)$ po skróceniu.']]),
+        steps: [T`$x^2+${a === 1 ? '' : a}x=x(x+${a})$, $${a * a}-x^2=(${a}-x)(${a}+x)$.`, T`$\frac{${m}}{x(x+${a})}\cdot\frac{(${a}-x)(${a}+x)}{${n}x}=\frac{${m}(${a}-x)}{${n}x^2}$.`] };
+    }
+    // 1/(kx) − x
+    const k = R.int(2, 5);
+    return { q: T`Dla każdej liczby $x\neq0$ wartość wyrażenia $\dfrac{1}{${k}x}-x$ jest równa wartości wyrażenia`, opts: opts(T`\frac{1-${k}x^2}{${k}x}`, [[T`\frac{1-x}{${k}x}`, 'Sprowadzając do wspólnego mianownika, $x$ trzeba pomnożyć przez $' + k + 'x$.'], [T`\frac{1}{x}`, 'Odejmowanie ułamków wymaga wspólnego mianownika.'], [T`-\frac{1}{${k}x}`, 'To nie jest wynik odejmowania.'], [T`\frac{1-${k}x}{${k}x}`, '$x=\\frac{' + k + 'x^2}{' + k + 'x}$, więc w liczniku jest $x^2$.']]),
+      steps: [T`$x=\frac{${k}x^2}{${k}x}$, więc $\frac{1}{${k}x}-\frac{${k}x^2}{${k}x}=\frac{1-${k}x^2}{${k}x}$.`] };
+  });
+
+  /* =================== DZIAŁ III: równania i nierówności =================== */
+  reg('rownProp', ['2605-9'], ['f02-4'], () => {
+    const p = R.int(1, 5), q = R.int(2, 7); if (gcd(p, q) !== 1 || p === q) return null;
+    const x0 = R.int(-3, 12), b = R.int(1, 4), c = R.int(-5, 5); // (x+a)/(bx−c) = p/q, dobieramy a: q(x0+a) = p(b x0 − c)
+    const aNum = p * (b * x0 - c) - q * x0; if (aNum % q) return null; const a = aNum / q; if (!a || b * x0 - c === 0) return null;
+    // błędy: mnożenie „na krzyż” źle
+    const w1 = Q(p * (-c) - q * a, q - p * b), w2 = Q(p * c - q * a, q - p * b);
+    return { q: T`Rozwiązaniem równania $\dfrac{x${sgn(a)}}{${lin(b, -c)}}=\dfrac{${p}}{${q}}$ jest liczba`, opts: opts(no(x0), [[w1.d && !qeq(w1, Q(x0)) ? qo(w1) : null, 'Mnożąc „na krzyż”: $' + q + '(x' + sgn(a) + ')=' + p + '(' + lin(b, -c) + ')$ — sprawdź znaki po przeniesieniu.'], [w2.d ? qo(w2) : null, 'Zły znak przy wyrazie wolnym mianownika.'], [qo(Q(q * a, p)), 'Nie wolno „skreślać” $x$ — trzeba pomnożyć na krzyż.'], [no(x0 + 1), 'Sprawdź, podstawiając wynik do równania.'], [no(-x0), 'Zły znak wyniku.']]),
+      steps: [T`$${q}(x${sgn(a)})=${p}(${lin(b, -c)})$`, T`$${q}x${sgn(q * a)}=${p * b}x${sgn(-p * c)}$, więc $x=${x0}$.`] };
+  });
+  // nierówność liniowa → przedział (2305-6, 2405-6, 2408-5, 2508-7)
+  reg('nierLin', ['2305-6', '2405-6', '2408-5', '2508-7'], ['f02-4'], () => {
+    // a·(x + b) ≤ (c − x)/d  →  przekształcenie; liczymy ogólnie: L(x) = α x + β, nierówność L(x) ≤ 0
+    const x0 = R.int(-8, 8), al = R.pick([-3, -2, -1, 2, 3]), d = R.pick([2, 3, 5]), sym = R.pick(['\\leq', '\\geq', '<', '>']);
+    // lewa: al(x − x0)·d/… zapis: al(x + m) sym (n − x)/d  z m, n dobranymi tak, by granica = x0
+    const m = R.int(-5, 5), n = d * al * (x0 + m) + x0; // al(x0+m) = (n − x0)/d
+    const coef = al * d + 1; // al d x + al d m sym n − x  →  (al d + 1) x sym n − al d m
+    if (coef === 0) return null;
+    const keep = coef > 0, closed = sym === '\\leq' || sym === '\\geq', le = sym === '\\leq' || sym === '<';
+    const right = keep ? le : !le; // x ≤ x0 → (−∞, x0]
+    const ans = right ? iv(-Infinity, x0, 0, closed) : iv(x0, Infinity, closed, 0), flip = right ? iv(x0, Infinity, closed, 0) : iv(-Infinity, x0, 0, closed);
+    return { q: T`Zbiorem wszystkich rozwiązań nierówności $${al}(x${m ? sgn(m) : ''})${sym}\dfrac{${n}-x}{${d}}$ jest przedział`, opts: opts(ans, [[flip, coef < 0 ? 'Dzieląc przez liczbę ujemną, trzeba zmienić kierunek nierówności.' : 'Zły kierunek — sprawdź, podstawiając np. $x=' + (x0 + 10) + '$.'], [right ? iv(-Infinity, -x0, 0, closed) : iv(-x0, Infinity, closed, 0), 'Zły znak granicy przedziału.'], [right ? iv(-Infinity, x0, 0, !closed) : iv(x0, Infinity, !closed, 0), closed ? 'Nierówność nieostra — koniec przedziału należy do rozwiązań (nawias kwadratowy).' : 'Nierówność ostra — koniec nie należy (nawias okrągły).'], [right ? iv(-x0, Infinity, closed, 0) : iv(-Infinity, -x0, 0, closed), 'Zły znak granicy i zły kierunek.']]),
+      steps: [T`Mnożymy obie strony przez $${d}$: $${al * d}(x${m ? sgn(m) : ''})${sym}${n}-x$.`, T`$${coef}x${keep ? sym : { '\\leq': '\\geq', '\\geq': '\\leq', '<': '>', '>': '<' }[sym]}${coef * x0}$ ${coef < 0 ? '(dzielimy przez liczbę ujemną — zmiana kierunku)' : ''} $\Rightarrow x${right ? (closed ? '\\leq' : '<') : closed ? '\\geq' : '>'}${x0}$.`] };
+  });
+  // liczby całkowite spełniające nierówność liniową (2406-6, 2506-6, 2608-6, 2306-16)
+  reg('nierLinCalk', ['2406-6', '2506-6', '2608-6', '2306-16'], ['f08-1'], () => {
+    const kind = R.int(0, 2), a = R.pick([2, 3, 5, 7]), b = R.int(-9, 9), c = R.pick([2, 3, 4, 5, 6, 12]), dd = R.int(1, 5);
+    // (a x + b)/c  ?  d   →  a x ? c d − b  → granica g = (c d − b)/a
+    const g = (c * dd - b) / a; if (Number.isInteger(g)) return null;
+    if (kind === 0) { const hi = Math.floor(g); if (hi < 2) return null; return { q: T`Liczba wszystkich całkowitych dodatnich rozwiązań nierówności $\dfrac{${lin(a, b)}}{${c}}<${dd}$ jest równa`, opts: opts(String(hi), [[String(hi + 1), 'Granica $' + dec(+g.toFixed(2)) + '$ nie jest całkowita — największa całkowita spełniająca to $' + hi + '$.'], [String(hi - 1), 'Policz jeszcze raz: od $1$ do $' + hi + '$.'], [String(Math.floor((c * dd + b) / a) > 0 && Math.floor((c * dd + b) / a) !== hi ? Math.floor((c * dd + b) / a) : hi + 2), 'Zły znak przy przenoszeniu wyrazu wolnego.'], [String(c * dd), 'Trzeba rozwiązać nierówność, a nie tylko pomnożyć.']]), steps: [T`$${lin(a, b)}<${c * dd}\iff x<${qt(Q(c * dd - b, a))}\approx ${dec(+g.toFixed(2))}$.`, T`Dodatnie liczby całkowite: $1,\ldots,${hi}$ — jest ich $${hi}$.`] }; }
+    if (kind === 1) { const hi = Math.floor(g); return { q: T`Największą liczbą całkowitą spełniającą nierówność $\dfrac{${lin(a, b)}}{${c}}\leq ${dd}$ jest`, opts: opts(no(hi), [[no(hi + 1), 'Ta liczba już nie spełnia nierówności — sprawdź, podstawiając.'], [no(Math.ceil(g) + 1), 'Szukamy największej liczby <b>nie większej</b> od granicy.'], [no(hi - 1), 'Istnieje większa liczba całkowita spełniająca nierówność.'], [no(Math.round(c * dd / a)), 'Zgubiony wyraz wolny licznika.']]), steps: [T`$${lin(a, b)}\leq ${c * dd}\iff x\leq ${qt(Q(c * dd - b, a))}\approx ${dec(+g.toFixed(2))}$.`, T`Największa liczba całkowita: $${hi}$.`] }; }
+    const lo = Math.ceil(g); return { q: T`Najmniejszą liczbą całkowitą spełniającą nierówność $\dfrac{${lin(a, b)}}{${c}}\geq ${dd}$ jest`, opts: opts(no(lo), [[no(lo - 1), 'Ta liczba nie spełnia nierówności — granica to $' + dec(+g.toFixed(2)) + '$.'], [no(lo + 1), 'Istnieje mniejsza liczba całkowita spełniająca nierówność.'], [no(-lo), 'Zły znak.'], [no(Math.floor(g) - 1), 'Szukamy najmniejszej liczby <b>nie mniejszej</b> od granicy.']]), steps: [T`$${lin(a, b)}\geq ${c * dd}\iff x\geq ${qt(Q(c * dd - b, a))}\approx ${dec(+g.toFixed(2))}$.`, T`Najmniejsza liczba całkowita: $${lo}$.`] };
+  });
+  reg('nierLinOs', ['2505-6'], ['f02-4'], () => {
+    const x0 = R.int(-9, 6), a = R.int(2, 5), b = R.int(1, 4), c = R.int(1, 5); // a − b(1 − c x) ≥ c... prościej: p x + q ≥ r x + s z granicą x0
+    const p = R.int(2, 6), r = R.int(-3, p - 1), q = R.int(-9, 9), s = (p - r) * x0 + q; void a; void b; void c;
+    const strict = R.int(0, 1) === 1, sym = strict ? '>' : '\\geq';
+    const pic = (dir, cl) => axis([dir > 0 ? [x0, Infinity, cl, 0] : [-Infinity, x0, 0, cl]], [x0, 0].filter((v, i, ar) => ar.indexOf(v) === i));
+    const v = R.shuffle([[pic(1, !strict), true, ''], [pic(-1, !strict), false, 'Zły kierunek — sprawdź, podstawiając dużą liczbę.'], [pic(1, strict), false, strict ? 'Nierówność ostra — pusty koniec.' : 'Nierówność nieostra — pełny koniec.'], [pic(-1, strict), false, 'Zły kierunek i zły koniec.']]);
+    return { q: T`Dana jest nierówność $${lin(p, q)}${sym}${lin(r, s)}$. Na którym rysunku zaznaczono zbiór wszystkich jej rozwiązań?`, opts: v.map(([html, ok, why]) => ({ t: '', html, ok, why })), steps: [T`$${p - r}x${sym}${s - q}\iff x${sym}${x0}$.`] };
+  });
+  reg('nierKwadr', ['2606-7'], ['f07-4', 'f07-6'], () => {
+    const a = R.pick([-3, -2, -1, 1, 2]), x1 = R.int(-5, 2), x2 = x1 + R.int(2, 6), gt = R.int(0, 1) === 1;
+    const inside = (a < 0) === gt; // a(x−x1)(x−x2) > 0: dla a<0 między pierwiastkami
+    const ans = inside ? iv(x1, x2, 0, 0) : T`(-\infty, ${x1})\cup(${x2}, +\infty)`;
+    const other = inside ? T`(-\infty, ${x1})\cup(${x2}, +\infty)` : iv(x1, x2, 0, 0);
+    return { q: T`Zbiorem wszystkich rozwiązań nierówności $${a === 1 ? '' : a === -1 ? '-' : a}(x${sgn(-x1)})(x${sgn(-x2)})${gt ? '>' : '<'}0$ jest`, opts: opts(ans, [[other, 'Współczynnik $' + a + '$ decyduje o kierunku ramion paraboli — sprawdź, gdzie wartości są ' + (gt ? 'dodatnie.' : 'ujemne.')], [iv(x1, x2, 1, 1), 'Nierówność ostra — końce nie należą.'], [iv(-x2, -x1, 0, 0), 'Miejsca zerowe $(x-a)$ to $a$, nie $-a$.'], [iv(-x2, -x1, 1, 1), 'Złe miejsca zerowe i złe końce.']]),
+      steps: [T`Miejsca zerowe: $${x1}$ i $${x2}$; ramiona paraboli skierowane ${a < 0 ? 'w dół' : 'w górę'}.`, T`Wartości ${gt ? 'dodatnie' : 'ujemne'}: $${ans}$.`] };
+  });
+  // równania wielomianowe w postaci iloczynowej (2305-7, 2505-7, 2506-7, 2508-10, 2605-8, 2608-7)
+  reg('rownIloczyn', ['2305-7', '2505-7', '2506-7', '2508-10', '2605-8', '2608-7'], ['f06-0'], () => {
+    const t = R.int(0, 2);
+    if (t === 0) { // ile rozwiązań: k(x−a)²(x²−b²)=0 lub (x²+c)
+      const a = R.int(-4, 4), b = R.int(1, 6), neg = R.int(0, 1), roots = new Set([a]); if (!neg) { roots.add(b); roots.add(-b); }
+      const n = roots.size, word = ['', 'jedno rozwiązanie.', 'dwa rozwiązania.', 'trzy rozwiązania.', 'cztery rozwiązania.', 'pięć rozwiązań.'];
+      return { q: T`Równanie $${R.int(2, 5)}(x${a ? sgn(-a) : ''})^2(x^2${neg ? '+' : '-'}${b * b})=0$ w zbiorze liczb rzeczywistych ma dokładnie`, opts: opts(T`\text{${word[n]}}`, [[T`\text{${word[n + 1] || 'sześć rozwiązań.'}}`, 'Pierwiastek podwójny $(x' + (a ? sgn(-a) : '') + ')^2$ to jedno rozwiązanie, nie dwa.'], [T`\text{${word[Math.max(1, n - 1)] === word[n] ? word[n + 2] : word[Math.max(1, n - 1)]}}`, neg ? 'Sprawdź, czy $x^2+' + b * b + '=0$ ma rozwiązania.' : 'Równanie $x^2-' + b * b + '=0$ ma dwa rozwiązania: $\\pm' + b + '$.'], [T`\text{${neg ? word[3] : word[5]}}`, neg ? '$x^2+' + b * b + '>0$ — ten czynnik nie daje rozwiązań.' : 'Liczba czynników to nie liczba rozwiązań.'], [T`\text{${word[4]}}`, 'Policz różne rozwiązania.']]),
+        steps: [T`$(x${a ? sgn(-a) : ''})^2=0\iff x=${a}$; ${neg ? T`$x^2+${b * b}=0$ nie ma rozwiązań` : T`$x^2-${b * b}=0\iff x=\pm${b}$`}.`, T`Różnych rozwiązań: $${n}$.`] };
+    }
+    if (t === 1) { // suma rozwiązań (px − q)(r + s x)(x − u) = 0
+      const r1 = R.int(-5, 5), r2 = R.int(-5, 5), r3 = R.int(-5, 5); if (new Set([r1, r2, r3]).size < 3) return null;
+      const k1 = R.int(2, 4), k2 = R.int(2, 5), sum = r1 + r2 + r3;
+      const f1 = T`(${k1}x${sgn(-k1 * r1)})`, f2 = T`(${-k2 * r2 === 0 ? '' : -k2 * r2}${-k2 * r2 === 0 ? '' : '+'}${k2}x)`, f3 = T`(x${sgn(-r3)})`;
+      return { q: T`Suma wszystkich rozwiązań równania $${f1}${f2}${f3}=0$ jest równa`, opts: opts(no(sum), [[no(k1 * r1 + (-k2 * r2) / -1 + r3 === sum ? sum + 2 : -sum), 'Rozwiązanie czynnika $(x-a)$ to $a$ — sprawdź znaki.'], [no(-k1 * r1 + k2 * r2 + r3 === sum ? sum + 3 : k1 * r1 - k2 * r2 * -1 + r3), 'Przy czynniku $(kx+m)$ rozwiązaniem jest $-\\frac mk$, a nie $-m$.'], [no(r1 * r2 * r3 === sum ? sum - 1 : r1 * r2 * r3), 'Pytamy o sumę, nie iloczyn.'], [no(sum + 1), 'Policz każde rozwiązanie osobno.']]),
+        steps: [T`Rozwiązania: $${r1}$, $${r2}$, $${r3}$.`, T`Suma: $${sum}$.`] };
+    }
+    // jedno z rozwiązań: k(x²−s)(x+a)=0
+    const s = R.pick([2, 3, 5, 7]), a = R.int(1, 6);
+    return { q: T`Jednym z rozwiązań równania $\sqrt{${R.pick([2, 3, 5])}}(x^2-${s})(x+${a})=0$ jest liczba`, opts: opts(T`\sqrt{${s}}`, [[String(a), 'Czynnik $(x+' + a + ')$ zeruje się dla $x=-' + a + '$.'], [String(s), '$x^2=' + s + '\\iff x=\\pm\\sqrt{' + s + '}$.'], [T`\sqrt{${s === 2 ? 3 : 2}}`, 'Współczynnik przed nawiasami nie daje rozwiązań.'], [opt(String(-s)), '$x^2=' + s + '$, a nie $x=-' + s + '$.']]),
+      steps: [T`Iloczyn jest zerem, gdy któryś czynnik jest zerem: $x^2=${s}$ albo $x=-${a}$.`, T`Rozwiązania: $\pm\sqrt{${s}}$, $-${a}$.`] };
+  });
+  // równania wymierne — dziedzina! (2305-8, 2306-10, 2308-8, 2405-7, 2408-6)
+  reg('rownWymierne', ['2305-8', '2306-10', '2308-8', '2405-7', '2408-6'], ['f06-0'], () => {
+    const a = R.int(1, 5), b = R.int(1, 5), c = R.int(1, 6); if (a === b || a === c) return null;
+    // (x²−a x)(x+b) / (x²−b²) = 0: licznik zeruje się w 0, a, −b; mianownik w ±b → rozwiązania 0, a (o ile a ≠ b)
+    const roots = [0, a, -b].filter(x => Math.abs(x) !== b), n = roots.length;
+    const word = ['nie ma rozwiązań.', 'ma dokładnie jedno rozwiązanie.', 'ma dokładnie dwa rozwiązania.', 'ma dokładnie trzy rozwiązania.', 'ma dokładnie cztery rozwiązania.'];
+    return { q: T`Równanie $\dfrac{(x^2-${a === 1 ? '' : a}x)(x+${b})}{x^2-${b * b}}=0$ w zbiorze liczb rzeczywistych`, opts: opts(T`\text{${word[n]}}`, [[T`\text{${word[3]}}`, 'Liczba $-' + b + '$ zeruje mianownik — nie należy do dziedziny.'], [T`\text{${word[1]}}`, 'Sprawdź oba czynniki licznika: $x(x-' + a + ')$.'], [T`\text{${word[4]}}`, 'Miejsca zerowe mianownika nie są rozwiązaniami — wręcz przeciwnie, trzeba je wykluczyć.'], [T`\text{${word[0]}}`, 'Licznik ma miejsca zerowe spoza $\\{\\pm' + b + '\\}$.']]),
+      steps: [T`Dziedzina: $x\neq\pm${b}$.`, T`Licznik: $x(x-${a})(x+${b})=0\iff x\in\{0,${a},${-b}\}$; $-${b}$ odpada. Rozwiązania: $0$, $${a}$.`] };
+  });
+
+  /* =================== DZIAŁ IV: układy równań =================== */
+  reg('ukladWykres', ['2305-10', '2405-11', '2408-8'], ['f11-3', 'f11-8'], () => {
+    const par = R.int(0, 2) === 0, a1 = R.pick([-2, -1, 1, 2]), b1 = R.int(-3, 3), a2 = par ? a1 : R.pick([-2, -1, 1, 2].filter(v => v !== a1)), b2 = par ? b1 + R.pick([-3, -2, 2, 3]) : R.int(-3, 3);
+    if (!par && b1 === b2) return null;
+    const S = sys(linEq(a1, b1), linEq(a2, b2));
+    return { q: 'Na rysunku przedstawiono interpretację geometryczną jednego z poniższych układów równań.' + plotLines([[a1, b1], [a2, b2]]) + 'Tym układem jest',
+      opts: opts(S, [[sys(linEq(-a1, b1), linEq(a2, b2)), 'Pierwsza prosta ' + (a1 > 0 ? 'rośnie' : 'maleje') + ' — współczynnik kierunkowy jest ' + (a1 > 0 ? 'dodatni.' : 'ujemny.')], [sys(linEq(a1, -b1 || 4), linEq(a2, b2)), 'Wyraz wolny to punkt przecięcia z osią $Oy$ — odczytaj go z rysunku.'], [sys(linEq(a1, b1), linEq(-a2, b2)), 'Druga prosta ma przeciwne nachylenie.'], [sys(linEq(a1, b1), linEq(a2, -b2 || 4)), 'Sprawdź, gdzie druga prosta przecina oś $Oy$.']]),
+      steps: [T`Wyraz wolny $b$ odczytujemy z osi $Oy$, współczynnik $a$ — z nachylenia (o ile rośnie $y$, gdy $x$ rośnie o 1).`, T`Proste: $${linEq(a1, b1)}$ i $${linEq(a2, b2)}$${par ? ' — równoległe, bo mają ten sam współczynnik $a$' : ''}.`] };
+  });
+  reg('ukladPunkt', ['2308-10'], ['f11-3'], () => {
+    const x = R.int(-8, 8), y = R.int(-8, 8); const mk = () => { const p = R.int(-3, 3) || 1, q = R.int(-3, 3) || 1; return [p, q, p * x + q * y]; };
+    const e = ([p, q, r]) => T`${poly([p, 0]).replace('x', 'x')}${q < 0 ? '-' : '+'}${Math.abs(q) === 1 ? '' : Math.abs(q)}y=${r}`;
+    const good = [mk(), mk()]; if (good[0][0] * good[1][1] === good[0][1] * good[1][0]) return null;
+    const bad = k => { const g = mk(); g[2] += k; return g; };
+    return { q: T`W kartezjańskim układzie współrzędnych punkt $(${x},${y})$ jest punktem przecięcia prostych o równaniach`, opts: opts(T`${e(good[0])}\ \text{i}\ ${e(good[1])}`, [[T`${e(good[0])}\ \text{i}\ ${e(bad(2))}`, 'Punkt musi spełniać <b>oba</b> równania — podstaw do drugiego.'], [T`${e(bad(-3))}\ \text{i}\ ${e(good[1])}`, 'Pierwsze równanie nie jest spełnione przez ten punkt.'], [T`${e(bad(1))}\ \text{i}\ ${e(bad(4))}`, 'Żadne z równań nie jest spełnione.'], [T`${e([good[0][1], good[0][0], good[0][2]])}\ \text{i}\ ${e(good[1])}`, 'Zamienione współrzędne $x$ i $y$.']]),
+      steps: [T`Podstawiamy $x=${x}$, $y=${y}$ do każdej pary — oba równania muszą być spełnione.`] };
+  });
+  reg('ukladIle', ['2406-7'], null, () => {
+    const p = R.int(1, 3), q = R.int(-4, 4) || 2, r = R.int(-6, 6), k = R.pick([-4, -3, -2, 2, 3]), t = R.int(0, 2);
+    const e2 = t === 0 ? [k * p, k * q, k * r] : t === 1 ? [k * p, k * q, k * r + R.pick([-2, 1, 3])] : [k * p + 1, k * q, k * r];
+    const E = ([a, b, c]) => T`${poly([a, 0])}${b < 0 ? '-' : '+'}${Math.abs(b) === 1 ? '' : Math.abs(b)}y=${c}`;
+    const ans = ['\\text{ma nieskończenie wiele rozwiązań.}', '\\text{nie ma rozwiązań.}', '\\text{ma dokładnie jedno rozwiązanie.}'][t];
+    return { q: T`Układ równań $${sys(E([p, q, r]), E(e2))}$`, opts: opts(ans, [['\\text{ma dokładnie dwa rozwiązania.}', 'Układ dwóch równań liniowych ma 0, 1 albo nieskończenie wiele rozwiązań — nigdy dokładnie dwa.'], ...['\\text{ma nieskończenie wiele rozwiązań.}', '\\text{nie ma rozwiązań.}', '\\text{ma dokładnie jedno rozwiązanie.}'].filter(x => x !== ans).map(x => [x, t === 0 ? 'Drugie równanie to pierwsze pomnożone przez $' + k + '$ — to ta sama prosta.' : t === 1 ? 'Lewe strony są proporcjonalne, prawe nie — proste równoległe, rozłączne.' : 'Współczynniki przy $x$ i $y$ nie są proporcjonalne — proste się przecinają.'])]),
+      steps: [t === 0 ? T`Drugie równanie to pierwsze pomnożone przez $${k}$ — ta sama prosta, nieskończenie wiele rozwiązań.` : t === 1 ? 'Lewe strony proporcjonalne, prawe nie — proste równoległe rozłączne, brak rozwiązań.' : 'Współczynniki nie są proporcjonalne — proste przecinają się w jednym punkcie.'] };
+  });
+  reg('ukladTresc', ['2405-10', '2606-9', '2305-11'], null, () => {
+    const t = R.int(0, 1);
+    if (t === 0) { const N = R.int(150, 400), k = R.int(10, 40), m = R.pick([2, 3, 4]);
+      return { q: T`W parku rosną drzewa iglaste i liściaste — łącznie $${N}$. Gdyby drzew iglastych było o $${k}$ więcej, to liściastych byłoby $${m}$ razy więcej niż iglastych. Niech $x$ — liczba drzew iglastych, $y$ — liściastych. Układem równań opisującym tę sytuację jest`,
+        opts: opts(sys(T`x+y=${N}`, T`y=${m}(x+${k})`), [[sys(T`x+y=${N}`, T`x+${k}=${m}y`), 'Zamienione role: to liściastych byłoby $' + m + '$ razy więcej.'], [sys(T`x+y=${N}`, T`y=${m}x+${k}`), 'Najpierw dodajemy $' + k + '$ do liczby iglastych, potem mnożymy — potrzebny nawias.'], [sys(T`x+y=${N}`, T`${m}y=x+${k}`), 'To znaczy, że iglastych byłoby więcej.'], [sys(T`x-y=${N}`, T`y=${m}(x+${k})`), 'Łączna liczba to suma.']]),
+        steps: [T`Razem: $x+y=${N}$. Po dodaniu $${k}$ iglastych: $x+${k}$; liściastych jest $${m}$ razy więcej: $y=${m}(x+${k})$.`] };
+    }
+    const P = R.pick([20, 24, 30, 36, 40]), d = R.int(2, 6);
+    return { q: T`Obwód prostokąta o bokach $a>b$ jest równy $${P}$, a jeden bok jest o $${d}$ krótszy od drugiego. Układem równań opisującym tę sytuację jest`,
+      opts: opts(sys(T`2a+2b=${P}`, T`a-b=${d}`), [[sys(T`2ab=${P}`, T`a-b=${d}`), '$2ab$ to nie obwód — obwód to suma boków.'], [sys(T`a+b=${P}`, T`a=b+${d}`), 'Obwód to $2a+2b$, a nie $a+b$.'], [sys(T`2a+2b=${P}`, T`b=${d}a`), '„O $' + d + '$ krótszy” to różnica, nie iloraz.'], [sys(T`2a+b=${P}`, T`a=${d}b`), 'Obwód: $2a+2b$; różnica boków: $a-b=' + d + '$.']]),
+      steps: [T`Obwód: $2a+2b=${P}$; różnica boków: $a-b=${d}$.`] };
+  });
+
+  /* =================== DZIAŁ V: funkcje =================== */
+  // rysunek wykresu: łamana (węzły [x,y]) z kółkami na końcach albo parabola
+  function plotFn(f, o) {
+    const S = 17, X0 = o.xmin ?? -7, X1 = o.xmax ?? 7, Y0 = o.ymin ?? -6, Y1 = o.ymax ?? 6, W = (X1 - X0) * S + 20, H = (Y1 - Y0) * S + 20;
+    const px = x => 10 + (x - X0) * S, py = y => 10 + (Y1 - y) * S;
+    let s = `<svg class="maxis mplot" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img">`;
+    for (let x = X0; x <= X1; x++) s += `<line x1="${px(x)}" y1="${py(Y1)}" x2="${px(x)}" y2="${py(Y0)}" stroke="currentColor" stroke-opacity=".12"/>`;
+    for (let y = Y0; y <= Y1; y++) s += `<line x1="${px(X0)}" y1="${py(y)}" x2="${px(X1)}" y2="${py(y)}" stroke="currentColor" stroke-opacity=".12"/>`;
+    s += `<line x1="${px(X0) - 4}" y1="${py(0)}" x2="${px(X1) + 6}" y2="${py(0)}" stroke="currentColor"/><line x1="${px(0)}" y1="${py(Y0) + 4}" x2="${px(0)}" y2="${py(Y1) - 6}" stroke="currentColor"/>`;
+    s += `<text x="${px(X1) + 2}" y="${py(0) - 5}" font-size="11" font-style="italic" fill="currentColor">x</text><text x="${px(0) + 5}" y="${py(Y1) + 2}" font-size="11" font-style="italic" fill="currentColor">y</text>`;
+    for (let x = X0; x <= X1; x++) if (x && x % (o.step || 1) === 0) s += `<text x="${px(x)}" y="${py(0) + 12}" font-size="9" text-anchor="middle" fill="currentColor">${x < 0 ? '−' + -x : x}</text>`;
+    for (let y = Y0; y <= Y1; y++) if (y && y % (o.step || 1) === 0) s += `<text x="${px(0) - 4}" y="${py(y) + 3}" font-size="9" text-anchor="end" fill="currentColor">${y < 0 ? '−' + -y : y}</text>`;
+    s += `<text x="${px(0) - 4}" y="${py(0) + 12}" font-size="9" text-anchor="end" fill="currentColor">0</text>`;
+    if (f.nodes) { s += `<polyline points="${f.nodes.map(([x, y]) => px(x) + ',' + py(y)).join(' ')}" fill="none" stroke="#7b3fbf" stroke-width="2.4" stroke-linejoin="round"/>`; for (const [x, y, c] of [[...f.nodes[0], f.c0], [...f.nodes[f.nodes.length - 1], f.c1]]) s += `<circle cx="${px(x)}" cy="${py(y)}" r="3.6" fill="${c ? '#7b3fbf' : '#fff'}" stroke="#7b3fbf" stroke-width="1.8"/>`; }
+    const cid = 'mc' + Math.random().toString(36).slice(2, 8); s += `<clipPath id="${cid}"><rect x="${px(X0)}" y="${py(Y1)}" width="${px(X1) - px(X0)}" height="${py(Y0) - py(Y1)}"/></clipPath>`;
+    if (f.fn) { const pts = []; for (let x = X0; x <= X1 + 1e-9; x += 0.1) { const y = f.fn(x); if (y >= Y0 - 0.5 && y <= Y1 + 0.5) pts.push(px(x).toFixed(1) + ',' + py(y).toFixed(1)); } s += `<polyline points="${pts.join(' ')}" fill="none" stroke="#7b3fbf" stroke-width="2.4" clip-path="url(#${cid})"/>`; }
+    return `<div class="mplotw">${s}</svg></div>`;
+  }
+  // losowa ciągła łamana o całkowitych węzłach
+  function randPL() {
+    for (let t = 0; t < 200; t++) {
+      const k = R.int(3, 4), xs = [R.int(-6, -3)]; for (let i = 0; i < k; i++) xs.push(xs[i] + R.int(1, 4)); if (xs[k] > 6) continue;
+      const ys = xs.map(() => R.int(-4, 5)); let ok = true; for (let i = 0; i < k; i++) { const dy = ys[i + 1] - ys[i], dx = xs[i + 1] - xs[i]; if (dy % dx && dy !== 0) { if ((ys[i] <= 0 && ys[i + 1] >= 0) || (ys[i] >= 0 && ys[i + 1] <= 0)) ok = false; } if (i && (ys[i] - ys[i - 1]) * (ys[i + 1] - ys[i]) > 0 && (ys[i] - ys[i - 1]) / (xs[i] - xs[i - 1]) === (ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i])) ok = false; }
+      if (!ok || new Set(ys).size < 3) continue;
+      const f = { nodes: xs.map((x, i) => [x, ys[i]]), c0: R.int(0, 1) === 1, c1: R.int(0, 1) === 1 };
+      f.at = x => { for (let i = 0; i < k; i++) if (x >= xs[i] && x <= xs[i + 1]) return ys[i] + (ys[i + 1] - ys[i]) * (x - xs[i]) / (xs[i + 1] - xs[i]); return NaN; };
+      f.inD = x => (x > xs[0] && x < xs[k]) || (x === xs[0] && f.c0) || (x === xs[k] && f.c1);
+      f.a = xs[0]; f.b = xs[k]; return f;
+    }
+    return null;
+  }
+  // zbiór {x ∈ D: pred(f(x))} jako suma przedziałów — próbkowanie co 1/4 (węzły i przecięcia są całkowite)
+  function setOf(f, pred) {
+    const pts = []; for (let x = f.a; x <= f.b + 1e-9; x += 0.25) pts.push(+x.toFixed(2));
+    const iv2 = []; let cur = null;
+    for (const x of pts) { const ok = f.inD(x) && pred(f.at(x)); if (ok) { if (!cur) cur = { a: x, ca: true }; cur.b = x; cur.cb = true; } else if (cur) { iv2.push(cur); cur = null; } }
+    if (cur) iv2.push(cur);
+    // granice niecałkowite (sąsiedzi punktów wykluczonych) -> otwarte końce w liczbie całkowitej
+    return iv2.map(I => { const a = Math.round(I.a * 4) / 4, b = I.b; const A2 = Number.isInteger(a) ? a : Math.floor(a), B2 = Number.isInteger(b) ? b : Math.ceil(b); return { a: A2, b: B2, ca: Number.isInteger(I.a), cb: Number.isInteger(I.b) }; });
+  }
+  const ivT = I => (I.length ? I.map(i => (i.a === i.b ? `\\{${i.a}\\}` : (i.ca ? '[' : '(') + i.a + ', ' + i.b + (i.cb ? ']' : ')'))).join('\\cup ') : '\\emptyset');
+  const fRange = f => { const ys = f.nodes.map(n => n[1]); const mn = Math.min(...ys), mx = Math.max(...ys); const att = v => f.nodes.some(([x, y]) => y === v && f.inD(x)); return { mn, mx, cmn: att(mn), cmx: att(mx) }; };
+  reg('wykresLamana', ['2508-12.1', '2605-12.1', '2606-12.2', '2305-12.1', '2305-12.2', '2305-12.3', '2306-13.2', '2308-14.1', '2308-14.2', '2406-11.1', '2306-13.1', '2508-12.2', '2605-12.2', '2606-12.1', '2608-11', '2505-11', '2506-10'], null, () => {
+    const f = randPL(); if (!f) return null; const pic = plotFn(f, {}), t = R.int(0, 6), rg = fRange(f), D = { a: f.a, b: f.b, ca: f.c0, cb: f.c1 };
+    const head = 'Na rysunku przedstawiono wykres funkcji $y=f(x)$.' + pic;
+    if (t === 0) return { q: head + 'Dziedziną funkcji $f$ jest', opts: opts(ivT([D]), [[ivT([{ a: rg.mn, b: rg.mx, ca: rg.cmn, cb: rg.cmx }]), 'To zbiór wartości (oś $Oy$), a dziedzina to argumenty — oś $Ox$.'], [ivT([{ ...D, ca: !D.ca }]), 'Pusty kółek oznacza, że koniec nie należy do wykresu — nawias okrągły.'], [ivT([{ ...D, cb: !D.cb }]), 'Sprawdź prawy koniec: pełne kółko — nawias kwadratowy, puste — okrągły.'], [ivT([{ ...D, ca: !D.ca, cb: !D.cb }]), 'Oba końce mają zły nawias.']]), steps: [T`Dziedzina to rzut wykresu na oś $Ox$: od $${f.a}$ do $${f.b}$; ${f.c0 ? 'lewy koniec należy' : 'lewy koniec nie należy'}, ${f.c1 ? 'prawy należy' : 'prawy nie należy'}.`] };
+    if (t === 1) { const W2 = ivT([{ a: rg.mn, b: rg.mx, ca: rg.cmn, cb: rg.cmx }]); return { q: head + 'Zbiorem wartości funkcji $f$ jest', opts: opts(W2, [[ivT([D]), 'To dziedzina (oś $Ox$), a zbiór wartości czytamy z osi $Oy$.'], [ivT([{ a: rg.mn, b: rg.mx, ca: !rg.cmn, cb: rg.cmx }]), 'Sprawdź, czy najmniejsza wartość jest przyjmowana (pełny punkt) czy tylko „dochodzi” do pustego kółka.'], [ivT([{ a: rg.mn, b: rg.mx, ca: rg.cmn, cb: !rg.cmx }]), 'Sprawdź, czy największa wartość jest przyjmowana.'], [ivT([{ a: f.nodes[0][1] < f.nodes[f.nodes.length - 1][1] ? f.nodes[0][1] : f.nodes[f.nodes.length - 1][1], b: Math.max(f.nodes[0][1], f.nodes[f.nodes.length - 1][1]), ca: true, cb: true }]), 'Zbiór wartości to nie wartości na końcach dziedziny — szukamy najniższego i najwyższego punktu.']]), steps: [T`Najniższy punkt wykresu: $y=${rg.mn}$, najwyższy: $y=${rg.mx}$.`, T`Zbiór wartości: $${W2}$.`] }; }
+    if (t === 2) { const a = R.int(f.a + 1, f.b - 2), b = R.int(a + 1, f.b - 1); let mx = -99, arg = a; for (let x = a; x <= b; x += 0.25) if (f.at(x) > mx) { mx = f.at(x); arg = x; } if (!Number.isInteger(mx)) return null;
+      return { q: head + T`Największa wartość funkcji $f$ w przedziale $[${a}, ${b}]$ jest równa`, opts: opts(no(mx), [[no(rg.mx), 'To największa wartość na całej dziedzinie, a pytamy tylko o przedział $[' + a + ', ' + b + ']$.'], [no(arg), 'To argument (współrzędna $x$), a nie wartość.'], [no(f.at(b)), 'Wartość na końcu przedziału nie musi być największa.'], [no(f.at(a)), 'Wartość na początku przedziału nie musi być największa.'], [no(mx + 1), 'Odczytaj dokładnie z siatki.']]), steps: [T`W przedziale $[${a}, ${b}]$ najwyżej leży punkt $(${arg}, ${mx})$.`] }; }
+    if (t === 3) { // monotoniczność
+      const segs = []; for (let i = 0; i + 1 < f.nodes.length; i++) { const d = Math.sign(f.nodes[i + 1][1] - f.nodes[i][1]); const last = segs[segs.length - 1]; if (last && last.d === d) last.b = f.nodes[i + 1][0]; else segs.push({ a: f.nodes[i][0], b: f.nodes[i + 1][0], d }); }
+      const dec = R.int(0, 1) ? -1 : 1, good = segs.filter(s2 => s2.d === dec), bad = segs.filter(s2 => s2.d === -dec); if (!good.length || !bad.length) return null;
+      const g = R.pick(good), b2 = R.pick(bad), all = segs.length > 1 ? { a: segs[0].a, b: segs[1].b } : null;
+      const ivx = s2 => `[${s2.a}, ${s2.b}]`;
+      return { q: head + T`Funkcja $f$ jest ${dec < 0 ? 'malejąca' : 'rosnąca'} w przedziale`, opts: opts(ivx(g), [[ivx(b2), dec < 0 ? 'W tym przedziale wykres idzie w górę — funkcja rośnie.' : 'W tym przedziale wykres idzie w dół — funkcja maleje.'], [all && (all.a !== g.a || all.b !== g.b) ? ivx(all) : null, 'Ten przedział zawiera punkt, w którym funkcja zmienia monotoniczność.'], [ivx({ a: Math.min(...f.nodes.map(n => n[1])), b: Math.max(...f.nodes.map(n => n[1])) }), 'Przedziały monotoniczności czytamy na osi $Ox$, nie $Oy$.'], [ivx({ a: g.a - 1, b: g.b }), 'Sprawdź lewy koniec przedziału na rysunku.'], [ivx({ a: f.a, b: f.b }), 'Na całej dziedzinie funkcja nie jest monotoniczna.']]), steps: [T`Wykres ${dec < 0 ? 'opada' : 'wznosi się'} m.in. dla $x\in[${g.a}, ${g.b}]$.`] };
+    }
+    if (t === 4) { const z = setOf(f, y => Math.abs(y) < 1e-9).filter(I => I.a === I.b).map(I => I.a); if (!z.length || z.length > 3) return null; const zs = z.join(',\\ ');
+      const y0 = f.inD(0) ? f.at(0) : null;
+      return { q: head + 'Wszystkimi miejscami zerowymi funkcji $f$ są liczby', opts: opts(zs, [[y0 != null && Number.isInteger(y0) && !z.includes(y0) ? String(y0) : null, 'To $f(0)$ — punkt przecięcia z osią $Oy$, a nie miejsce zerowe.'], [z.length > 1 ? z.slice(1).join(',\\ ') : null, 'Brakuje jednego miejsca zerowego.'], [z.map(v => -v).join(',\\ ') !== zs ? z.map(v => -v).join(',\\ ') : null, 'Zły znak — odczytaj z osi $Ox$.'], [zs + ',\\ ' + (z[z.length - 1] + 2), 'Ta liczba nie jest miejscem zerowym.'], [String(z[0] + 1), 'Odczytaj dokładnie z siatki.']]), steps: [T`Miejsca zerowe to punkty wspólne wykresu z osią $Ox$: $${zs}$.`] }; }
+    if (t === 5) { const c = R.int(rg.mn + 1, rg.mx - 1); for (let i = 0; i + 1 < f.nodes.length; i++) { const [x1, y1] = f.nodes[i], [x2, y2] = f.nodes[i + 1]; if ((y1 - c) * (y2 - c) < 0 && ((c - y1) * (x2 - x1)) % (y2 - y1)) return null; } const gt = R.int(0, 1) === 1, P = gt ? (y => y > c + 1e-9) : (y => y < c - 1e-9), I = setOf(f, P); if (!I.length) return null;
+      const Iq = setOf(f, gt ? (y => y >= c - 1e-9) : (y => y <= c + 1e-9)), Ic = setOf(f, gt ? (y => y < c - 1e-9) : (y => y > c + 1e-9));
+      return { q: head + T`Zbiorem wszystkich rozwiązań nierówności $f(x)${gt ? '>' : '<'}${c}$ jest`, opts: opts(ivT(I), [[ivT(Iq), 'Nierówność ostra — punkty, w których $f(x)=' + c + '$, nie należą do rozwiązań.'], [ivT(Ic), 'To zbiór, gdzie wykres jest po drugiej stronie prostej $y=' + c + '$.'], [ivT([{ a: c, b: gt ? rg.mx : rg.mn, ca: false, cb: true }].map(x => (x.a > x.b ? { a: x.b, b: x.a, ca: true, cb: false } : x))), 'Rozwiązania nierówności to argumenty ($x$), a nie wartości.'], [ivT(I.map(x => ({ ...x, ca: !x.ca })) ), 'Sprawdź końce przedziałów.']]), steps: [T`Szukamy $x$, dla których wykres leży ${gt ? 'powyżej' : 'poniżej'} prostej $y=${c}$: $${ivT(I)}$.`] }; }
+    // t === 6: wartość wyrażenia
+    const xa = R.int(f.a + 1, f.b - 1), xb = R.int(f.a + 1, f.b - 1), k = R.int(2, 3), va = f.at(xa), vb = f.at(xb); if (!Number.isInteger(va) || !Number.isInteger(vb) || xa === xb) return null;
+    const v = va + k * vb;
+    return { q: head + T`Wartość wyrażenia $f(${xa})+${k}\cdot f(${xb})$ jest równa`, opts: opts(no(v), [[no(xa + k * xb), 'Zamiast wartości użyto argumentów.'], [no(va + vb), 'Zapomniany mnożnik $' + k + '$.'], [no(-va + k * vb), 'Sprawdź znak $f(' + xa + ')$.'], [no(k * va + vb), 'Mnożnik dotyczy $f(' + xb + ')$.']]), steps: [T`$f(${xa})=${va}$, $f(${xb})=${vb}$, więc wynik to $${va}+${k}\cdot ${vb < 0 ? '(' + vb + ')' : vb}=${v}$.`] };
+  });
+  // przekształcenia wykresu: g(x)=f(x+a), f(x)+b, f(−x) — wybór rysunku
+  reg('wykresPrzeksz', ['2406-11.2', '2308-14.3', '2405-14.4'], ['f11-13'], () => {
+    const f = randPL(); if (!f) return null; const t = R.int(0, 2), a = R.pick([-3, -2, 2, 3]);
+    const tr = (g, fx, fy) => ({ nodes: g.nodes.map(([x, y]) => [fx(x), fy(y)]).sort((p, q) => p[0] - q[0]), c0: fx(g.nodes[0][0]) < fx(g.nodes[g.nodes.length - 1][0]) ? g.c0 : g.c1, c1: fx(g.nodes[0][0]) < fx(g.nodes[g.nodes.length - 1][0]) ? g.c1 : g.c0 });
+    const V = [[tr(f, x => x - a, y => y), t === 0], [tr(f, x => x + a, y => y), false], [tr(f, x => x, y => y + a), t === 1], [tr(f, x => -x, y => y), t === 2], [tr(f, x => x, y => -y), false]];
+    const want = t === 0 ? T`g(x)=f(x${sgn(a)})` : t === 1 ? T`g(x)=f(x)${sgn(a)}` : 'g(x)=f(-x)';
+    const pickV = [V[t === 0 ? 0 : t === 1 ? 2 : 3]].concat(R.shuffle(V.filter((v, i) => i !== (t === 0 ? 0 : t === 1 ? 2 : 3))).slice(0, 3));
+    const fits = g => g.nodes.every(([x, y]) => x >= -7 && x <= 7 && y >= -6 && y <= 6); if (!pickV.every(([g]) => fits(g))) return null;
+    const why = g => (g === V[1][0] ? 'Przesunięcie w złą stronę: $f(x+a)$ przesuwa wykres w <b>lewo</b> o $a$, gdy $a>0$.' : g === V[2][0] ? 'To przesunięcie w pionie — $f(x)+b$.' : g === V[3][0] ? 'To odbicie względem osi $Oy$ — $f(-x)$.' : g === V[4][0] ? 'To odbicie względem osi $Ox$ — $-f(x)$.' : 'To przesunięcie w poziomie.');
+    return { q: 'Na rysunku przedstawiono wykres funkcji $y=f(x)$.' + plotFn(f, {}) + T`Funkcja $g$ jest określona wzorem $${want}$. Wykres funkcji $g$ przedstawiono na rysunku`,
+      opts: R.shuffle(pickV.map(([g], i) => ({ t: '', html: plotFn(g, {}), ok: i === 0, why: i === 0 ? '' : why(g) }))),
+      steps: [t === 0 ? T`$f(x${sgn(a)})$ przesuwa wykres o $${Math.abs(a)}$ w ${a > 0 ? 'lewo' : 'prawo'}.` : t === 1 ? T`$f(x)${sgn(a)}$ przesuwa wykres o $${Math.abs(a)}$ w ${a > 0 ? 'górę' : 'dół'}.` : '$f(-x)$ odbija wykres względem osi $Oy$.'] };
+  });
+  reg('fTabela', ['2406-12', '2408-9'], null, () => {
+    const xs = [-3, -2, -1, 0, 1, 2, 3], ys = xs.map(() => R.int(-4, 5)); const zeros = xs.filter((x, i) => ys[i] === 0); if (zeros.length !== 1 && zeros.length !== 2) return null;
+    const mx = Math.max(...ys), argmx = xs[ys.indexOf(mx)], tbl = `<table class="mtab2"><tr><th>$x$</th>${xs.map(x => '<td>$' + x + '$</td>').join('')}</tr><tr><th>$y$</th>${ys.map(y => '<td>$' + y + '$</td>').join('')}</tr></table>`;
+    if (R.int(0, 1)) return { q: 'Funkcja $y=f(x)$ jest określona tabelą.' + tbl + 'Największa wartość funkcji $f$ jest równa', opts: opts(no(mx), [[no(argmx), 'To argument, dla którego funkcja przyjmuje największą wartość.'], [no(Math.max(...xs)), 'To największy argument, a nie wartość.'], [no(ys[ys.length - 1]), 'Wartość dla ostatniego argumentu nie musi być największa.'], [no(Math.min(...ys)), 'To najmniejsza wartość.']]), steps: [T`Największa liczba w wierszu $y$: $${mx}$.`] };
+    const sym = xs.every((x, i) => ys[i] === ys[xs.indexOf(-x)]);
+    return { pf: [[T`Funkcja $f$ ma dokładnie jedno miejsce zerowe.`, zeros.length === 1, T`Miejsca zerowe (gdzie $y=0$): $${zeros.join(',\\ ')}$.`], [T`Wykres funkcji $f$ jest symetryczny względem osi $Oy$.`, sym, sym ? 'Dla $x$ i $-x$ wartości są równe.' : 'Dla $x$ i $-x$ wartości nie zawsze są równe.']], q: 'Funkcja $y=f(x)$ jest określona tabelą.' + tbl + 'Oceń prawdziwość stwierdzeń.', steps: [] };
+  });
+  reg('fModelLin', ['2408-11.1', '2408-11.2', '2408-11.3'], ['f11-3'], () => {
+    const m0 = R.pick([4.5, 5, 5.5, 6, 6.5, 7]), k = R.pick([0.9, 1.03, 1.2, 1.5, 0.8]), V = R.pick([5, 8, 10, 12, 15]), mx = +(m0 + k * V).toFixed(2);
+    const intro = T`Pusty pojemnik o pojemności $${V}$ litrów ma masę $${dec(m0)}$ kg. Jeden litr cieczy ma masę $${dec(k)}$ kg. Niech $f(x)$ oznacza masę pojemnika z $x$ litrami cieczy, $x\in[0, ${V}]$. `;
+    if (R.int(0, 1)) return { q: intro + 'Funkcja $f$ jest określona wzorem', opts: opts(T`f(x)=${dec(k)}x+${dec(m0)}`, [[T`f(x)=${dec(m0)}x+${dec(k)}`, 'Zamienione: masa pustego pojemnika to wyraz wolny, a masa litra — współczynnik przy $x$.'], [T`f(x)=${dec(k)}x+${V}`, 'Wyraz wolny to masa pustego pojemnika, a nie pojemność.'], [T`f(x)=${V}x+${dec(k)}`, 'Pojemność nie jest współczynnikiem we wzorze.'], [T`f(x)=${dec(k)}x`, 'Zapomniano o masie pustego pojemnika.']]), steps: [T`Masa = masa pojemnika + masa cieczy: $f(x)=${dec(m0)}+${dec(k)}x$.`] };
+    return { q: intro + 'Największa wartość funkcji $f$ jest równa', opts: opts(dec(mx), [[dec(+(m0 * V + k).toFixed(2)), 'Zamienione role liczb we wzorze.'], [dec(+(k * V).toFixed(2)), 'To sama masa cieczy — doliczyć masę pojemnika.'], [dec(+(V + k).toFixed(2)), 'Funkcja jest rosnąca — największa wartość dla $x=' + V + '$: $f(' + V + ')$.'], [dec(+(m0 + V).toFixed(2)), 'Masa litra to $' + dec(k) + '$ kg, a nie 1 kg.']]), steps: [T`Funkcja rośnie, więc największa wartość jest dla $x=${V}$: $${dec(m0)}+${dec(k)}\cdot ${V}=${dec(mx)}$.`] };
+  });
+  reg('fWzorWart', ['2308-12'], null, () => {
+    const x0 = R.int(-3, 3), k = R.int(-6, 6), d = x0 * x0 + 1; if ((x0 - k) % d) return null; const val = (x0 - k) / d;
+    return { q: T`Funkcja $f$ jest określona wzorem $f(x)=\dfrac{x-k}{x^2+1}$. Spełnia warunek $f(${x0})=${val}$. Współczynnik $k$ jest równy`, opts: opts(no(k), [[no(-k), 'Zły znak: $' + x0 + '-k=' + val * d + '$.'], [no(x0 + val * d), 'Przenosząc na drugą stronę, zmieniamy znak.'], [no(x0 - val), 'Najpierw pomnóż przez mianownik $' + d + '$.'], [no(k + d), 'Policz mianownik: $' + x0 + '^2+1=' + d + '$.']]), steps: [T`$\frac{${x0}-k}{${d}}=${val}\Rightarrow ${x0}-k=${val * d}\Rightarrow k=${k}$.`] };
+  });
+  // parabola z wykresu (2405-14.x, 2408-12.x, 2505-12.x)
+  function randPar() {
+    for (let t = 0; t < 100; t++) { const a = R.pick([-1, 1, -0.5, 0.5, -2, 2]), p = R.int(-3, 3), q = R.int(-5, 5); const fn = x => a * (x - p) ** 2 + q; const d2 = -q / a; const r = d2 > 0 ? Math.sqrt(d2) : null; if (r != null && !Number.isInteger(r)) continue; if (Math.abs(fn(0)) > 6 || !Number.isInteger(fn(0))) continue; return { a, p, q, fn, x1: r != null ? p - r : null, x2: r != null ? p + r : null }; }
+    return null;
+  }
+  const aT = a => (a === 1 ? '' : a === -1 ? '-' : a === 0.5 ? '\\frac12' : a === -0.5 ? '-\\frac12' : String(a));
+  const canT = P => T`${aT(P.a)}(x${P.p ? sgn(-P.p) : ''})^2${P.q ? sgn(P.q) : ''}`;
+  reg('parabolaWykres', ['2405-14.1', '2405-14.2', '2405-14.3', '2408-12.1', '2408-12.2', '2408-12.3', '2505-12.2', '2505-12.3'], ['f07-3', 'f07-5'], () => {
+    const P = randPar(); if (!P) return null; const pic = plotFn({ fn: P.fn }, {}), t = R.int(0, 4), head = T`Na rysunku przedstawiono fragment paraboli — wykresu funkcji kwadratowej $f$. Wierzchołek i punkty przecięcia z osiami mają całkowite współrzędne.` + pic;
+    if (t === 0) { const W2 = P.a > 0 ? iv(P.q, Infinity, 1, 0) : iv(-Infinity, P.q, 0, 1); return { q: head + 'Zbiorem wartości funkcji $f$ jest', opts: opts(W2, [[P.a > 0 ? iv(-Infinity, P.q, 0, 1) : iv(P.q, Infinity, 1, 0), 'Ramiona paraboli idą ' + (P.a > 0 ? 'w górę' : 'w dół') + ' — wartości ' + (P.a > 0 ? 'od $q$ w górę.' : 'od $q$ w dół.')], [P.a > 0 ? iv(P.p, Infinity, 1, 0) : iv(-Infinity, P.p, 0, 1), 'Zbiór wartości zależy od $q$ (druga współrzędna wierzchołka), a nie od $p$.'], [P.a > 0 ? iv(P.q, Infinity, 0, 0) : iv(-Infinity, P.q, 0, 0), 'Wierzchołek należy do wykresu — nawias kwadratowy.'], [P.x1 != null ? iv(P.x1, P.x2, 1, 1) : iv(P.q - 2, P.q + 2, 1, 1), 'Zbiór wartości czytamy na osi $Oy$.']]), steps: [T`Wierzchołek $W=(${P.p}, ${P.q})$, ramiona ${P.a > 0 ? 'w górę' : 'w dół'}: $${W2}$.`] }; }
+    if (t === 1) return { q: head + 'Osią symetrii wykresu funkcji $f$ jest prosta o równaniu', opts: opts(T`x=${P.p}`, [[T`y=${P.p}`, 'Oś symetrii paraboli jest pionowa: $x=p$.'], [T`x=${P.q}`, 'To druga współrzędna wierzchołka — oś symetrii to $x=p$.'], [T`y=${P.q}`, 'Prosta $y=q$ jest pozioma — styczna w wierzchołku, a nie oś symetrii.'], [T`x=${-P.p}`, 'Zły znak — odczytaj $p$ z rysunku.']]), steps: [T`Oś symetrii przechodzi przez wierzchołek $(${P.p}, ${P.q})$ pionowo: $x=${P.p}$.`] };
+    if (t === 2) { const s = R.int(P.p - 5, P.p + 5); if (s === P.p) return null; const t2 = 2 * P.p - s; return { q: head + T`Dla funkcji $f$ prawdziwa jest równość`, opts: opts(T`f(${s})=f(${t2})`, [[T`f(${s})=f(${t2 + 1})`, 'Punkty o równych wartościach leżą symetrycznie względem osi $x=' + P.p + '$.'], [T`f(${s})=f(${-s})`, 'Oś symetrii to $x=' + P.p + '$, a nie oś $Oy$.'], [T`f(${s})=f(${t2 - 1})`, 'Sprawdź odległość od osi symetrii.'], [T`f(${s})=f(${P.p * 2 + s})`, 'Punkt symetryczny do $s$ względem $p$ to $2p-s$.']]), steps: [T`Punkt symetryczny do $${s}$ względem osi $x=${P.p}$: $2\cdot ${P.p}-(${s})=${t2}$.`] }; }
+    if (t === 3) return { q: head + 'Funkcja $f$ jest określona wzorem', opts: opts(T`f(x)=${canT(P)}`, [[T`f(x)=${canT({ ...P, p: -P.p })}`, 'W postaci kanonicznej $a(x-p)^2+q$: dla $p=' + P.p + '$ w nawiasie jest $x' + sgn(-P.p) + '$.'], [T`f(x)=${canT({ ...P, a: -P.a })}`, 'Ramiona ' + (P.a > 0 ? 'w górę — $a>0$.' : 'w dół — $a<0$.')], [T`f(x)=${canT({ ...P, q: -P.q })}`, 'Druga współrzędna wierzchołka to $q=' + P.q + '$.'], [T`f(x)=${canT({ ...P, p: P.q, q: P.p })}`, 'Zamienione współrzędne wierzchołka.']]), steps: [T`Wierzchołek $(${P.p}, ${P.q})$, ramiona ${P.a > 0 ? 'w górę' : 'w dół'}; $a$ odczytujemy z punktu przecięcia z osią $Oy$: $f(0)=${P.fn(0)}$.`, T`$f(x)=${canT(P)}$.`] };
+    if (P.x1 == null || P.x1 === P.x2) return null;
+    const ge = R.int(0, 1) === 1, inside = (P.a > 0) !== ge; const S2 = inside ? iv(P.x1, P.x2, 1, 1) : T`(-\infty, ${P.x1}]\cup[${P.x2}, +\infty)`;
+    return { q: head + T`Zbiorem wszystkich rozwiązań nierówności $f(x)${ge ? '\\geq' : '\\leq'} 0$ jest`, opts: opts(S2, [[inside ? T`(-\infty, ${P.x1}]\cup[${P.x2}, +\infty)` : iv(P.x1, P.x2, 1, 1), 'Wybrano argumenty, dla których wykres jest po drugiej stronie osi $Ox$.'], [inside ? iv(P.x1, P.x2, 0, 0) : T`(-\infty, ${P.x1})\cup(${P.x2}, +\infty)`, 'Nierówność nieostra — miejsca zerowe należą do rozwiązań.'], [P.a > 0 ? iv(P.q, Infinity, 1, 0) : iv(-Infinity, P.q, 0, 1), 'To zbiór wartości, a pytamy o argumenty.'], [iv(-P.x2, -P.x1, 1, 1), 'Odczytaj miejsca zerowe z osi $Ox$ — zły znak.']]), steps: [T`Miejsca zerowe: $${P.x1}$, $${P.x2}$; wykres ${ge ? 'nad' : 'pod'} osią $Ox$ dla $${S2}$.`] };
+  });
+  // symetria paraboli, drugie miejsce zerowe, przesunięcie wierzchołka (2606-13.1, 2305-14, 2308-13, 2606-13.2, 2508-14.3, 2508-14.1)
+  reg('parabolaSym', ['2606-13.1', '2305-14', '2308-13', '2606-13.2', '2508-14.3', '2508-14.1'], ['f07-3', 'f07-6'], () => {
+    const t = R.int(0, 3), p = R.int(-6, 6), q = R.int(-9, 9);
+    if (t === 0) { const s = R.int(-12, 12); if (s === p) return null; const v = 2 * p - s; return { q: T`Wykresem funkcji kwadratowej $f$ jest parabola o wierzchołku $W=(${p}, ${q})$. Liczba $t\neq ${s}$ spełnia warunek $f(t)=f(${s})$. Liczba $t$ jest równa`, opts: opts(no(v), [[no(-s), 'Oś symetrii to $x=' + p + '$, a nie oś $Oy$.'], [no(s + p), 'Punkt symetryczny względem $p$: $2p-s$, a nie $s+p$.'], [no(p - s), 'Policz: $2\\cdot' + p + '-(' + s + ')$.'], [no(v + q), 'Druga współrzędna wierzchołka nie ma tu znaczenia.']]), steps: [T`Punkty o równych wartościach leżą symetrycznie względem $x=${p}$: $t=2\cdot ${p}-(${s})=${v}$.`] }; }
+    if (t === 1) { const x1 = R.int(-12, 12); if (x1 === p) return null; const x2 = 2 * p - x1; return { q: T`Jednym z miejsc zerowych funkcji kwadratowej $f$ jest liczba $${x1 < 0 ? '(' + x1 + ')' : x1}$. Pierwsza współrzędna wierzchołka paraboli jest równa $${p}$. Drugim miejscem zerowym jest`, opts: opts(no(x2), [[no(-x1), 'Miejsca zerowe są symetryczne względem $x=p$, nie względem zera.'], [no(p - x1), 'Środek odcinka $[x_1, x_2]$ to $p$: $x_2=2p-x_1$.'], [no(x1 + p), 'Policz: $2\\cdot' + p + '-(' + x1 + ')$.'], [no(2 * x1 - p), 'Zamienione role $p$ i $x_1$.']]), steps: [T`$p=\frac{x_1+x_2}{2}\Rightarrow x_2=2p-x_1=${x2}$.`] }; }
+    if (t === 2) { const a = R.pick([-3, -2, 2, 3]), b = R.int(-5, 5); if (!b && !a) return null; const sh = R.int(0, 1); // g(x) = f(x − a) albo f(x) + b
+      const W2 = sh ? `(${p + a}, ${q})` : `(${p}, ${q + b})`;
+      return { q: T`Wykresem funkcji kwadratowej $f$ jest parabola o wierzchołku $W=(${p}, ${q})$. Funkcja $g$ jest określona wzorem $g(x)=${sh ? T`f(x${sgn(-a)})` : T`f(x)${sgn(b)}`}$. Wierzchołek paraboli $g$ ma współrzędne`, opts: opts(W2, [[sh ? `(${p - a}, ${q})` : `(${p}, ${q - b})`, sh ? '$f(x-a)$ przesuwa wykres w prawo o $a$ (gdy $a>0$).' : '$f(x)+b$ przesuwa wykres w górę o $b$.'], [sh ? `(${p}, ${q + a})` : `(${p + b}, ${q})`, sh ? 'Zmiana w argumencie przesuwa wykres w poziomie, nie w pionie.' : 'Dodanie liczby do wartości przesuwa w pionie, nie w poziomie.'], [sh ? `(${p}, ${q - a})` : `(${p - b}, ${q})`, 'Złe przesunięcie.'], [`(${q}, ${p})`, 'Zamienione współrzędne.']]), steps: [sh ? T`$g(x)=f(x${sgn(-a)})$ — przesunięcie o $${a}$ wzdłuż osi $Ox$: $${W2}$.` : T`$g(x)=f(x)${sgn(b)}$ — przesunięcie o $${b}$ wzdłuż osi $Oy$: $${W2}$.`] };
+    }
+    const a = R.pick([0.5, -0.5, 1, -1, 2]), x1 = R.int(-6, 6), x2 = 2 * p - x1; if (x1 === x2) return null;
+    const f = (u, v) => T`f(x)=${aT(a)}(x${u ? sgn(-u) : ''})(x${v ? sgn(-v) : ''})`;
+    return { q: T`Funkcja kwadratowa $f(x)=${aT(a)}x^2+bx+c$ ma miejsce zerowe $${x1}$, a prosta $x=${p}$ jest osią symetrii jej wykresu. Funkcja $f$ jest określona wzorem`, opts: opts(f(x1, x2), [[f(-x1, -x2), 'Miejsce zerowe $x_0$ daje czynnik $(x-x_0)$ — zły znak.'], [f(x1, -x2), 'Drugie miejsce zerowe: $2p-x_1=' + x2 + '$.'], [f(-x1, x2), 'Sprawdź znak przy pierwszym miejscu zerowym.'], [f(x1, x1 + p), 'Drugie miejsce zerowe to $2p-x_1$.']]), steps: [T`Drugie miejsce zerowe: $2\cdot ${p}-(${x1})=${x2}$.`, T`Postać iloczynowa: $${f(x1, x2)}$.`] };
+  });
+  reg('kwPF', ['2406-15.2', '2608-13.1', '2508-14.2'], ['f07-5', 'f07-3', 'f07-4'], () => {
+    const a = R.pick([-2, -1, 1, 2]), p = R.int(-4, 4), q = R.int(-6, 6), f0 = a * p * p + q, zeros = -q / a > 0 ? 2 : -q / a === 0 ? 1 : 0;
+    const fx = T`f(x)=${aT(a)}(x${p ? sgn(-p) : ''})^2${q ? sgn(q) : ''}`, y0 = R.pick([f0, q, f0 + 1]);
+    return { pf: [[T`Funkcja $f$ ma dwa rzeczywiste miejsca zerowe.`, zeros === 2, zeros === 2 ? 'Wierzchołek leży po drugiej stronie osi $Ox$ niż ramiona — są dwa miejsca zerowe.' : 'Wierzchołek i ramiona są po tej samej stronie osi $Ox$ — brak dwóch miejsc zerowych.'], [T`Wykres funkcji $f$ przecina oś $Oy$ w punkcie $(0, ${y0})$.`, y0 === f0, T`$f(0)=${aT(a) || '1'}\cdot ${p * p}${q ? sgn(q) : ''}=${f0}$.`]], q: T`Funkcja kwadratowa jest określona wzorem $${fx}$. Oceń prawdziwość stwierdzeń.`, steps: [] };
+  });
+  reg('kwModel', ['2305-31.1', '2605-33.1'], ['f07-3', 'f07-4'], () => {
+    const t1 = R.int(1, 4), t2 = t1 + R.int(2, 6), k = R.pick([1, 2, 5]); // h(t) = −k (t + t1')… prościej: h(t) = −k t (t − T)
+    const Tt = t2, h = t => -k * t * (t - Tt), tm = Tt / 2; void t1;
+    return { q: T`Wysokość piłki (w metrach) $t$ sekund po wyrzuceniu z ziemi opisuje wzór $h(t)=${-k === -1 ? '-' : -k}t^2+${k * Tt}t$. Piłka uderzy w ziemię w chwili`, opts: opts(T`t=${Tt}\text{ s}`, [[T`t=${dec(tm)}\text{ s}`, 'W tej chwili piłka jest najwyżej (wierzchołek), a nie na ziemi.'], [T`t=${k * Tt}\text{ s}`, 'Rozwiąż $h(t)=0$: $t(' + (k * Tt) + '-' + (k === 1 ? '' : k) + 't)=0$.'], [T`t=${Tt + 1}\text{ s}`, 'Sprawdź: $h(t)$ musi być równe 0.'], [T`t=${dec(+(h(tm)).toFixed(2))}\text{ s}`, 'To maksymalna wysokość w metrach, a nie czas.']]), steps: [T`$h(t)=0\iff t=0$ albo $t=${Tt}$. Piłka spada na ziemię po $${Tt}$ s.`] };
+  });
+  reg('kwParam', ['2606-11'], ['f07-4'], () => {
+    const a = R.int(1, 3), c = R.int(-8, 8), x0 = R.pick([-3, -2, -1, 1, 2, 3]); // a x0² − k x0 + c = 0 → k = (a x0² + c)/x0
+    if ((a * x0 * x0 + c) % x0) return null; const k = (a * x0 * x0 + c) / x0;
+    return { q: T`Funkcja $f(x)=${a === 1 ? '' : a}x^2-kx${c ? sgn(c) : ''}$ ma miejsce zerowe $${x0 < 0 ? '(' + x0 + ')' : x0}$. Liczba $k$ jest równa`, opts: opts(no(k), [[no(-k), 'Uwaga na znak przy $-kx$.'], [no((a * x0 * x0 - c) / x0), 'Zły znak wyrazu wolnego.'], [no(a * x0 * x0 + c), 'Zapomniano podzielić przez $' + x0 + '$.'], [no(k + a), 'Sprawdź: $f(' + x0 + ')$ musi być równe $0$.']]), steps: [T`$f(${x0})=0$: $${a * x0 * x0}-${x0 < 0 ? '(' + x0 + ')' : x0}k${c ? sgn(c) : ''}=0\Rightarrow k=${k}$.`] };
+  });
+  reg('kwZnakiWykres', ['2306-14'], ['f07-2', 'f07-3'], () => {
+    const sa = R.pick([-1, 1]), sb = R.pick([-1, 1]), c = R.pick([-2, -1, 1, 2]);
+    const mk = (A2, B2) => { const a = A2 * R.pick([0.5, 1]), b = B2 * R.pick([1, 2]); return plotFn({ fn: x => a * x * x + b * x + c }, {}); };
+    const opts2 = R.shuffle([[sa, sb, true], [-sa, sb, false], [sa, -sb, false], [-sa, -sb, false]]).map(([A2, B2, ok]) => ({ t: '', html: mk(A2, B2), ok, why: ok ? '' : (A2 !== sa ? 'Znak $a$ decyduje o kierunku ramion: $a' + (sa < 0 ? '<' : '>') + '0$ — ramiona ' + (sa < 0 ? 'w dół.' : 'w górę.') : 'Wierzchołek $p=-\\frac b{2a}$ — przy tym $a$ i $b' + (sb > 0 ? '>' : '<') + '0$ leży po ' + (sb * sa < 0 ? 'prawej' : 'lewej') + ' stronie osi $Oy$.') }));
+    return { q: T`Funkcja $f(x)=ax^2+bx${sgn(c)}$, gdzie $a${sa < 0 ? '<' : '>'}0$ i $b${sb < 0 ? '<' : '>'}0$. Fragment wykresu tej funkcji przedstawiono na rysunku`, opts: opts2, steps: [T`$a${sa < 0 ? '<' : '>'}0$ — ramiona ${sa < 0 ? 'w dół' : 'w górę'}; $p=-\frac{b}{2a}$ jest ${sb * sa < 0 ? 'dodatnie' : 'ujemne'}; wykres przecina oś $Oy$ w $(0, ${c})$.`] };
+  });
+  reg('kwZbiorWart', ['2308-15'], ['f07-3', 'f07-5'], () => {
+    const q = R.int(-4, 4), mk = (a, p, qq) => T`${aT(a)}(x${p ? sgn(-p) : ''})^2${qq ? sgn(qq) : ''}`, p1 = R.int(-3, 3), p2 = R.int(-3, 3);
+    const all = R.shuffle([[mk(-1, p1, q), true], [mk(-2, p2, q), true], [mk(1, p1, q), false], [mk(-1, q, p1 === q ? q + 1 : p1), false], [mk(-1, p1, -q || 3), false], [mk(2, p2, q), false]]);
+    return { multi: all.map(([t, ok]) => ({ t: 'f(x)=' + t, ok })), q: T`Wybierz <b>dwie</b> funkcje, których zbiorem wartości jest przedział $(-\infty, ${q}]$.`, steps: [T`Zbiór $(-\infty, q]$ mają funkcje $a(x-p)^2+q$ z $a<0$ i $q=${q}$ — $p$ może być dowolne.`] };
+  });
+  /* --- funkcja liniowa --- */
+  reg('linZnaki', ['2305-13', '2605-13.1', '2605-13.2'], ['f11-3'], () => {
+    const a = R.pick([-3, -2, -1, 1, 2, 3, Q(1, 2), Q(-1, 2), Q(3, 2), Q(-3, 2)]), b = R.int(-4, 4) || 2, av = typeof a === 'object' ? a.n / a.d : a;
+    const pic = plotLines([[a, b]]); const sg = (v, n) => n + (v > 0 ? '>0' : '<0');
+    if (R.int(0, 1)) return { q: 'Na rysunku przedstawiono fragment wykresu funkcji liniowej $f(x)=ax+b$.' + pic + 'Liczby $a$ i $b$ spełniają warunki', opts: opts(T`${sg(av, 'a')}\ \text{i}\ ${sg(b, 'b')}`, [[T`${sg(-av, 'a')}\ \text{i}\ ${sg(b, 'b')}`, 'Prosta ' + (av > 0 ? 'rośnie — $a>0$.' : 'maleje — $a<0$.')], [T`${sg(av, 'a')}\ \text{i}\ ${sg(-b, 'b')}`, '$b$ to punkt przecięcia z osią $Oy$ — ' + (b > 0 ? 'nad' : 'pod') + ' osią $Ox$.'], [T`${sg(-av, 'a')}\ \text{i}\ ${sg(-b, 'b')}`, 'Oba znaki odwrotnie.']]), steps: [T`Prosta ${av > 0 ? 'rośnie' : 'maleje'}, więc $a${av > 0 ? '>' : '<'}0$; przecina oś $Oy$ w $(0, ${b})$, więc $b${b > 0 ? '>' : '<'}0$.`] };
+    const x0 = Q(-b * (typeof a === 'object' ? a.d : 1), typeof a === 'object' ? a.n : a); if (!Number.isInteger(x0.n / x0.d)) return null;
+    const tg = typeof a === 'object' ? a : Q(a);
+    return { q: 'Na rysunku przedstawiono fragment wykresu funkcji liniowej $f(x)=ax+b$. Wykres jest nachylony do osi $Ox$ pod kątem $\\alpha$.' + pic + 'Tangens kąta $\\alpha$ jest równy', opts: opts(qo(tg), [[qo(Q(-tg.n, tg.d)), 'Znak tangensa = znak $a$: prosta ' + (av > 0 ? 'rośnie.' : 'maleje.')], [qo(Q(tg.d, tg.n)), 'Tangens to iloraz przyrostów: $\\frac{\\Delta y}{\\Delta x}$, a nie odwrotnie.'], [qo(Q(-tg.d, tg.n)), 'Odwrócony iloraz i zły znak.'], [qo(Q(b)), 'To wyraz wolny $b$, a nie nachylenie.']]), steps: [T`$\operatorname{tg}\alpha=a=\frac{\Delta y}{\Delta x}=${qt(tg)}$ (odczytane z punktów przecięcia z osiami).`] };
+  });
+  reg('linParam', ['2306-11', '2405-12', '2505-13', '2506-11', '2406-13'], ['f11-3', 'f11-8'], () => {
+    const t = R.int(0, 3), u = R.int(1, 4), w = R.int(-5, 5);
+    if (t === 0) { // (u m + w) x + c równoległa do y = s x → u m + w = s
+      const s = R.int(-3, 3) || -1, m = Q(s - w, u); if (m.d !== 1) return null;
+      return { q: T`Wykresy funkcji $f(x)=(${u === 1 ? '' : u}m${sgn(w)})x+${R.int(1, 6)}$ oraz $g(x)=${s === 1 ? '' : s === -1 ? '-' : s}x$ nie mają punktów wspólnych dla`, opts: opts(T`m=${m.n}`, [[T`m=${-m.n || 3}`, 'Proste bez punktów wspólnych są równoległe — współczynniki kierunkowe równe: $' + u + 'm' + sgn(w) + '=' + s + '$.'], [T`m=${(s + w) / u === m.n || !Number.isInteger((s + w) / u) ? m.n + 2 : (s + w) / u}`, 'Zły znak przy przenoszeniu $' + w + '$.'], [T`m=${(-1 / s - w) / u === m.n || !Number.isInteger((-1 / s - w) / u) ? m.n - 1 : (-1 / s - w) / u}`, 'To warunek prostopadłości, a potrzebna równoległość.'], [T`m=${m.n + 1}`, 'Podstaw i sprawdź współczynnik.']]), steps: [T`Brak punktów wspólnych $\iff$ proste równoległe: $${u}m${sgn(w)}=${s}\Rightarrow m=${m.n}$.`] }; }
+    if (t === 1) { // malejąca: (−u k + w) < 0 → k > w/u
+      const g = Q(w, u); return { q: T`Funkcja $f(x)=(-${u === 1 ? '' : u}k${sgn(w)})x+k-1$ jest malejąca dla każdego $k$ z przedziału`, opts: opts(T`\left(${qt(g)}, +\infty\right)`, [[T`\left(-\infty, ${qt(g)}\right)`, 'Dla tych $k$ współczynnik jest dodatni — funkcja rośnie.'], [T`\left(-\infty, 1\right)`, 'Monotoniczność zależy od współczynnika przy $x$, a nie od wyrazu wolnego.'], [T`\left(1, +\infty\right)`, 'Wyraz wolny $k-1$ nie wpływa na monotoniczność.'], [T`\left(${qt(Q(-w, u))}, +\infty\right)`, 'Zły znak przy rozwiązywaniu nierówności.']]), steps: [T`Malejąca $\iff -${u === 1 ? '' : u}k${sgn(w)}<0\iff k>${qt(g)}$.`] }; }
+    if (t === 2) { // nie ma miejsca zerowego: (c − m) x + d, d ≠ 0 → m = c
+      const c = R.int(-5, 5), d = R.int(1, 6) * R.pick([-1, 1]);
+      return { q: T`Funkcja $f(x)=(${c}-m)x${sgn(d)}$ nie ma miejsca zerowego dla $m$ równego`, opts: opts(no(c), [[no(-c || 1), 'Brak miejsca zerowego, gdy współczynnik przy $x$ jest zerem: $' + c + '-m=0$.'], ['0', 'Dla $m=0$ funkcja ma miejsce zerowe.'], [no(d), 'Wyraz wolny nie decyduje — liczy się współczynnik przy $x$.'], [no(c + d), 'Podstaw i sprawdź.']]), steps: [T`Funkcja stała $f(x)=${d}$ (dla $m=${c}$) nie ma miejsc zerowych.`] };
+    }
+    const x0 = R.pick([-2, -1, 1, 2, 4]), c = R.int(-6, 6) || 2, d = R.int(-8, 8) || 4; // (c − m) x0 + d = 0 → m = c + d/x0
+    if (d % x0) return null; const m = c + d / x0;
+    return { q: T`Liczba $${x0 < 0 ? '(' + x0 + ')' : x0}$ jest miejscem zerowym funkcji $f(x)=(${c}-m)x${sgn(d)}$. Liczba $m$ jest równa`, opts: opts(no(m), [[no(c - d / x0), 'Zły znak przy przenoszeniu.'], [no(c), 'Dla tego $m$ funkcja jest stała.'], [no(c + d), 'Zapomniano podzielić przez $' + x0 + '$.'], [no(m + 1), 'Podstaw $x=' + x0 + '$ i sprawdź.']]), steps: [T`$(${c}-m)\cdot ${x0 < 0 ? '(' + x0 + ')' : x0}${sgn(d)}=0\Rightarrow ${c}-m=${-d / x0}\Rightarrow m=${m}$.`] };
+  });
+  reg('linWzor', ['2306-12', '2308-11', '2405-13', '2508-13', '2506-12'], ['f11-5', 'f11-3'], () => {
+    const t = R.int(0, 2);
+    if (t === 0) { const xA = R.int(-5, 3), xB = xA + R.int(1, 6), yA = R.int(-5, 5), yB = R.int(-5, 5); if (yA === yB) return null; const a = Q(yB - yA, xB - xA);
+      return { q: T`Prosta $y=ax+b$ przechodzi przez punkty $A=(${xA}, ${yA})$ i $B=(${xB}, ${yB})$. Współczynnik $a$ jest równy`, opts: opts(qo(a), [[qo(Q(xB - xA, yB - yA)), 'Iloraz odwrotnie: $a=\\frac{y_B-y_A}{x_B-x_A}$.'], [qo(Q(-a.n, a.d)), 'Zły znak — sprawdź różnice w tej samej kolejności.'], [qo(Q(yB + yA, xB + xA || 1)), 'Potrzebne są różnice, nie sumy.'], [qo(Q(yB - yA, 1)), 'Podziel przez różnicę $x$.']]), steps: [T`$a=\frac{${yB}-(${yA})}{${xB}-(${xA})}=${qt(a)}$.`] }; }
+    if (t === 1) { const x0 = R.int(-4, 4), y0b = R.int(-4, 4) || 3; // miejsce zerowe x0, f(0) = b
+      if (!x0) return null; const a = Q(-y0b, x0), f = (A2, B2) => T`f(x)=${A2.d === 1 ? (A2.n === 1 ? '' : A2.n === -1 ? '-' : A2.n) : qt(A2)}x${sgn(B2)}`;
+      return { q: T`Miejscem zerowym funkcji liniowej $f$ jest $${x0 < 0 ? '(' + x0 + ')' : x0}$, a $f(0)=${y0b}$. Funkcja $f$ jest określona wzorem`, opts: opts(f(a, y0b), [[f(Q(-a.n, a.d), y0b), 'Sprawdź: $f(' + x0 + ')=0$ — zły znak współczynnika.'], [f(Q(x0), y0b), 'Współczynnik to $-\\frac{b}{x_0}$, a nie $x_0$.'], [f(a, x0), '$f(0)$ to wyraz wolny $b=' + y0b + '$.'], [f(Q(a.d, a.n), y0b), 'Odwrócony iloraz.']]), steps: [T`$b=f(0)=${y0b}$; $0=a\cdot ${x0 < 0 ? '(' + x0 + ')' : x0}${sgn(y0b)}\Rightarrow a=${qt(a)}$.`] }; }
+    const k = R.int(2, 6), s = R.int(1, 3) * R.pick([1, -1]); // f(x) = k x przesunięte o s w prawo → k x − k s
+    return { q: T`Wykres funkcji $f(x)=${k}x$ przesunięto o $${Math.abs(s)}$ ${Math.abs(s) === 1 ? 'jednostkę' : 'jednostki'} w ${s > 0 ? 'prawo' : 'lewo'} wzdłuż osi $Ox$. Otrzymano wykres funkcji $g$ o wzorze`, opts: opts(T`g(x)=${k}x${sgn(-k * s)}`, [[T`g(x)=${k}x${sgn(k * s)}`, 'Przesunięcie w ' + (s > 0 ? 'prawo' : 'lewo') + ': $g(x)=f(x' + sgn(-s) + ')$.'], [T`g(x)=${k}x${sgn(-s)}`, 'Nawias: $' + k + '(x' + sgn(-s) + ')$ — mnożymy też przesunięcie.'], [T`g(x)=${k}x${sgn(s)}`, 'To przesunięcie w pionie, i to w złą stronę.'], [T`g(x)=${k + s}x`, 'Przesunięcie nie zmienia nachylenia.']]), steps: [T`$g(x)=f(x${sgn(-s)})=${k}(x${sgn(-s)})=${k}x${sgn(-k * s)}$.`] };
+  });
+  reg('linPF', ['2606-10'], ['f11-3'], () => {
+    const a = R.int(-5, 5) || 2, b = R.int(-6, 6) || -3, y = R.pick([b, -b]);
+    return { pf: [[T`Funkcja $f$ jest rosnąca.`, a > 0, T`Współczynnik $a=${a}$ jest ${a > 0 ? 'dodatni' : 'ujemny'}.`], [T`Wykres funkcji $f$ przecina oś $Oy$ w punkcie $(0, ${y})$.`, y === b, T`$f(0)=${b}$.`]], q: T`Funkcja liniowa jest określona wzorem $f(x)=${a === 1 ? '' : a === -1 ? '-' : a}x${sgn(b)}$. Oceń prawdziwość stwierdzeń.`, steps: [] };
+  });
+  reg('linKat', ['2408-10'], ['f09-5', 'f11-3'], () => {
+    const [aT2, ang, sinT] = R.pick([['\\frac{\\sqrt3}{3}', 30, '\\frac12'], ['1', 45, '\\frac{\\sqrt2}{2}'], ['\\sqrt3', 60, '\\frac{\\sqrt3}{2}']]), b = R.int(-5, 5);
+    return { q: T`Wykres funkcji $f(x)=${aT2 === '1' ? '' : aT2}x${b ? sgn(b) : ''}$ jest nachylony do osi $Ox$ pod kątem ostrym $\alpha$. Sinus kąta $\alpha$ jest równy`, opts: opts(sinT, [[aT2 === '1' ? '1' : aT2, 'To tangens kąta (współczynnik kierunkowy), a pytamy o sinus.'], [ang === 30 ? '\\frac{\\sqrt3}{2}' : ang === 60 ? '\\frac12' : '\\frac{\\sqrt3}{2}', 'Sprawdź kąt: $\\operatorname{tg}\\alpha=' + aT2 + '$ daje $\\alpha=' + ang + '^\\circ$.'], [String(ang), 'To miara kąta, a nie sinus.'], [ang === 45 ? '\\frac12' : '\\frac{\\sqrt2}{2}', 'Odczytaj wartość z tabeli dla $' + ang + '^\\circ$.']]), steps: [T`$\operatorname{tg}\alpha=${aT2}\Rightarrow \alpha=${ang}^\circ$, więc $\sin\alpha=${sinT}$.`] };
+  });
+
+  A.MGEN = { G, MAP, snipTitles: {}, gen: id => { const g = G[MAP[id]]; if (!g) return null; for (let k = 0; k < 60; k++) { let r = null; try { r = g.gen(); } catch (e) { r = null; } if (r && (r.opts || r.pf || r.multi)) { if (r.pf && !(r.steps && r.steps.length)) r.steps = r.pf.map(x => x[2]).filter(Boolean); return Object.assign({ pattern: MAP[id] }, r); } } return null; }, wz: id => (G[MAP[id]] || {}).wz || [], noWz: id => !!G[MAP[id]] && G[MAP[id]].wz === null };
 })();
