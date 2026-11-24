@@ -655,9 +655,15 @@
     const SN = A.MATURA_SNIP || {}, G = A.MGEN, wz = (G ? G.wz(it.id) : []).filter(id => SN[id]);
     const box = h('div', { class: 'mtools' }), slot = h('div', {}), bar = h('div', { class: 'mtoolbar' });
     let open = null;
-    const toggle = (k, make) => { slot.innerHTML = ''; open = open === k ? null : k; if (open) slot.append(make()); bar.querySelectorAll('.mtool').forEach(b => b.classList.toggle('on', b.dataset.k === open)); };
+    const toggle = (k, make) => { slot.innerHTML = ''; open = open === k ? null : k; if (open) slot.append(make()); bar.querySelectorAll('.mtool, .mpd').forEach(b => b.classList.toggle('on', b.dataset.k === open)); };
     if (wz.length) bar.append(h('button', { class: 'mtool', 'data-k': 'wz', onclick: () => toggle('wz', () => h('div', { class: 'mwzbox' }, ...wz.map(id => matSnip(SN[id])))) }, h('span', { html: IC.book }), 'Wzory z tablic (' + wz.length + ')'));
-    if (G && G.MAP[it.id]) bar.append(h('button', { class: 'mtool', 'data-k': 'var', onclick: () => toggle('var', () => matVariant(it)) }, h('span', { html: IC.dice }), 'Podobny przykład'));
+    if (G && G.MAP[it.id]) {
+      bar.append(h('button', { class: 'mtool', 'data-k': 'ex', onclick: () => toggle('ex', () => matExample(it)) }, h('span', { html: IC.book }), 'Podobny przykład'));
+      const dots = () => { const n = Math.min(3, (S.matV || {})[it.id] || 0), go = () => { SFX.click(); toggle('var', () => matVariant(it, () => { const d = bar.querySelector('.pdots'); if (d) d.replaceWith(dots()); })); };
+        return h('span', { class: 'pdots mpd' + (open === 'var' ? ' on' : ''), 'data-k': 'var' }, h('button', { class: 'plabel', onclick: go, title: 'Ćwicz na podobnych zadaniach' }, 'Podobne'),
+          ...[0, 1, 2].map(i => h('button', { class: 'pdot' + (i < n ? ' on' : ''), onclick: go, title: (i < n ? 'Rozwiązane' : 'Spróbuj') + ' — podobne zadanie ' + (i + 1) + '/3', 'aria-label': 'Podobne zadanie ' + (i + 1) + ' z 3' + (i < n ? ', rozwiązane' : '') }, i < n ? h('span', { html: IC.check }) : String(i + 1)))); };
+      bar.append(dots());
+    }
     box.append(bar, slot);
     return bar.children.length ? box : '';
   }
@@ -667,13 +673,28 @@
       h('button', { class: 'mqbtn', 'aria-label': 'Wyjaśnij ten wzór', title: 'Wyjaśnij własnymi słowami', onclick: e => { ex.hidden = !ex.hidden; e.currentTarget.classList.toggle('on', !ex.hidden); } }, '?')),
       h('div', { class: 'mpaper' }, mImg(s.img, s.t)), ex);
   }
-  function matVariant(it) {
+  // podobny przykład: od razu rozwiązany krok po kroku (bez zgadywania)
+  function matExample(it) {
+    const r = A.MGEN.gen(it.id), box = h('div', { class: 'mvar mex' });
+    if (!r) return h('p', { class: 'mq' }, 'Nie udało się wylosować przykładu — spróbuj jeszcze raz.');
+    box.append(h('div', { class: 'mvh' }, h('small', {}, 'Podobny przykład · inne liczby · rozwiązanie krok po kroku'), h('button', { class: 'btn small ghost', onclick: () => { SFX.click(); box.replaceWith(matExample(it)); } }, 'Inny przykład')), mdEl('div', r.q, { class: 'mvq' }));
+    if (r.opts) { const list = h('div', { class: 'mvopts' + (r.opts.some(o => o.html) ? ' pics' : '') }); r.opts.forEach((o, i) => list.append(h('div', { class: 'mvo' }, h('div', { class: 'mvopt static' + (o.ok ? ' right' : '') }, h('span', { class: 'letter' }, 'ABCD'[i]), o.html ? h('span', { class: 'txt', html: o.html }) : mdEl('span', '$' + o.t + '$', { class: 'txt' }))))); box.append(list); }
+    else if (r.pf) r.pf.forEach(([t]) => box.append(h('div', { class: 'mpfrow' }, mdEl('span', t, { class: 'mpft' }))));
+    else if (r.multi) { const list = h('div', { class: 'mvopts' }); r.multi.forEach((o, i) => list.append(h('div', { class: 'mvo' }, h('div', { class: 'mvopt static' + (o.ok ? ' right' : '') }, h('span', { class: 'letter' }, 'ABCDEF'[i]), mdEl('span', '$' + o.t + '$', { class: 'txt' }))))); box.append(list); }
+    const s2 = h('div', { class: 'mvsteps' }, h('small', {}, 'Rozwiązanie')); if (r.fig) s2.append(h('div', { class: 'mplotw mfigw', html: r.fig }));
+    (r.steps || []).forEach(x => s2.append(mdEl('p', x)));
+    if (r.pf) s2.append(mdEl('p', 'Odpowiedź: ' + r.pf.map(([, ok], k) => (k + 1) + '. ' + (ok ? 'P' : 'F')).join(', ') + '.'));
+    if (r.multi) s2.append(mdEl('p', 'Odpowiedź: ' + r.multi.map((o, i) => o.ok ? 'ABCDEF'[i] : null).filter(Boolean).join(' oraz ') + '.'));
+    box.append(s2);
+    return box;
+  }
+  function matVariant(it, onOk) {
     const r = A.MGEN.gen(it.id), box = h('div', { class: 'mvar' });
     if (!r) return h('p', { class: 'mq' }, 'Nie udało się wylosować przykładu — spróbuj jeszcze raz.');
-    const again = () => box.replaceWith(matVariant(it));
+    const again = () => box.replaceWith(matVariant(it, onOk));
     const steps = () => { const s = h('div', { class: 'mvsteps' }, h('small', {}, 'Rozwiązanie')); if (r.fig) s.append(h('div', { class: 'mplotw mfigw', html: r.fig })); (r.steps || []).forEach(x => s.append(mdEl('p', x))); return s; };
-    const done = ok => { box.querySelectorAll('.mvopt, .mopt').forEach(b => { b.disabled = true; }); if (ok) { SFX.correct(); bumpDay(true); S.correct++; S.matV = S.matV || {}; const k = S.matV[it.id] || 0; S.matV[it.id] = k + 1; gainXP(k < 3 ? 5 : 1, box); } else { SFX.wrong(); bumpDay(false); } save(); renderTop(); box.append(steps(), h('button', { class: 'btn small primary', onclick: again }, 'Kolejny przykład', h('span', { html: IC.dice }))); };
-    box.append(h('div', { class: 'mvh' }, h('small', {}, 'Podobny przykład · inne liczby'), h('button', { class: 'btn small ghost', onclick: again }, 'Losuj')), mdEl('div', r.q, { class: 'mvq' }));
+    const done = ok => { box.querySelectorAll('.mvopt, .mopt').forEach(b => { b.disabled = true; }); if (ok) { SFX.correct(); bumpDay(true); S.correct++; S.matV = S.matV || {}; const k = S.matV[it.id] || 0; S.matV[it.id] = k + 1; gainXP(k < 3 ? 5 : 1, box); if (onOk) setTimeout(onOk, 0); } else { SFX.wrong(); bumpDay(false); } save(); renderTop(); box.append(steps(), h('button', { class: 'btn small primary', onclick: again }, 'Kolejny przykład', h('span', { html: IC.dice }))); };
+    box.append(h('div', { class: 'mvh' }, h('small', {}, 'Podobne zadanie · rozwiąż samodzielnie'), h('button', { class: 'btn small ghost', onclick: again }, 'Losuj')), mdEl('div', r.q, { class: 'mvq' }));
     if (r.opts) {
       const list = h('div', { class: 'mvopts' + (r.opts.some(o => o.html) ? ' pics' : '') });
       r.opts.forEach((o, i) => {
@@ -788,7 +809,7 @@
   }
   // szerokie wzory wyświetlane (treść, pytania, wzory) zmniejszamy, by mieściły się w szerokości ekranu
   function fitMath() {
-    document.querySelectorAll('mjx-container[display="true"], .opt .txt mjx-container, .gq mjx-container, .question mjx-container, .stx mjx-container, .exq mjx-container, .ftx mjx-container, .solsteps mjx-container, .exstep mjx-container, .gl mjx-container, .fwhy mjx-container, .exl mjx-container, .gwhy mjx-container, .mvsteps mjx-container, .mvq mjx-container, .mvwhy mjx-container, .mpft mjx-container').forEach(c => {
+    document.querySelectorAll('mjx-container[display="true"], .opt .txt mjx-container, .gq mjx-container, .question mjx-container, .stx mjx-container, .exq mjx-container, .ftx mjx-container, .solsteps mjx-container, .exstep mjx-container, .gl mjx-container, .fwhy mjx-container, .exl mjx-container, .gwhy mjx-container, .mvopt .txt mjx-container, .mvsteps mjx-container, .mvq mjx-container, .mvwhy mjx-container, .mpft mjx-container').forEach(c => {
       const svg = c.querySelector('svg'); if (!svg || !c.parentElement) return;
       c.style.fontSize = '';
       let box = c.getAttribute('display') === 'true' ? c.parentElement : (c.closest('.txt, .gq, .question, .stx, .exq, .ftx, .solsteps li, .exstep > div, .gl, .fwhy li, .exl, .gwhy, .mvsteps p, .mvq, .mvwhy, .mpft') || c.parentElement);
