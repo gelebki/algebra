@@ -1468,9 +1468,11 @@
   function rankRow(r, i, total, valTxt, valSub, extraCls) {
     const lv = levelInfo(r.xp), series = r.me ? mySeries() : sparkOf(r), sj = subjCounts(r);
     const hasMat = sj.mat != null;
-    const segs = SUBJ.map(sb => ({ sb, n: sj[sb.id] || 0 })).concat(hasMat ? [{ sb: { id: 'mat', short: 'Matura', color: '#b98ae0' }, n: sj.mat }] : []);
-    total = summary().base + (hasMat ? MAT().items.length : 0); // każdy ma własną pulę: matura tylko u tych, którzy ją zaczęli
-    const solved = r.me ? summary().solved : hasMat ? Object.values(sj).reduce((a, b) => a + b, 0) : r.solved;
+    // kto zaczął od matury: w pasku tylko matura (i przedmioty ze studiów, jeśli coś z nich rozwiązał); pozostali — przedmioty ze studiów
+    const matSeg = { sb: { id: 'mat', short: 'Matura', color: '#b98ae0' }, n: sj.mat };
+    const segs = hasMat ? SUBJ.map(sb => ({ sb, n: sj[sb.id] || 0 })).filter(sg => sg.n > 0).concat([matSeg]) : SUBJ.map(sb => ({ sb, n: sj[sb.id] || 0 }));
+    total = hasMat ? segs.reduce((a, sg) => a + (sg.sb.id === 'mat' ? MAT().items.length : subjProgress(sg.sb.id).total), 0) : summary().base;
+    const solved = hasMat ? segs.reduce((a, sg) => a + sg.n, 0) : r.me ? summary().solved : r.solved;
     const split = h('div', { class: 'bar split', 'aria-hidden': 'true' }, ...segs.filter(sg => sg.n).map((sg, k) => h('i', { style: `width:${Math.min(100, 100 * sg.n / total)}%;background:${sg.sb.color};--k:${k}` })));
     const leg = h('div', { class: 'rsub' }, ...segs.map(sg => h('span', {}, h('i', { style: 'background:' + sg.sb.color }), sg.sb.short + ' ', h('b', {}, String(sg.n)))), h('span', { class: 'rof' }, 'z ' + total));
     const li = h('li', { class: 'rrow' + (r.me ? ' me' : '') + (extraCls || ''), style: `animation-delay:${i * 30}ms`, tabindex: '0', 'aria-expanded': 'false' },
