@@ -1622,7 +1622,7 @@
     kwPF: ['f07-6', 'f07-7'], kwModel: ['f07-6'], parabolaWykres: ['f07-4'], kwParam: ['f07-7'], optym: ['f07-6', 'f07-4'],
     ciagPF: ['f08-3', 'f08-6'], geom: ['f08-6'],
     trygKatWsp: ['f09-4'], trygTrojkat: ['f09-5'], trygPoleCos: ['f10-2', 'f09-4', 'f09-5'],
-    rownoleglobok: ['f09-8', 'f09-5'], okrWpisOpis: ['f10-4'], prostePerp: ['f11-3'], odcinekDl: ['f10-17'],
+    rownoleglobok: ['f09-8', 'f09-5'], okrWpisOpis: ['f10-4', 'f09-5'], trojProstSin: ['f09-5'], katyOkrag: [], wycinek: [], prostePerp: ['f11-3'], odcinekDl: ['f10-17'],
     ostroslupH: ['f10-1', 'f10-17', 'f09-5'], graniastNachyl: ['f10-1', 'f10-17', 'f10-6', 'f09-5'],
     prostopad: ['f10-1', 'f10-6', 'f09-1', 'f09-5'], brylyObrot: ['f09-1', 'f09-5', 'f10-6'], kostki: ['f13-3'],
   };
