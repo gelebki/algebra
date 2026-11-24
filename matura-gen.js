@@ -1615,5 +1615,21 @@
     }
     return out;
   }
-  A.MGEN = { G, MAP, snipTitles: {}, gen: id => { const g = G[MAP[id]]; if (!g) return null; CUR = id; for (let k = 0; k < 60; k++) { let r = null; try { r = g.gen(); } catch (e) { r = null; } if (r && (r.opts || r.pf || r.multi)) { if (r.pf) { const st0 = r.steps || []; r.steps = st0.concat(r.pf.map(x => x[2]).filter(x => x && !st0.includes(x))); } { const name = MAP[id], ok = r.opts && r.opts.find(o => o.ok), st = mergeCont(r.steps || []); if (HOW[name]) st.unshift(HOW[name]); if (ok && ok.t && !st.some(x => /^Odpowiedź/.test(x))) st.push('Odpowiedź: $' + ok.t + '$' + (/\.\}$/.test(ok.t) ? '' : '.')); r = Object.assign({}, r, { steps: st }); } return cleanOnes(Object.assign({ pattern: MAP[id] }, r)); } } return null; }, wz: id => (G[MAP[id]] || {}).wz || [], noWz: id => !!G[MAP[id]] && G[MAP[id]].wz === null };
+  // Uzupełnienie wzorów z tablic: także te potrzebne do drugiej popularnej metody; bez wzorów, które w zadaniu nic nie dają.
+  const WZ_ADD = {
+    potUlamk: ['f02-2'], potDzies: ['f02-2'], potIloraz: ['f02-2'], pierwIloczyn: ['f02-3'], pierwRoznica: ['f02-3'],
+    logPierw: ['f03-2'], logUlamki: ['f03-1'], logDwie: ['f03-1'],
+    kwPF: ['f07-6', 'f07-7'], kwModel: ['f07-6'], parabolaWykres: ['f07-4'], kwParam: ['f07-7'], optym: ['f07-6', 'f07-4'],
+    ciagPF: ['f08-3', 'f08-6'], geom: ['f08-6'],
+    trygKatWsp: ['f09-4'], trygTrojkat: ['f09-5'], trygPoleCos: ['f10-2', 'f09-4', 'f09-5'],
+    rownoleglobok: ['f09-8', 'f09-5'], okrWpisOpis: ['f10-4'], prostePerp: ['f11-3'], odcinekDl: ['f10-17'],
+    ostroslupH: ['f10-1', 'f10-17', 'f09-5'], graniastNachyl: ['f10-1', 'f10-17', 'f10-6', 'f09-5'],
+    prostopad: ['f10-1', 'f10-6', 'f09-1', 'f09-5'], brylyObrot: ['f09-1', 'f09-5', 'f10-6'], kostki: ['f13-3'],
+  };
+  const WZ_SET = { rownProp: null, nierLin: null, nierLinOs: null, nierLinCalk: null, ukladIle: ['f11-3', 'f11-8'], ciagWzor: ['f02-3', 'f02-4'] };
+  const WZ_ID = { '2305-15': null, '2308-16': null, '2406-21': ['f10-13', 'f10-12'], '2605-24.2': ['f11-2', 'f10-5'], '2308-27': ['f11-9', 'f11-3', 'f09-5'] };
+  for (const [k, v] of Object.entries(WZ_SET)) if (G[k]) G[k].wz = v;
+  for (const [k, v] of Object.entries(WZ_ADD)) if (G[k]) G[k].wz = (G[k].wz || []).concat(v.filter(x => !(G[k].wz || []).includes(x)));
+  const wzOf = id => (id in WZ_ID ? WZ_ID[id] : (G[MAP[id]] || {}).wz);
+  A.MGEN = { G, MAP, snipTitles: {}, gen: id => { const g = G[MAP[id]]; if (!g) return null; CUR = id; for (let k = 0; k < 60; k++) { let r = null; try { r = g.gen(); } catch (e) { r = null; } if (r && (r.opts || r.pf || r.multi)) { if (r.pf) { const st0 = r.steps || []; r.steps = st0.concat(r.pf.map(x => x[2]).filter(x => x && !st0.includes(x))); } { const name = MAP[id], ok = r.opts && r.opts.find(o => o.ok), st = mergeCont(r.steps || []); if (HOW[name]) st.unshift(HOW[name]); if (ok && ok.t && !st.some(x => /^Odpowiedź/.test(x))) st.push('Odpowiedź: $' + ok.t + '$' + (/\.\}$/.test(ok.t) ? '' : '.')); r = Object.assign({}, r, { steps: st }); } return cleanOnes(Object.assign({ pattern: MAP[id] }, r)); } } return null; }, wz: id => wzOf(id) || [], noWz: id => !!G[MAP[id]] && wzOf(id) === null };
 })();
