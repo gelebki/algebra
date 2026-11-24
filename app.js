@@ -681,7 +681,8 @@
     const ansRaw = all.length && /^Odpowiedź:/.test(all[all.length - 1]) ? all.pop() : null;
     const L = 'ABCDEF';
     const qBox = h('div', { class: 'exq' }, h('div', { class: 'glabel mexh' }, h('span', {}, 'Podobny przykład'), h('button', { class: 'btn small ghost', onclick: () => { SFX.click(); box.replaceWith(matExample(it)); } }, 'Inny przykład')), mdEl('div', r.q));
-    if (r.opts) qBox.append(h('ul', { class: 'exopts' }, r.opts.map((o, k) => o.html ? h('li', {}, h('b', {}, L[k] + '. '), h('span', { class: 'mplotw', html: o.html })) : mdEl('li', '<b>' + L[k] + '.</b> $' + o.t + '$'))));
+    const plotOpts = r.opts && r.opts.some(o => o.html);
+    if (plotOpts) qBox.append(h('ul', { class: 'exopts' }, r.opts.map((o, k) => o.html ? h('li', {}, h('b', {}, L[k] + '. '), h('span', { class: 'mplotw', html: o.html })) : mdEl('li', '<b>' + L[k] + '.</b> $' + o.t + '$'))));
     else if (r.multi) qBox.append(h('ul', { class: 'exopts' }, r.multi.map((o, k) => mdEl('li', '<b>' + L[k] + '.</b> $' + o.t + '$'))));
     else if (r.pf) qBox.append(h('ul', { class: 'exopts' }, r.pf.map(([t], k) => mdEl('li', (k + 1) + '. ' + t + ' <b>P / F</b>'))));
     box.append(qBox);
@@ -692,7 +693,7 @@
       if (r.pf) return mdEl('div', '<b>Odpowiedź:</b> ' + r.pf.map(([, ok], k) => (k + 1) + '. ' + (ok ? 'P' : 'F')).join(', '), { class: 'exq' });
       if (r.multi) return mdEl('div', '<b>Odpowiedź:</b> ' + r.multi.map((o, k) => o.ok ? L[k] : null).filter(Boolean).join(' oraz '), { class: 'exq' });
       const ok = (r.opts || []).findIndex(o => o.ok);
-      return mdEl('div', '<b>Odpowiedź:</b> ' + (ok >= 0 ? L[ok] + (r.opts[ok].t ? '. $' + r.opts[ok].t + '$' : '') : (ansRaw || '').replace(/^Odpowiedź:\s*/, '')), { class: 'exq' });
+      return mdEl('div', '<b>Odpowiedź:</b> ' + (ok >= 0 ? (plotOpts || !r.opts[ok].t ? L[ok] + (r.opts[ok].t ? '. $' + r.opts[ok].t + '$' : '') : '$' + r.opts[ok].t + '$') : (ansRaw || '').replace(/^Odpowiedź:\s*/, '')), { class: 'exq' });
     };
     const btn = h('button', { class: 'btn primary', onclick: () => {
       if (shown < steps.length) { stepsBox.append(h('div', { class: 'exstep' }, h('span', { class: 'n' }, String(shown + 1)), mdEl('div', steps[shown]))); shown++; SFX.key(); }
