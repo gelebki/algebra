@@ -18,6 +18,7 @@
 
   /* ---------------- ikony ---------------- */
   const IC = {
+    sheet: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 2.8h8.2L19 7.6V20a1.2 1.2 0 0 1-1.2 1.2H6A1.2 1.2 0 0 1 4.8 20V4A1.2 1.2 0 0 1 6 2.8Z" fill="#fff" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 2.8V7a.8.8 0 0 0 .8.8H19" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="7" y="9.4" width="9.8" height="2.8" rx=".6" fill="#b98ae0"/><path d="M7.4 15.2h9M7.4 18.2h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
     star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg>',
     solved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/></svg>',
     flame: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3.5 5.5 5.6 5.5 11a5.5 5.5 0 0 1-11 0c0-2.4 1.2-4 2.5-5 .1 1.6.8 2.7 2 3.2C10.6 8.6 11 5 12 2z"/></svg>',
@@ -576,6 +577,132 @@
     return h('div', { class: 'help', html: 'Jak wpisywać: <code>2+3i</code>, <code>√3</code> lub <code>sqrt(3)</code>, <code>∛2</code>, <code>root(4, 2)</code>, <code>π</code> lub <code>pi</code>, potęga <code>^</code>, ułamek <code>/</code> lub <code>:</code>, ułamki dziesiętne z kropką lub przecinkiem (<code>0,75</code>). Mnożenie można pomijać: <code>2√3i</code>. Postać wykładnicza: <code>2e^(iπ/3)</code>, trygonometryczna: <code>2(cos(π/3)+i sin(π/3))</code>. Kąty w radianach lub stopniach (<code>15°</code>), liczone modulo 2π. Kilka rozwiązań oddziel <code>;</code> (albo przecinkiem); działa też <code>±(2-i)</code>. Gdy coś nie istnieje: <code>brak</code>, <code>nie istnieje</code> lub <code>-</code>. Każdy równoważny zapis jest akceptowany — ale tam, gdzie wymagana jest postać a+bi, nie przejdzie przepisany z treści iloczyn ani iloraz liczb zespolonych.' });
   }
 
+  /* ---------------- Matura: zadania zamknięte z arkuszy CKE (formuła 2023) ---------------- */
+  const MAT = () => A.MATURA || { dz: [], items: [] };
+  const MWZ = () => A.MATURA_WZORY || [];
+  // działy → rozdziały tablic CKE „Wybrane wzory matematyczne”
+  const DZ_WZ = { I: [1, 2, 3], II: [6], III: [7], IV: [], V: [7], VI: [8], VII: [9, 17], VIII: [10], IX: [11], X: [12], XI: [4, 13], XII: [14, 15], XIII: [7] };
+  const matState = id => (S.mat || {})[id];
+  function matProgress(f) { const its = MAT().items.filter(f || (() => true)); return { done: its.filter(it => (matState(it.id) || {}).ok).length, total: its.length }; }
+  function goMatura(dz, wz) { SFX.click(); T = null; V = { view: 'matura', dz: dz == null ? null : dz, wz: !!wz, list: V.list }; setHash(wz ? 'matura-wzory' : dz == null ? 'matura' : 'matura-' + (dz + 1)); render(); window.scrollTo({ top: 0, behavior: 'auto' }); }
+  const mImg = (o, alt) => h('img', { src: 'matura/' + o.src, width: o.w, height: o.h, alt, loading: 'lazy', decoding: 'async' });
+  function matZoom(title, imgs) {
+    closeOverlays();
+    const close = () => closeOverlays();
+    document.body.append(h('div', { class: 'scrim', onclick: close }),
+      h('div', { class: 'modal mview', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+        h('div', { class: 'mvhead' }, h('b', {}, title), h('button', { class: 'iconbtn', 'aria-label': 'Zamknij', html: IC.x, onclick: close })),
+        h('div', { class: 'mvbody' }, ...imgs.map(([o, alt]) => mImg(o, alt)))));
+  }
+  function maturaView() {
+    const M = MAT(), all = matProgress(), nS = new Set(M.items.map(it => it.id.split('-')[0])).size;
+    const page = h('section', { class: 'matura' });
+    page.append(h('div', { class: 'mhead' },
+      h('div', { class: 'mtitle' }, h('span', { class: 'mico', html: IC.sheet }),
+        h('div', {}, h('h1', {}, 'Matura'), h('p', {}, 'Matematyka · poziom podstawowy · formuła 2023. Zadania zamknięte z ' + nS + ' arkuszy CKE: maj, czerwiec i sierpień 2023–2026.'))),
+      h('div', { class: 'mstat', html: ringSVG(all.done / Math.max(1, all.total), 54, 5, 'var(--accent)') + `<span><b>${all.done}</b><small>/${all.total}</small></span>` })));
+    page.append(h('div', { class: 'mtabs', role: 'tablist' },
+      h('button', { class: 'mtab' + (!V.wz ? ' on' : ''), role: 'tab', 'aria-selected': !V.wz ? 'true' : 'false', onclick: () => goMatura(null) }, 'Zadania zamknięte'),
+      h('button', { class: 'mtab' + (V.wz ? ' on' : ''), role: 'tab', 'aria-selected': V.wz ? 'true' : 'false', onclick: () => goMatura(null, true) }, 'Tablice wzorów')));
+    page.append(V.wz ? matWzory() : V.dz == null ? matDzialy() : matDzial(V.dz));
+    return page;
+  }
+  function matDzialy() {
+    const M = MAT(), g = h('div', { class: 'mgrid' });
+    M.dz.forEach((d, i) => {
+      const its = M.items.filter(it => it.dz === i); if (!its.length) return;
+      const p = matProgress(it => it.dz === i);
+      g.append(h('button', { class: 'mcard' + (p.done === p.total ? ' full' : ''), onclick: () => goMatura(i) },
+        h('span', { class: 'mnum' }, String(i + 1)),
+        h('span', { class: 'mbody' }, h('b', {}, d.name), h('small', {}, d.subs.filter((s, k) => its.some(it => it.sub === k)).join(' · ')),
+          h('span', { class: 'mbar' }, h('i', { style: 'width:' + (100 * p.done / p.total).toFixed(1) + '%' })), h('span', { class: 'mcount' }, p.done + ' / ' + p.total + ' zadań'))));
+    });
+    return h('div', {}, h('p', { class: 'mlead' }, 'Działy idą w kolejności nauki — od liczb, przez funkcje i geometrię, do prawdopodobieństwa. W każdym dziale zadania są pogrupowane tematycznie i ułożone od podstawowych umiejętności.'), g);
+  }
+  function matDzial(i) {
+    const M = MAT(), d = M.dz[i], its = M.items.filter(it => it.dz === i), p = matProgress(it => it.dz === i);
+    const box = h('div', { class: 'mdz' });
+    box.append(h('div', { class: 'mdzhead' },
+      h('button', { class: 'iconbtn', 'aria-label': 'Wszystkie działy', html: IC.back, onclick: () => goMatura(null) }),
+      h('div', { class: 'mdzt' }, h('small', {}, 'Dział ' + (i + 1) + ' z ' + M.dz.length), h('h2', {}, d.name)),
+      h('span', { class: 'mcount' }, p.done + ' / ' + p.total)));
+    const wz = (DZ_WZ[d.r] || []).map(n => MWZ().find(x => x.n === n)).filter(Boolean);
+    if (wz.length) box.append(h('div', { class: 'mwzl' }, h('span', {}, 'Wzory z tablic:'), ...wz.map(w => h('button', { class: 'mchip', onclick: () => matZoom(w.n + '. ' + w.name, [[w.img, w.name]]) }, w.n + '. ' + w.name))));
+    const subs = d.subs.map((s, k) => [s, its.filter(it => it.sub === k)]).filter(([, a]) => a.length);
+    if (subs.length > 1) box.append(h('nav', { class: 'msubnav', 'aria-label': 'Tematy w dziale' }, ...subs.map(([s, a], k) => h('button', { class: 'mchip', onclick: () => { const el = document.getElementById('msub' + k); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, s, h('span', {}, String(a.filter(it => (matState(it.id) || {}).ok).length) + '/' + a.length)))));
+    let n = 0;
+    subs.forEach(([s, a], k) => { box.append(h('h3', { class: 'msub', id: 'msub' + k }, s)); a.forEach(it => box.append(matCard(it, ++n))); });
+    const nx = M.dz.findIndex((x, j) => j > i && M.items.some(it => it.dz === j));
+    box.append(h('div', { class: 'mfoot' }, h('button', { class: 'btn', onclick: () => goMatura(null) }, 'Wszystkie działy'), nx >= 0 ? h('button', { class: 'btn primary', onclick: () => goMatura(nx) }, 'Następny dział: ' + M.dz[nx].name, h('span', { html: IC.next })) : ''));
+    return box;
+  }
+  function matCard(it, n) {
+    const st = matState(it.id);
+    const card = h('article', { class: 'mtask' + (st ? (st.ok ? ' ok' : ' bad') : ''), id: 'm-' + it.id });
+    const imgs = (it.intro ? [[it.intro, 'Wstęp do zadania ' + it.nr.split('.')[0]]] : []).concat([[it.img, 'Zadanie ' + it.nr + ' — matura ' + it.ses]]);
+    card.append(h('div', { class: 'mmeta' }, h('span', { class: 'mn' }, String(n)), h('span', { class: 'mses' }, 'Matura ' + it.ses + ' · zad. ' + it.nr), h('span', { class: 'mpts' }, it.pts.split('-')[1] + ' pkt'),
+      h('span', { class: 'mst' }, st ? (st.ok ? 'zrobione' : 'do powtórki') : '')),
+      h('button', { class: 'mpaper', 'aria-label': 'Powiększ zadanie', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, ...imgs.map(([o, alt]) => mImg(o, alt))),
+      matAnswer(it, card));
+    return card;
+  }
+  function matAnswer(it, card) {
+    const box = h('div', { class: 'mans' });
+    const rec = ok => {
+      S.mat = S.mat || {}; const prev = S.mat[it.id];
+      // czy zaczął od matury (bez żadnych zadań ze studiów) — tylko wtedy matura liczy się do paska w rankingu
+      if (S.matFirst == null) S.matFirst = !Object.keys(S.items || {}).length && !Object.keys(S.tried || {}).length;
+      S.mat[it.id] = { ok, d: today() };
+      if (!prev) { bumpDay(ok); if (ok) { S.correct++; gainXP(3 * (+it.pts.split('-')[1] || 1), box); } }
+      else if (ok && !prev.ok) gainXP(1, box);
+      if (ok) SFX.correct(); else SFX.wrong();
+      save(); checkBadges(); renderTop();
+      card.className = 'mtask ' + (ok ? 'ok' : 'bad');
+      const ms = card.querySelector('.mst'); if (ms) ms.textContent = ok ? 'zrobione' : 'do powtórki';
+    };
+    const keyBox = (ok, again) => h('div', { class: 'mres ' + (ok == null ? '' : ok ? 'ok' : 'bad') },
+      ok == null ? '' : h('b', { class: 'mverdict' }, ok ? 'Dobrze!' : 'Niestety nie.'),
+      it.key ? h('div', { class: 'mkey' }, h('small', {}, 'Odpowiedź z klucza CKE (zasady oceniania)'), Object.assign(mImg(it.key, 'Klucz CKE do zadania ' + it.nr), { style: 'width:' + Math.min(100, it.key.w / it.img.w * 100).toFixed(1) + '%' })) : '',
+      again ? h('button', { class: 'btn small ghost', onclick: () => box.replaceWith(matAnswer(it, card)) }, 'Spróbuj jeszcze raz') : '');
+    const finish = (ok, mark) => { box.querySelectorAll('button.mopt').forEach(b => { b.disabled = true; }); if (mark) mark(); box.append(keyBox(ok, true)); rec(ok); };
+    const row = (label, opts, cls, onpick) => h('div', { class: 'mrow' }, label ? h('span', { class: 'mlab' }, label) : '', ...opts.map(o => h('button', { class: 'mopt ' + (cls || ''), 'data-v': o, onclick: e => onpick(o, e.currentTarget) }, o)));
+    const pickIn = (rw, btn) => { rw.querySelectorAll('.mopt').forEach(b => b.classList.toggle('sel', b === btn)); };
+    if (it.type === 'abcd') {
+      box.append(h('p', { class: 'mq' }, 'Twoja odpowiedź:'), row('', it.opts, 'big', (o, btn) => finish(o === it.ans, () => { btn.classList.add(o === it.ans ? 'good' : 'wrong'); if (o !== it.ans) { const g = box.querySelector(`.mopt[data-v="${it.ans}"]`); if (g) g.classList.add('right'); } })));
+    } else if (it.type === 'pf') {
+      const ch = [], rows = [...it.ans].map((_, k) => { const r = row((k + 1) + '.', ['P', 'F'], '', (o, btn) => { ch[k] = o; pickIn(r, btn); chk.disabled = ch.filter(Boolean).length < it.ans.length; }); return r; });
+      const chk = h('button', { class: 'btn primary small', disabled: true, onclick: () => { chk.remove(); const ok = [...it.ans].every((a, k) => ch[k] === a); finish(ok, () => rows.forEach((r, k) => { const b = r.querySelector('.sel'); if (b) b.classList.add(ch[k] === it.ans[k] ? 'good' : 'wrong'); if (ch[k] !== it.ans[k]) { const g = r.querySelector(`.mopt[data-v="${it.ans[k]}"]`); if (g) g.classList.add('right'); } })); } }, 'Sprawdź');
+      box.append(h('p', { class: 'mq' }, 'Oceń każde stwierdzenie: P — prawda, F — fałsz.'), ...rows, chk);
+    } else if (it.type === 'why' || (it.type === 'seq' && it.ordered)) {
+      const two = it.type === 'why' ? [['Odpowiedź', it.opts], ['Uzasadnienie', it.why || ['1', '2', '3']]] : [['Pierwsza luka', it.opts], ['Druga luka', it.opts]];
+      const ch = [], rows = two.map(([lab, os], k) => { const r = row(lab, os, '', (o, btn) => { ch[k] = o; pickIn(r, btn); chk.disabled = !(ch[0] && ch[1]); }); return r; });
+      const chk = h('button', { class: 'btn primary small', disabled: true, onclick: () => { chk.remove(); const ok = ch[0] === it.ans[0] && ch[1] === it.ans[1]; finish(ok, () => rows.forEach((r, k) => { const b = r.querySelector('.sel'); if (b) b.classList.add(ch[k] === it.ans[k] ? 'good' : 'wrong'); if (ch[k] !== it.ans[k]) { const g = r.querySelector(`.mopt[data-v="${it.ans[k]}"]`); if (g) g.classList.add('right'); } })); } }, 'Sprawdź');
+      box.append(h('p', { class: 'mq' }, it.type === 'why' ? 'Wybierz odpowiedź i jej uzasadnienie.' : 'Wybierz literę do każdej luki.'), ...rows, chk);
+    } else if (it.type === 'seq') {
+      const set = new Set();
+      const r = row('', it.opts, '', (o, btn) => { if (set.has(o)) set.delete(o); else if (set.size < it.ans.length) set.add(o); r.querySelectorAll('.mopt').forEach(b => b.classList.toggle('sel', set.has(b.dataset.v))); chk.disabled = set.size !== it.ans.length; });
+      const chk = h('button', { class: 'btn primary small', disabled: true, onclick: () => { chk.remove(); const ok = [...it.ans].every(a => set.has(a)); finish(ok, () => r.querySelectorAll('.mopt').forEach(b => { const v = b.dataset.v; if (set.has(v)) b.classList.add(it.ans.includes(v) ? 'good' : 'wrong'); else if (it.ans.includes(v)) b.classList.add('right'); })); } }, 'Sprawdź');
+      box.append(h('p', { class: 'mq' }, 'Wybierz ' + (it.ans.length === 2 ? 'dwie odpowiedzi' : it.ans.length + ' odpowiedzi') + '.'), r, chk);
+    } else {
+      const show = h('button', { class: 'btn small', onclick: () => {
+        show.remove();
+        const self = h('div', { class: 'mself' }, h('span', {}, 'Porównaj ze swoją odpowiedzią:'),
+          h('button', { class: 'btn small primary', onclick: () => { self.remove(); rec(true); } }, 'Miałem dobrze'),
+          h('button', { class: 'btn small', onclick: () => { self.remove(); rec(false); } }, 'Miałem źle'));
+        box.append(keyBox(null, false), self);
+      } }, 'Pokaż odpowiedź z klucza CKE');
+      box.append(h('p', { class: 'mq' }, 'To zadanie z luką do uzupełnienia — rozwiąż je na kartce, a potem porównaj z kluczem.'), show);
+    }
+    return box;
+  }
+  function matWzory() {
+    const W = MWZ();
+    return h('div', { class: 'mwz' },
+      h('p', { class: 'mlead' }, 'Oficjalne tablice CKE „Wybrane wzory matematyczne na egzamin maturalny z matematyki” — te same, które dostaniesz na egzaminie.'),
+      h('nav', { class: 'msubnav' }, ...W.map(w => h('button', { class: 'mchip', onclick: () => { const el = document.getElementById('wz' + w.n); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, w.n + '. ' + w.name))),
+      ...W.map(w => h('div', { class: 'mpaper wz', id: 'wz' + w.n }, mImg(w.img, w.n + '. ' + w.name))));
+  }
+
   /* ---------------- routing ---------------- */
   function setHash(x) { S.last = x; save(); try { if (location.hash !== '#' + x) history.pushState(null, '', '#' + x); } catch (e) { /* ignoruj */ } }
   function fromHash() {
@@ -584,6 +711,8 @@
     if (hs === 'home' || hs === '') { V = { view: 'home', list: V.list }; return; }
     { const sb = SUBJ.find(x => x.id === hs); if (sb) { V = { view: 'list', list: lastListOf(sb.id) }; return; } }
     if (hs === 'stats') { V = { view: 'stats', list: V.list }; return; }
+    if (hs === 'matura' || hs === 'matura-wzory') { V = { view: 'matura', dz: null, wz: hs === 'matura-wzory', list: V.list }; return; }
+    { const mm = hs.match(/^matura-(\d+)$/); if (mm && MAT().dz[+mm[1] - 1]) { V = { view: 'matura', dz: +mm[1] - 1, wz: false, list: V.list }; return; } }
     if (hs === 'ranking') { V = { view: 'rank', list: V.list }; return; }
     const m = hs.match(/^t([PE]?\d+)-(\d+)$/);
     if (m) { const id = m[1] + '.' + m[2]; for (let li = 0; li < LISTS.length; li++) { const task = LISTS[li].tasks.findIndex(t => t.id === id); if (task >= 0) { startTask(li, task); return 'started'; } } }
@@ -596,13 +725,13 @@
   const navSubj = () => (V.view === 'list' || V.view === 'task' ? subjOf(V.list) : V.view === 'subj' ? V.subj : null);
   function render() {
     const root = app(); root.innerHTML = '';
-    const hue = ['stats', 'rank', 'home', 'subj'].includes(V.view) ? 'st' : LISTS[V.list].hue;
-    document.body.className = 'h-' + hue + (navSubj() && navSubj() !== 'alg' ? ' s-' + navSubj() : '');
+    const hue = ['stats', 'rank', 'home', 'subj', 'matura'].includes(V.view) ? 'st' : LISTS[V.list].hue;
+    document.body.className = 'h-' + hue + (V.view === 'matura' ? ' s-mat' : navSubj() && navSubj() !== 'alg' ? ' s-' + navSubj() : '');
     const pageKey = V.view + ':' + (V.view === 'subj' ? V.subj : V.view === 'list' ? V.list : V.view === 'task' && T ? T.ti : '');
-    const page = V.view === 'home' ? homeView() : V.view === 'subj' ? subjView(V.subj) : V.view === 'list' ? listView() : V.view === 'stats' ? statsView() : V.view === 'rank' ? rankView() : taskView();
+    const page = V.view === 'home' ? homeView() : V.view === 'subj' ? subjView(V.subj) : V.view === 'list' ? listView() : V.view === 'stats' ? statsView() : V.view === 'rank' ? rankView() : V.view === 'matura' ? maturaView() : taskView();
     if (pageKey !== lastPage) page.classList.add('pagein');
     lastPage = pageKey;
-    root.append(topBar(), h('div', { class: 'wrap' }, navBar(), page));
+    root.append(topBar(), h('div', { class: 'wrap' }, V.view === 'matura' ? '' : navBar(), page));
     if (V.view === 'list') requestAnimationFrame(drawTrail);
     if (V.view === 'task') requestAnimationFrame(() => { if (T && T.status === 'answering') focusField(T.focus || 0, true); });
   }
@@ -628,6 +757,7 @@
     const lv = levelInfo(S.xp);
     const top = h('header', { class: 'top' }, h('div', { class: 'wrap' },
       h('button', { class: 'logo', 'aria-label': 'Matematyka — strona główna', onclick: () => goHome() }, h('span', { html: logoSVG }), h('b', {}, 'Matematyka')),
+      h('button', { class: 'matbtn' + (V.view === 'matura' ? ' on' : ''), 'aria-label': 'Matura — zadania z arkuszy CKE', onclick: () => goMatura(null) }, h('span', { html: IC.sheet }), h('b', {}, 'Matura')),
       h('div', { class: 'spacer' }),
       h('div', { class: 'player' },
         h('div', { class: 'lvl', title: 'Poziom ' + lv.L, html: ringSVG(lv.into / lv.need, 42, 4, 'var(--xp)') + `<span style="position:relative">${lv.L}</span>` }),
@@ -1226,7 +1356,7 @@
   }
   // podział zaliczonych podpunktów na przedmioty: wiersz rankingu albo ja
   function subjCounts(r) {
-    if (r.me) return Object.fromEntries(SUBJ.map(sb => [sb.id, subjProgress(sb.id).solved]));
+    if (r.me) { const o = Object.fromEntries(SUBJ.map(sb => [sb.id, subjProgress(sb.id).solved])); if (S.matFirst) o.mat = matProgress().done; return o; }
     const o = {};
     if (typeof r.subj === 'string' && r.subj) r.subj.split(',').forEach(kv => { const [k, v] = kv.split(':'); if (k && isFinite(+v)) o[k] = +v; });
     else o.alg = r.solved || 0; // starsze wpisy: przed proseminarium wszystko było algebrą
@@ -1236,8 +1366,10 @@
   // wiersz rankingu: po najechaniu (komputer) albo dotknięciu (telefon) pasek dzieli się na przedmioty, a wykres się powiększa
   function rankRow(r, i, total, valTxt, valSub, extraCls) {
     const lv = levelInfo(r.xp), series = r.me ? mySeries() : sparkOf(r), sj = subjCounts(r);
-    const segs = SUBJ.map(sb => ({ sb, n: sj[sb.id] || 0 }));
-    const solved = r.me ? summary().solved : r.solved;
+    const hasMat = sj.mat != null;
+    const segs = SUBJ.map(sb => ({ sb, n: sj[sb.id] || 0 })).concat(hasMat ? [{ sb: { id: 'mat', short: 'Matura', color: '#b98ae0' }, n: sj.mat }] : []);
+    total = summary().base + (hasMat ? MAT().items.length : 0); // każdy ma własną pulę: matura tylko u tych, którzy ją zaczęli
+    const solved = r.me ? summary().solved : hasMat ? Object.values(sj).reduce((a, b) => a + b, 0) : r.solved;
     const split = h('div', { class: 'bar split', 'aria-hidden': 'true' }, ...segs.filter(sg => sg.n).map((sg, k) => h('i', { style: `width:${Math.min(100, 100 * sg.n / total)}%;background:${sg.sb.color};--k:${k}` })));
     const leg = h('div', { class: 'rsub' }, ...segs.map(sg => h('span', {}, h('i', { style: 'background:' + sg.sb.color }), sg.sb.short + ' ', h('b', {}, String(sg.n)))), h('span', { class: 'rof' }, 'z ' + total));
     const li = h('li', { class: 'rrow' + (r.me ? ' me' : '') + (extraCls || ''), style: `animation-delay:${i * 30}ms`, tabindex: '0', 'aria-expanded': 'false' },
@@ -1448,8 +1580,12 @@
   function summary() {
     let solved = 0, total = 0;
     for (const L of LISTS) { const p = listProgress(L); solved += p.solved; total += p.total; }
-    const subj = SUBJ.map(sb => sb.id + ':' + subjProgress(sb.id).solved).join(',');
-    return { xp: S.xp, level: levelInfo(S.xp).L, solved, total, subj, correct: S.correct, attempts: S.correct, best: 0 };
+    const base = total;
+    // matura liczy się do postępu tylko u osób, które zaczęły od niej (zanim zrobiły cokolwiek ze studiów)
+    const matStarted = !!S.matFirst, matOk = matStarted ? matProgress().done : 0;
+    if (matStarted) { solved += matOk; total += MAT().items.length; }
+    const subj = SUBJ.map(sb => sb.id + ':' + subjProgress(sb.id).solved).join(',') + (matStarted ? ',mat:' + matOk : '');
+    return { xp: S.xp, level: levelInfo(S.xp).L, solved, total, base, subj, correct: S.correct, attempts: S.correct, best: 0 };
   }
   A.ui = { curItem: () => T && T.item, isDone: () => !!(T && (T.mode !== 'orig' || S.items[T.origKey])), mySeries, curStreak, weekKey, myWeekXP, myName, h, IC, md, toast, SFX, confetti, levelInfo, summary, getS: () => S, setS: ns => { S = Object.assign(blank(), ns); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignoruj */ } }, render: () => { if (booted) render(); }, isRank: () => V.view === 'rank', closeOverlays, modal };
   if (window.AQRank && window.AQRank.init) window.AQRank.init();
