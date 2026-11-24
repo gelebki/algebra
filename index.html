@@ -822,6 +822,8 @@ body.s-mat .top { background: color-mix(in srgb, #ffffff 90%, transparent); }
 .mvopt { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 12px; text-align: left; border-radius: 11px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-size: 16px; }
 .mvopt .letter { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 8px; background: var(--surface-2); font: 800 14px var(--f-display); }
 .mvopt .txt { min-width: 0; overflow: visible; }
+.mex .exq { overflow: visible; } .mex .exopts { list-style: none; padding-left: 0; } .mex .exstep { border-left: 3px solid var(--accent); }
+.mex { display: grid; gap: 10px; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); min-width: 0; } .mex > * { min-width: 0; } .mexh { display: flex; justify-content: space-between; align-items: center; gap: 8px; } .mex .exopts .mplotw { display: inline-flex; vertical-align: middle; }
 .mvopt.static { cursor: default; } .mtoolbar .mpd { margin-left: 0; padding: 3px 6px 3px 2px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); } .mtoolbar .mpd.on { border-color: var(--accent); } .mtoolbar .mpd .plabel { color: var(--ink); font-weight: 600; font-size: 13.5px; }
 .mvopt:hover:not(:disabled) { border-color: #a874e0; } .mvopt.sel { border-color: #7b3fbf; background: #efe4fa; }
 .mvopt.good { border-color: var(--ok); background: var(--ok-bg); } .mvopt.wrong { border-color: var(--bad); background: var(--bad-bg); } .mvopt.right { border-color: var(--ok); border-style: dashed; }

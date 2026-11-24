@@ -673,19 +673,33 @@
       h('button', { class: 'mqbtn', 'aria-label': 'Wyjaśnij ten wzór', title: 'Wyjaśnij własnymi słowami', onclick: e => { ex.hidden = !ex.hidden; e.currentTarget.classList.toggle('on', !ex.hidden); } }, '?')),
       h('div', { class: 'mpaper' }, mImg(s.img, s.t)), ex);
   }
-  // podobny przykład: od razu rozwiązany krok po kroku (bez zgadywania)
+  // podobny przykład: tłumaczenie na innych liczbach — jak „Przykład” w części ze studiów (pomysł + kroki odsłaniane po kolei)
   function matExample(it) {
-    const r = A.MGEN.gen(it.id), box = h('div', { class: 'mvar mex' });
+    const r = A.MGEN.gen(it.id), box = h('div', { class: 'mex' });
     if (!r) return h('p', { class: 'mq' }, 'Nie udało się wylosować przykładu — spróbuj jeszcze raz.');
-    box.append(h('div', { class: 'mvh' }, h('small', {}, 'Podobny przykład · inne liczby · rozwiązanie krok po kroku'), h('button', { class: 'btn small ghost', onclick: () => { SFX.click(); box.replaceWith(matExample(it)); } }, 'Inny przykład')), mdEl('div', r.q, { class: 'mvq' }));
-    if (r.opts) { const list = h('div', { class: 'mvopts' + (r.opts.some(o => o.html) ? ' pics' : '') }); r.opts.forEach((o, i) => list.append(h('div', { class: 'mvo' }, h('div', { class: 'mvopt static' + (o.ok ? ' right' : '') }, h('span', { class: 'letter' }, 'ABCD'[i]), o.html ? h('span', { class: 'txt', html: o.html }) : mdEl('span', '$' + o.t + '$', { class: 'txt' }))))); box.append(list); }
-    else if (r.pf) r.pf.forEach(([t]) => box.append(h('div', { class: 'mpfrow' }, mdEl('span', t, { class: 'mpft' }))));
-    else if (r.multi) { const list = h('div', { class: 'mvopts' }); r.multi.forEach((o, i) => list.append(h('div', { class: 'mvo' }, h('div', { class: 'mvopt static' + (o.ok ? ' right' : '') }, h('span', { class: 'letter' }, 'ABCDEF'[i]), mdEl('span', '$' + o.t + '$', { class: 'txt' }))))); box.append(list); }
-    const s2 = h('div', { class: 'mvsteps' }, h('small', {}, 'Rozwiązanie')); if (r.fig) s2.append(h('div', { class: 'mplotw mfigw', html: r.fig }));
-    (r.steps || []).forEach(x => s2.append(mdEl('p', x)));
-    if (r.pf) s2.append(mdEl('p', 'Odpowiedź: ' + r.pf.map(([, ok], k) => (k + 1) + '. ' + (ok ? 'P' : 'F')).join(', ') + '.'));
-    if (r.multi) s2.append(mdEl('p', 'Odpowiedź: ' + r.multi.map((o, i) => o.ok ? 'ABCDEF'[i] : null).filter(Boolean).join(' oraz ') + '.'));
-    box.append(s2);
+    const all = (r.steps || []).slice(), ideaRaw = /^Pomysł:/.test(all[0] || '') ? all.shift().replace(/^Pomysł:\s*/, '').replace(/^./, ch => ch.toUpperCase()) : '';
+    const ansRaw = all.length && /^Odpowiedź:/.test(all[all.length - 1]) ? all.pop() : null;
+    const L = 'ABCDEF';
+    const qBox = h('div', { class: 'exq' }, h('div', { class: 'glabel mexh' }, h('span', {}, 'Podobny przykład'), h('button', { class: 'btn small ghost', onclick: () => { SFX.click(); box.replaceWith(matExample(it)); } }, 'Inny przykład')), mdEl('div', r.q));
+    if (r.opts) qBox.append(h('ul', { class: 'exopts' }, r.opts.map((o, k) => o.html ? h('li', {}, h('b', {}, L[k] + '. '), h('span', { class: 'mplotw', html: o.html })) : mdEl('li', '<b>' + L[k] + '.</b> $' + o.t + '$'))));
+    else if (r.multi) qBox.append(h('ul', { class: 'exopts' }, r.multi.map((o, k) => mdEl('li', '<b>' + L[k] + '.</b> $' + o.t + '$'))));
+    else if (r.pf) qBox.append(h('ul', { class: 'exopts' }, r.pf.map(([t], k) => mdEl('li', (k + 1) + '. ' + t + ' <b>P / F</b>'))));
+    box.append(qBox);
+    if (r.fig) box.append(h('div', { class: 'mplotw mfigw' , html: r.fig }));
+    if (ideaRaw) box.append(h('div', { class: 'gidea' }, h('div', { class: 'glabel' }, 'Pomysł'), mdEl('div', ideaRaw)));
+    const steps = all, stepsBox = h('div', { style: 'display:grid;gap:8px' }); let shown = 0;
+    const answerEl = () => {
+      if (r.pf) return mdEl('div', '<b>Odpowiedź:</b> ' + r.pf.map(([, ok], k) => (k + 1) + '. ' + (ok ? 'P' : 'F')).join(', '), { class: 'exq' });
+      if (r.multi) return mdEl('div', '<b>Odpowiedź:</b> ' + r.multi.map((o, k) => o.ok ? L[k] : null).filter(Boolean).join(' oraz '), { class: 'exq' });
+      const ok = (r.opts || []).findIndex(o => o.ok);
+      return mdEl('div', '<b>Odpowiedź:</b> ' + (ok >= 0 ? L[ok] + (r.opts[ok].t ? '. $' + r.opts[ok].t + '$' : '') : (ansRaw || '').replace(/^Odpowiedź:\s*/, '')), { class: 'exq' });
+    };
+    const btn = h('button', { class: 'btn primary', onclick: () => {
+      if (shown < steps.length) { stepsBox.append(h('div', { class: 'exstep' }, h('span', { class: 'n' }, String(shown + 1)), mdEl('div', steps[shown]))); shown++; SFX.key(); }
+      if (shown >= steps.length) { btn.replaceWith(answerEl()); SFX.star(); }
+      else btn.textContent = 'Następny krok (' + (shown + 1) + '/' + steps.length + ')';
+    } }, steps.length ? 'Pokaż pierwszy krok' : 'Pokaż odpowiedź');
+    box.append(stepsBox, btn);
     return box;
   }
   function matVariant(it, onOk) {
