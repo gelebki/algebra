@@ -640,13 +640,45 @@
     box.append(h('div', { class: 'mfoot' }, h('button', { class: 'btn', onclick: () => goMatura(null) }, 'Wszystkie działy'), nx >= 0 ? h('button', { class: 'btn primary', onclick: () => goMatura(nx) }, 'Następny dział: ' + M.dz[nx].name, h('span', { html: IC.next })) : ''));
     return box;
   }
+  // treść zadania przepisana na tekst (czytelna na telefonie); rysunki to wycinki z arkusza
+  const srcKey = o => o.src.split('/').pop().replace(/\.webp$/, '');
+  function matFig(o, c) {
+    const [x0, y0, x1, y1] = c, cw = x1 - x0, ch = y1 - y0;
+    const img = h('img', { src: 'matura/' + o.src, alt: 'Rysunek do zadania', loading: 'lazy', decoding: 'async', style: `position:absolute;width:${(100 * o.w / cw).toFixed(3)}%;left:${(-100 * x0 / cw).toFixed(3)}%;top:${(-100 * y0 / ch).toFixed(3)}%;max-width:none` });
+    return h('div', { class: 'mtfig', style: `max-width:${cw}px` }, h('div', { class: 'mtfigi', style: `aspect-ratio:${cw}/${ch}` }, img));
+  }
+  function matTextBlocks(o) {
+    const TX = A.MATURA_TXT || {}, bl = TX[srcKey(o)]; if (!bl) return null;
+    const L = 'ABCDEFGH', out = [];
+    for (const b of bl) {
+      const k = Object.keys(b)[0], v = b[k];
+      if (k === 't') out.push(mdEl('div', v, { class: 'mtp' + (/^\s*\$\$/.test(v) ? ' disp' : '') }));
+      else if (k === 'fig') out.push(matFig(o, v));
+      else if (k === 'opts' || k === 'multi') out.push(h('ol', { class: 'mtopts' }, ...v.map((x, i) => h('li', {}, h('b', {}, L[i] + '.'), mdEl('span', x)))));
+      else if (k === 'pf') out.push(h('ol', { class: 'mtpf' }, ...v.map((x, i) => h('li', {}, h('b', {}, (i + 1) + '.'), mdEl('span', x), h('span', { class: 'mtpfpf' }, 'P / F')))));
+      else if (k === 'table') out.push(h('div', { class: 'mttab' }, h('table', { class: 'mtab2' }, ...v.map((row, ri) => h('tr', {}, ...row.map((c, ci) => mdEl(ci === 0 && /[a-ząęółśżźćń]/i.test(String(c)) ? 'th' : 'td', String(c))))))));
+      else if (k === 'why') out.push(h('div', { class: 'mtwhy' },
+        v.lead ? mdEl('div', v.lead, { class: 'mtwl' }) : '',
+        h('ol', { class: 'mtopts' }, ...(v.ab || []).map((x, i) => h('li', {}, h('b', {}, 'ABCD'[i] + '.'), mdEl('span', x)))),
+        v.mid ? mdEl('div', v.mid, { class: 'mtwl' }) : '',
+        h('ol', { class: 'mtopts' }, ...(v.n || []).map((x, i) => h('li', {}, h('b', {}, (i + 1) + '.'), mdEl('span', x))))));
+    }
+    return out;
+  }
+  function matText(it) {
+    const parts = [];
+    if (it.intro) { const a = matTextBlocks(it.intro); if (!a) return null; parts.push(h('div', { class: 'mtintro' }, ...a)); }
+    const b = matTextBlocks(it.img); if (!b) return null;
+    parts.push(...b);
+    return h('div', { class: 'mtext' }, ...parts);
+  }
   function matCard(it, n) {
     const st = matState(it.id);
     const card = h('article', { class: 'mtask' + (st ? (st.ok ? ' ok' : ' bad') : ''), id: 'm-' + it.id });
     const imgs = (it.intro ? [[it.intro, 'Wstęp do zadania ' + it.nr.split('.')[0]]] : []).concat([[it.img, 'Zadanie ' + it.nr + ' — matura ' + it.ses]]);
     card.append(h('div', { class: 'mmeta' }, h('span', { class: 'mn' }, String(n)), h('span', { class: 'mses' }, 'Matura ' + it.ses + ' · zad. ' + it.nr), h('span', { class: 'mpts' }, it.pts.split('-')[1] + ' pkt'),
       h('span', { class: 'mst' }, st ? (st.ok ? 'zrobione' : 'do powtórki') : '')),
-      h('button', { class: 'mpaper', 'aria-label': 'Powiększ zadanie', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, ...imgs.map(([o, alt]) => mImg(o, alt))),
+      (txt => txt ? h('div', {}, txt, h('button', { class: 'mshow', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, h('span', { html: IC.book }), 'Oryginał z arkusza CKE')) : h('button', { class: 'mpaper', 'aria-label': 'Powiększ zadanie', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, ...imgs.map(([o, alt]) => mImg(o, alt))))(matText(it)),
       matAnswer(it, card), matTools(it));
     return card;
   }
@@ -824,10 +856,10 @@
   }
   // szerokie wzory wyświetlane (treść, pytania, wzory) zmniejszamy, by mieściły się w szerokości ekranu
   function fitMath() {
-    document.querySelectorAll('mjx-container[display="true"], .opt .txt mjx-container, .gq mjx-container, .question mjx-container, .stx mjx-container, .exq mjx-container, .ftx mjx-container, .solsteps mjx-container, .exstep mjx-container, .gl mjx-container, .fwhy mjx-container, .exl mjx-container, .gwhy mjx-container, .mvopt .txt mjx-container, .mvsteps mjx-container, .mvq mjx-container, .mvwhy mjx-container, .mpft mjx-container').forEach(c => {
+    document.querySelectorAll('mjx-container[display="true"], .opt .txt mjx-container, .gq mjx-container, .question mjx-container, .stx mjx-container, .exq mjx-container, .ftx mjx-container, .solsteps mjx-container, .exstep mjx-container, .gl mjx-container, .fwhy mjx-container, .exl mjx-container, .gwhy mjx-container, .mvopt .txt mjx-container, .mvsteps mjx-container, .mvq mjx-container, .mvwhy mjx-container, .mpft mjx-container, .mtext mjx-container').forEach(c => {
       const svg = c.querySelector('svg'); if (!svg || !c.parentElement) return;
       c.style.fontSize = '';
-      let box = c.getAttribute('display') === 'true' ? c.parentElement : (c.closest('.txt, .gq, .question, .stx, .exq, .ftx, .solsteps li, .exstep > div, .gl, .fwhy li, .exl, .gwhy, .mvsteps p, .mvq, .mvwhy, .mpft') || c.parentElement);
+      let box = c.getAttribute('display') === 'true' ? c.parentElement : (c.closest('.txt, .gq, .question, .stx, .exq, .ftx, .solsteps li, .exstep > div, .gl, .fwhy li, .exl, .gwhy, .mvsteps p, .mvq, .mvwhy, .mpft, .mtp, .mtopts li > span, .mtpf li > span') || c.parentElement);
       while (box && box.parentElement && getComputedStyle(box).display.startsWith('inline')) box = box.parentElement;
       const cs = getComputedStyle(box), avail = box.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0), nat = svg.getBoundingClientRect().width;
       if (avail > 0 && nat > avail) c.style.fontSize = (Math.max(0.5, (avail / nat) * 0.97) * 100).toFixed(1) + '%';

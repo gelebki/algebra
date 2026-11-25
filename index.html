@@ -851,6 +851,15 @@ body.s-mat.mat-dark .mpaper { background: #fff; }
 body.s-mat.mat-dark .mpaper img, body.s-mat.mat-dark .mkey img { border-radius: 6px; }
 .mplotw { display: flex; justify-content: center; margin: 8px 0; } .mplotw svg { max-width: min(100%, 300px); height: auto; color: var(--ink); }
 .mvopt .mplotw svg { max-width: 220px; } .mvopts.pics { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+.mtext { display: grid; gap: 10px; font-size: 1.02rem; line-height: 1.6; min-width: 0; } .mtext > * { min-width: 0; max-width: 100%; }
+.mtintro { display: grid; gap: 10px; padding: 0 0 10px 12px; border-left: 3px solid var(--line); }
+.mtp.disp { text-align: center; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; } .mtp.disp::-webkit-scrollbar { display: none; }
+.mtopts, .mtpf { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; } .mtopts li, .mtpf li { display: flex; gap: 8px; align-items: baseline; min-width: 0; } .mtopts li > span, .mtpf li > span:not(.mtpfpf) { min-width: 0; flex: 1; }
+.mtpf li { padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; } .mtpfpf { color: var(--muted); font-size: .85em; white-space: nowrap; }
+.mtwhy { display: grid; gap: 6px; } .mtwl { color: var(--muted); }
+.mttab { overflow-x: auto; scrollbar-width: none; } .mttab::-webkit-scrollbar { display: none; }
+.mtfig { width: 100%; margin: 4px auto; background: #fff; border-radius: 8px; } .mtfigi { position: relative; width: 100%; overflow: hidden; }
+.mshow { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: .85rem; cursor: zoom-in; } .mshow span { display: inline-flex; width: 16px; height: 16px; }
 .mtab2 { border-collapse: collapse; margin: 8px 0; } .mtab2 th, .mtab2 td { border: 1px solid var(--line); padding: 5px 10px; text-align: center; }
 .mvsteps, .mvar, .mvar > *, .mvsteps > *, .mtools, .mtools > * { min-width: 0; max-width: 100%; } .mvsteps p { overflow-wrap: anywhere; } .mfigw svg { max-width: min(100%, 320px); height: auto; }
 .mstatrow { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; margin-bottom: 10px; } .mstatrow:hover { border-color: #c9a6e6; } .mstatrow .mbar { height: 8px; margin-top: 8px; }
@@ -887,6 +896,7 @@ window.MathJax = { tex: { packages: { '[+]': ['ams'] } }, svg: { fontCache: 'loc
 <script src="mc.js"></script>
 <script src="xp.js"></script>
 <script src="matura-data.js"></script>
+<script src="matura-txt.js"></script>
 <script src="matura-wzory.js"></script>
 <script src="matura-snip.js"></script>
 <script src="matura-gen.js"></script>
