@@ -653,7 +653,7 @@
   reg('fTabela', ['2406-12', '2408-9'], null, () => {
     const xs = [-3, -2, -1, 0, 1, 2, 3], ys = xs.map(() => R.int(-4, 5)); const zeros = xs.filter((x, i) => ys[i] === 0); if (zeros.length !== 1 && zeros.length !== 2) return null;
     const mx = Math.max(...ys), argmx = xs[ys.indexOf(mx)], tbl = `<table class="mtab2"><tr><th><i>x</i></th>${xs.map(x => '<td>' + String(x).replace('-', '−') + '</td>').join('')}</tr><tr><th><i>y</i></th>${ys.map(y => '<td>' + String(y).replace('-', '−') + '</td>').join('')}</tr></table>`;
-    if (R.int(0, 1)) return { q: 'Funkcja $y=f(x)$ jest określona tabelą.' + tbl + 'Największa wartość funkcji $f$ jest równa', opts: opts(no(mx), [[no(argmx), 'To argument, dla którego funkcja przyjmuje największą wartość.'], [no(Math.max(...xs)), 'To największy argument, a nie wartość.'], [no(ys[ys.length - 1]), 'Wartość dla ostatniego argumentu nie musi być największa.'], [no(Math.min(...ys)), 'To najmniejsza wartość.']]), steps: [T`Wartości funkcji to liczby w dolnym wierszu tabeli.`, T`Największa z nich to $${mx}$ (dla argumentu $x=${argmx}$).`] };
+    if (sv('mx', 2)) return { q: 'Funkcja $y=f(x)$ jest określona tabelą.' + tbl + 'Największa wartość funkcji $f$ jest równa', opts: opts(no(mx), [[no(argmx), 'To argument, dla którego funkcja przyjmuje największą wartość.'], [no(Math.max(...xs)), 'To największy argument, a nie wartość.'], [no(ys[ys.length - 1]), 'Wartość dla ostatniego argumentu nie musi być największa.'], [no(Math.min(...ys)), 'To najmniejsza wartość.']]), steps: [T`Wartości funkcji to liczby w dolnym wierszu tabeli.`, T`Największa z nich to $${mx}$ (dla argumentu $x=${argmx}$).`] };
     const sym = xs.every((x, i) => ys[i] === ys[xs.indexOf(-x)]);
     return { pf: [[T`Funkcja $f$ ma dokładnie jedno miejsce zerowe.`, zeros.length === 1, T`Miejsca zerowe (gdzie $y=0$): $${zeros.join(',\\ ')}$.`], [T`Wykres funkcji $f$ jest symetryczny względem osi $Oy$.`, sym, sym ? 'Dla $x$ i $-x$ wartości są równe.' : 'Dla $x$ i $-x$ wartości nie zawsze są równe.']], q: 'Funkcja $y=f(x)$ jest określona tabelą.' + tbl + 'Oceń prawdziwość stwierdzeń.', steps: [] };
   });
@@ -737,7 +737,7 @@
   reg('linZnaki', ['2305-13', '2605-13.1', '2605-13.2'], ['f11-3'], () => {
     const a = pk('a', () => R.pick([-3, -2, -1, 1, 2, 3, Q(1, 2), Q(-1, 2), Q(3, 2), Q(-3, 2)])), b = pk('b', () => R.int(-4, 4)) || 2, av = typeof a === 'object' ? a.n / a.d : a;
     const pic = plotLines([[a, b]]); const sg = (v, n) => n + (v > 0 ? '>0' : '<0');
-    if (R.int(0, 1)) return { q: 'Na rysunku przedstawiono fragment wykresu funkcji liniowej $f(x)=ax+b$.' + pic + 'Liczby $a$ i $b$ spełniają warunki', opts: opts(T`${sg(av, 'a')}\ \text{i}\ ${sg(b, 'b')}`, [[T`${sg(-av, 'a')}\ \text{i}\ ${sg(b, 'b')}`, 'Prosta ' + (av > 0 ? 'rośnie — $a>0$.' : 'maleje — $a<0$.')], [T`${sg(av, 'a')}\ \text{i}\ ${sg(-b, 'b')}`, '$b$ to punkt przecięcia z osią $Oy$ — ' + (b > 0 ? 'nad' : 'pod') + ' osią $Ox$.'], [T`${sg(-av, 'a')}\ \text{i}\ ${sg(-b, 'b')}`, 'Oba znaki odwrotnie.']]), steps: [T`Znak $a$: czytamy wykres od lewej do prawej — prosta ${av > 0 ? 'rośnie' : 'maleje'}, więc $a${av > 0 ? '>' : '<'}0$.`, T`$b$ to wartość dla $x=0$, czyli miejsce przecięcia z osią $Oy$: $(0, ${b})$, więc $b${b > 0 ? '>' : '<'}0$.`] };
+    if (!sv('tg', 2)) return { q: 'Na rysunku przedstawiono fragment wykresu funkcji liniowej $f(x)=ax+b$.' + pic + 'Liczby $a$ i $b$ spełniają warunki', opts: opts(T`${sg(av, 'a')}\ \text{i}\ ${sg(b, 'b')}`, [[T`${sg(-av, 'a')}\ \text{i}\ ${sg(b, 'b')}`, 'Prosta ' + (av > 0 ? 'rośnie — $a>0$.' : 'maleje — $a<0$.')], [T`${sg(av, 'a')}\ \text{i}\ ${sg(-b, 'b')}`, '$b$ to punkt przecięcia z osią $Oy$ — ' + (b > 0 ? 'nad' : 'pod') + ' osią $Ox$.'], [T`${sg(-av, 'a')}\ \text{i}\ ${sg(-b, 'b')}`, 'Oba znaki odwrotnie.']]), steps: [T`Znak $a$: czytamy wykres od lewej do prawej — prosta ${av > 0 ? 'rośnie' : 'maleje'}, więc $a${av > 0 ? '>' : '<'}0$.`, T`$b$ to wartość dla $x=0$, czyli miejsce przecięcia z osią $Oy$: $(0, ${b})$, więc $b${b > 0 ? '>' : '<'}0$.`] };
     const x0 = Q(-b * (typeof a === 'object' ? a.d : 1), typeof a === 'object' ? a.n : a); if (!Number.isInteger(x0.n / x0.d)) return null;
     const tg = typeof a === 'object' ? a : Q(a);
     return { q: 'Na rysunku przedstawiono fragment wykresu funkcji liniowej $f(x)=ax+b$. Wykres jest nachylony do osi $Ox$ pod kątem $\\alpha$.' + pic + 'Tangens kąta $\\alpha$ jest równy', opts: opts(qo(tg), [[qo(Q(-tg.n, tg.d)), 'Znak tangensa = znak $a$: prosta ' + (av > 0 ? 'rośnie.' : 'maleje.')], [qo(Q(tg.d, tg.n)), 'Tangens to iloraz przyrostów: $\\frac{\\Delta y}{\\Delta x}$, a nie odwrotnie.'], [qo(Q(-tg.d, tg.n)), 'Odwrócony iloraz i zły znak.'], [qo(Q(b)), 'To wyraz wolny $b$, a nie nachylenie.']]), steps: [T`Tangens kąta nachylenia prostej do osi $Ox$ to jej współczynnik kierunkowy $a$.`, T`Z rysunku odczytujemy dwa punkty prostej (np. przecięcia z osiami) i liczymy: o ile zmienia się $y$, gdy $x$ zmienia się o określoną wartość — $a=\frac{\Delta y}{\Delta x}$.`, T`$\operatorname{tg}\alpha=${qt(tg)}$.`] };
@@ -1292,6 +1292,8 @@
   });
 
 
+  pinSub({ '2305-13': { tg: 0 }, '2605-13.1': { tg: 0 }, '2605-13.2': { tg: 1 }, '2408-9': { mx: 1 }, '2406-12': { mx: 0 },
+    'inf-27.2': { t: 3, dec: 1 }, '2603-11.1': { t: 3 }, '2603-11.2': { t: 2 }, '2209-10.3': { t: 2 }, '2209-10.2': { t: [5, 4], gt: 0 }, '2603-11.3': { t: [0, 5], gt: 0 }, '2412-10': { t: [0, 1, 5] } });
   pinSub({ '2306-2': { three: 1 }, '2305-1': { out: 1, half: 1, strict: 0 }, '2312-4': { out: 0, half: 0, strict: 1 }, '2209-8': { out: 1, half: 0, strict: 0 } });
   pinSub({ '2406-3': { minus: 0 }, '2505-1': { minus: 1 }, '2608-1': { sum: 1 }, '2606-1': { sum: 0 },
     '2405-2': { t: 0 }, '2308-5': { t: 0 }, '2506-2': { t: 1 }, '2508-2': { t: 2 }, '2606-2': { t: 2 }, '2605-3': { t: 3 },
@@ -2078,6 +2080,64 @@
     ukladProstokatDwa: 'Pomysł: obwód to $2a+2b$, a „o $d$ krótszy” to $a-b=d$.',
   });
   /* ===== koniec bloku ===== */
+  /* ===== dopasowanie 1:1 — dział 7: funkcje i funkcja liniowa ===== */
+  reg('fKawalkiZero', ['inf-24'], null, () => {
+    const c = pk('c', () => R.int(0, 3)), a = pk('a', () => R.int(2, 4)), z1 = pk('z1', () => R.int(c + 1, c + 3)), z2 = pk('z2', () => R.int(c + 1, c + 5)); if (z1 === z2) return null;
+    const b = -a * z1, d = -z2; // a·x+b dla x≤c (zero z1>c — odpada), x+d dla x>c (zero z2>c — dobre)
+    return { q: T`Dana jest funkcja $f$ określona wzorem $f(x)=\begin{cases}${a}x${sgn(b)} & \text{dla } x\le ${c}\\x${sgn(d)} & \text{dla } x>${c}\end{cases}$ Miejscem zerowym funkcji $f$ jest liczba`,
+      opts: opts(String(z2), [[T`\left(${b}\right)`, 'To wartość $f(0)$ z pierwszego wzoru, a nie miejsce zerowe.'], [T`\left(${d}\right)`, 'To wyraz wolny drugiego wzoru.'], [String(z1), '$x=' + z1 + '$ nie spełnia warunku $x\\le ' + c + '$ — pierwszy wzór tam nie obowiązuje.']]),
+      steps: [T`Pierwszy wzór: $${a}x${sgn(b)}=0\Rightarrow x=${z1}$ — ale ten wzór obowiązuje tylko dla $x\le ${c}$, a $${z1}>${c}$. Odpada.`, T`Drugi wzór: $x${sgn(d)}=0\Rightarrow x=${z2}$, i rzeczywiście $${z2}>${c}$. To jest miejsce zerowe.`] };
+  });
+  reg('linParamRown', ['2306-11', 'inf-23'], ['f11-3', 'f11-8'], () => {
+    const p = pk('p', () => R.pick([1, 3, 5, 7])), c = pk('c', () => R.pick([-1, 1, 3, 5, -3])), m = Q(c - p, 2); if (m.d !== 1) return null;
+    const mv = m.n, opt4 = [mv, mv + 1, mv - 1, -mv].filter((v, i, ar) => ar.indexOf(v) === i); if (opt4.length < 4) return null;
+    const g = c === 1 ? 'x' : c === -1 ? '-x' : c + 'x';
+    return { q: T`W kartezjańskim układzie współrzędnych $(x,y)$ wykresy funkcji liniowych $f(x)=(2m+${p})x+5$ oraz $g(x)=${g}$ nie mają punktów wspólnych dla`,
+      opts: opts(T`m=${mv}`, [[T`m=${mv + 1}`, 'Proste bez punktów wspólnych są równoległe: współczynniki kierunkowe równe.'], [T`m=${mv - 1}`, 'Rozwiąż $2m+' + p + '=' + c + '$.'], [T`m=${-mv}`, 'Uważaj na znak przy przenoszeniu.']]),
+      steps: [T`Wykresy nie mają punktów wspólnych, gdy są równoległe i różne: równe współczynniki kierunkowe ($5\neq 0$, więc się nie pokrywają).`, T`$2m+${p}=${c}$, czyli $2m=${c}-${p}=${c - p}$, więc $m=${mv}$.`] };
+  });
+  reg('linParamPF', ['2603-10'], ['f11-3'], () => {
+    const p = pk('p', () => R.int(1, 4)), q = pk('q', () => R.int(1, 5)), k0 = pk('k0', () => R.int(2, 6)), right = sv('right', 2);
+    // f(x)=(k+p)x+(k−q): malejąca dla k<−p; przez (0, k0−q) dla k=k0
+    const bnd = right ? -p : p, yv = k0 - q + (sv('s2', 2) ? 0 : 1);
+    return { q: T`Funkcja liniowa $f$ jest określona wzorem $f(x)=(k+${p})x+(k-${q})$, gdzie $k$ jest liczbą rzeczywistą. Oceń prawdziwość stwierdzeń.`,
+      pf: [[T`Funkcja $f$ jest malejąca dla każdej liczby $k$ należącej do przedziału $(-\infty,${bnd})$.`, bnd === -p, T`Malejąca, gdy $k+${p}<0$, czyli $k<-${p}$ — przedział $(-\infty,-${p})$.`],
+        [T`Wykres funkcji $f$ przechodzi przez punkt $(0,${yv})$ dla $k=${k0}$.`, yv === k0 - q, T`$f(0)=k-${q}=${k0}-${q}=${k0 - q}$.`]],
+      steps: [T`Funkcja liniowa maleje, gdy współczynnik przy $x$ jest ujemny: $k+${p}<0$, czyli $k<-${p}$.`, T`Punkt $(0,y)$ to wyraz wolny: dla $k=${k0}$ jest $f(0)=${k0}-${q}=${k0 - q}$.`] };
+  });
+  reg('linPFUlamki', ['2312-10'], ['f11-3'], () => {
+    const d = pk('d', () => R.pick([2, 3, 4, 5, 6])), z = pk('z', () => R.int(2, 6)), s2 = sv('s2', 2); const b = Q(z, d); // f(x)=−(1/d)x + z/d → miejsce zerowe z
+    if (b.d === 1) return null;
+    return { q: T`Funkcja liniowa $f$ jest określona wzorem $f(x)=-\frac{1}{${d}}x+${qt(b)}$. Oceń prawdziwość stwierdzeń.`,
+      pf: [[T`Miejscem zerowym funkcji $f$ jest liczba $${z}$.`, true, T`$-\frac{1}{${d}}x+${qt(b)}=0\Rightarrow \frac{1}{${d}}x=${qt(b)}\Rightarrow x=${qt(b)}\cdot ${d}=${z}$.`],
+        [T`Punkt przecięcia wykresu funkcji $f$ z osią $Oy$ ma współrzędne $\left(0,${s2 ? qt(b) : '-\\frac{1}{' + d + '}'}\right)$.`, !!s2, T`Na osi $Oy$ jest $x=0$: $f(0)=${qt(b)}$ — to wyraz wolny, a nie współczynnik przy $x$.`]],
+      steps: [T`Miejsce zerowe: $-\frac{1}{${d}}x+${qt(b)}=0$, więc $\frac{1}{${d}}x=${qt(b)}$ i $x=${qt(b)}\cdot ${d}=${z}$.`, T`Przecięcie z osią $Oy$: $x=0$, $f(0)=${qt(b)}$, czyli punkt $\left(0,${qt(b)}\right)$.`] };
+  });
+  reg('linPolePF', ['2412-11'], ['f11-3'], () => {
+    const z = pk('z', () => R.int(1, 5)), b = pk('b', () => R.int(2, 6)), a = Q(-b, z), P = Q(z * b, 2), s1 = sv('s1', 2), s2 = sv('s2', 2);
+    const aw = s1 ? a : Q(-z, b), Pw = s2 ? Q(z * b) : P;
+    return { q: T`Miejscem zerowym funkcji liniowej $f$ jest liczba $${z}$, a punkt przecięcia wykresu funkcji $f$ z osią $Oy$ ma współrzędne $(0,${b})$. Oceń prawdziwość stwierdzeń.`,
+      pf: [[T`Współczynnik kierunkowy prostej, która jest wykresem funkcji $f$, jest równy $${pq(aw)}$.`, qeq(aw, a), T`Przez punkty $(${z},0)$ i $(0,${b})$: $a=\frac{0-${b}}{${z}-0}=${qt(a)}$.`],
+        [T`Pole trójkąta ograniczonego osiami układu współrzędnych oraz wykresem funkcji $f$ jest równe $${dq(Pw)}$.`, qeq(Pw, P), T`Trójkąt prostokątny o przyprostokątnych $${z}$ i $${b}$: $P=\frac{${z}\cdot ${b}}{2}=${dq(P)}$.`]],
+      steps: [T`Współczynnik kierunkowy z dwóch punktów $(${z},0)$ i $(0,${b})$: $a=\frac{0-${b}}{${z}-0}=${qt(a)}$.`, T`Wykres i osie tworzą trójkąt prostokątny o przyprostokątnych $${z}$ i $${b}$: $P=\frac{${z}\cdot ${b}}{2}=\frac{${z * b}}{2}=${dq(P)}$.`] };
+  });
+  reg('fTabelaPF3', ['inf-22'], null, () => {
+    const xs = [-3, -2, -1, 0, 1, 2, 3], ys = pk('ys', () => xs.map(() => R.int(-3, 3)));
+    const zeros = xs.filter((x, i) => ys[i] === 0).length, sym = xs.every((x, i) => ys[i] === ys[xs.indexOf(-x)]), mx = Math.max(...ys), claim = pk('claim', () => R.int(2, 4));
+    const tbl = `<table class="mtab2"><tr><th><i>x</i></th>${xs.map(x => '<td>' + String(x).replace('-', '−') + '</td>').join('')}</tr><tr><th><i>y</i></th>${ys.map(y => '<td>' + String(y).replace('-', '−') + '</td>').join('')}</tr></table>`;
+    return { q: 'Funkcja $y=f(x)$ jest określona za pomocą tabeli' + tbl + 'Oceń prawdziwość stwierdzeń.',
+      pf: [[T`Funkcja $f$ ma dokładnie jedno miejsce zerowe.`, zeros === 1, T`Miejsca zerowe to argumenty, dla których $y=0$ — w tabeli jest ich ${zeros}.`], [T`Wykres funkcji $f$ jest symetryczny względem osi $Oy$.`, sym, sym ? T`Dla $x$ i $-x$ wartości są równe.` : T`Np. dla $x$ i $-x$ wartości nie są równe.`], [T`Największa wartość funkcji $f$ jest równa $${claim}$.`, mx === claim, T`Największa liczba w dolnym wierszu to $${mx}$.`]],
+      steps: [T`Miejsca zerowe: argumenty z wartością $0$ — jest ich ${zeros}.`, T`Symetria względem $Oy$: wartości dla $x$ i $-x$ musiałyby być równe — ${sym ? 'są' : 'nie są'}.`, T`Największa wartość to największa liczba w wierszu $y$: $${mx}$.`] };
+  });
+  how({
+    fKawalkiZero: 'Pomysł: dla każdego kawałka szukamy zera i sprawdzamy, czy leży w przedziale, w którym ten wzór obowiązuje.',
+    linParamRown: 'Pomysł: proste bez punktów wspólnych są równoległe — mają równe współczynniki kierunkowe.',
+    linParamPF: 'Pomysł: znak współczynnika przy $x$ decyduje o monotoniczności, a wyraz wolny to punkt na osi $Oy$.',
+    linPFUlamki: 'Pomysł: miejsce zerowe z $f(x)=0$, punkt na osi $Oy$ to wyraz wolny.',
+    linPolePF: 'Pomysł: współczynnik kierunkowy z dwóch punktów; trójkąt z osiami jest prostokątny.',
+    fTabelaPF3: 'Pomysł: wszystko czytamy z tabeli — zera, symetrię i największą wartość.',
+  });
+  /* ===== koniec bloku ===== */
   // Uzupełnienie wzorów z tablic: także te potrzebne do drugiej popularnej metody; bez wzorów, które w zadaniu nic nie dają.
   const WZ_ADD = {
     potUlamk: ['f02-2'], potDzies: ['f02-2'], potIloraz: ['f02-2'], pierwIloczyn: ['f02-3'], pierwRoznica: ['f02-3'],
@@ -2095,6 +2155,12 @@
   for (const [k, v] of Object.entries(WZ_ADD)) if (G[k]) G[k].wz = (G[k].wz || []).concat(v.filter(x => !(G[k].wz || []).includes(x)));
   const wzOf = id => (id in WZ_ID ? WZ_ID[id] : (G[MAP[id]] || {}).wz);
   /* ===== liczby z oryginałów ===== */
+  pinSub({ '2603-10': { right: 0, s2: 1 }, '2312-10': { s2: 0 }, '2412-11': { s1: 1, s2: 1 } });
+  orig({
+    'inf-24': { c: 2, a: 2, z1: 3, z2: 4 }, '2306-11': { p: 3, c: -1 }, 'inf-23': { p: 7, c: 3 }, '2603-10': { p: 2, q: 3, k0: 4 }, '2312-10': { d: 6, z: 4 },
+    '2412-11': { z: 2, b: 4 }, 'inf-22': { ys: [-3, 2, 0, 1, 0, 2, 1], claim: 3 }, '2603-13': { x1: 18, y1: 9, x2: 24 },
+    '2408-11.1': { m0: 6.5, k: 1.03, V: 10 }, '2408-11.2': { m0: 6.5, k: 1.03, V: 10 }, '2408-11.3': { m0: 6.5, k: 1.03, V: 10 },
+  });
   orig({
     '2209-1': { b: 2, a: 3 }, '2603-1': { q: 20, r: 26 }, '2312-1': { a: 3, fd_fq: ['0{,}4', Q(2, 5)] }, '2308-5': { b: 3, k: 4 }, '2412-2': { n: 5, b: 5 },
     '2603-3': { b: 3, x: 10, y: 20, z: 15 }, '2606-2': { a: 4, h: 10 }, '2603-2': { k: 5, c_d: [2, 3] }, 'inf-6': { a_b: [5, 3], m: 2 }, '2605-3': { b: 5 },
@@ -2121,7 +2187,7 @@
   }
   function sameAsOrig(id, r) {
     const o = origMath(id); if (!o.size || !r.q) return false;
-    const g = (r.q.match(/\$[^$]+\$/g) || []).map(m => nrm(m.replace(/\$/g, ''))).filter(k => k.length >= 3);
+    const g = (r.q.match(/\$[^$]+\$/g) || []).map(m => nrm(m.replace(/\$/g, ''))).filter(k => k.length >= 3 && /\d/.test(k));
     return g.length > 0 && g.every(k => o.has(k));
   }
   A.MGEN = { G, MAP, snipTitles: {}, same: sameAsOrig, OP, orig: id => { ORIGMODE = true; try { return A.MGEN.gen(id, { raw: true }); } finally { ORIGMODE = false; } }, gen: (id, o) => { const g = G[MAP[id]]; if (!g) return null; CUR = id; const raw = o && o.raw; for (let k = 0; k < (raw ? 1 : 60); k++) { let r = null; try { r = g.gen(); } catch (e) { r = null; } if (r && !raw && k < 59 && sameAsOrig(id, r)) r = null; if (r && (r.opts || r.pf || r.multi)) { if (r.pf) { const st0 = r.steps || []; r.steps = st0.concat(r.pf.map(x => x[2]).filter(x => x && !st0.includes(x))); } { const name = MAP[id], ok = r.opts && r.opts.find(o => o.ok), st = mergeCont(r.steps || []); if (HOW[name]) st.unshift(HOW[name]); if (ok && ok.t && !st.some(x => /^Odpowiedź/.test(x))) st.push('Odpowiedź: $' + ok.t + '$' + (/\.\}$/.test(ok.t) ? '' : '.')); r = Object.assign({}, r, { steps: st }); } return cleanOnes(Object.assign({ pattern: MAP[id] }, r)); } } return null; }, wz: id => wzOf(id) || [], noWz: id => !!G[MAP[id]] && wzOf(id) === null };
