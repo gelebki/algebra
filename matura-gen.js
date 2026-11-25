@@ -1615,6 +1615,96 @@
     }
     return out;
   }
+  /* ---------- wzorce dla zadań z arkuszy diagnostycznych, próbnej i informatora ---------- */
+  reg('dzielReszta', ['2603-1'], null, () => {
+    const q = R.int(5, 30), r = R.int(3, 40);
+    return { q: T`Liczby $x$ oraz $y$ są całkowite i dodatnie. W wyniku dzielenia liczby $x$ przez liczbę $y$ otrzymano iloraz $${q}$ i resztę $${r}$. Liczba $x$ jest równa`,
+      opts: opts(T`${q}y+${r}`, [[T`${r}y+${q}`, 'Pomylone iloraz i reszta: iloraz mnożymy przez dzielnik.'], [T`(${q}+${r})y`, 'Reszty nie mnożymy przez $y$ — dodajemy ją na końcu.'], [T`${q}(y+${r})`, 'Dzielna = iloraz · dzielnik + reszta, a nie iloraz · (dzielnik + reszta).']]),
+      steps: [T`Dzielenie z resztą: dzielna = iloraz $\cdot$ dzielnik + reszta. Sprawdźmy na liczbach: $17:5=3$ reszty $2$, bo $17=3\cdot 5+2$.`, T`Tutaj dzielna to $x$, dzielnik $y$, iloraz $${q}$, reszta $${r}$: $x=${q}\cdot y+${r}=${q}y+${r}$.`, T`Reszta musi być mniejsza od dzielnika, więc $y>${r}$ — ale to nie zmienia wzoru na $x$.`] };
+  });
+  reg('ulamkiLiczby', ['inf-1'], null, () => {
+    const N = R.pick([12, 15, 20, 25, 99, 2023, 2024, 2025]), M = N + 1;
+    return { q: T`Wartość wyrażenia $${N}:\left(1-\frac{1}{${M}}\right)-\left(1-\frac{${M}}{${N}}\right):\frac{1}{${N}}$ jest równa`,
+      opts: opts(String(N + 2), [[String(N), 'Wyrażenie $1-\\frac{' + M + '}{' + N + '}$ jest ujemne — odejmujemy liczbę ujemną.'], ['0', 'Dzielenie przez ułamek to mnożenie przez jego odwrotność — policz każdą część osobno.'], ['1', 'Policz najpierw nawiasy, potem dzielenia.']]),
+      steps: [T`Pierwszy nawias: $1-\frac{1}{${M}}=\frac{${M}}{${M}}-\frac{1}{${M}}=\frac{${N}}{${M}}$.`, T`Dzielimy przez ułamek, czyli mnożymy przez odwrotność: $${N}:\frac{${N}}{${M}}=${N}\cdot\frac{${M}}{${N}}=${M}$ (${N} się skraca).`, T`Drugi nawias: $1-\frac{${M}}{${N}}=\frac{${N}}{${N}}-\frac{${M}}{${N}}=\frac{${N}-${M}}{${N}}=-\frac{1}{${N}}$.`, T`$-\frac{1}{${N}}:\frac{1}{${N}}=-\frac{1}{${N}}\cdot ${N}=-1$.`, T`Całość: $${M}-(-1)=${M}+1=${N + 2}$.`] };
+  });
+  reg('logWykres', ['inf-10'], ['f03-1'], () => {
+    const a = R.pick([1, 1, 2]), b = R.int(0, 2), t = R.int(2, 4), v = a * t + b - (a === 2 ? 2 : 0), bb = b - (a === 2 ? 2 : 0);
+    if (v < 1 || v > 7) return null;
+    return { q: T`Liczba bakterii $K(t)$ w próbce po czasie $t$ (w godzinach) spełnia zależność $\log K(t)=${a === 1 ? '' : a}t${bb ? sgn(bb) : ''}$. Gdy upłynęły dokładnie ${t} godziny, liczba $K$ bakterii była równa`,
+      opts: opts(T`${big(10 ** v)}`, [[String(v), 'To wartość logarytmu, a nie liczba bakterii.'], [T`${big(10 ** (v - 1))}`, 'Z definicji: $\\log K=' + v + '$ oznacza $K=10^{' + v + '}$.'], [T`${10 * v}`, 'Logarytm dziesiętny: $K=10^{\\log K}$, a nie $10\\cdot\\log K$.']]),
+      steps: [T`Podstawiamy $t=${t}$: $\log K=${a === 1 ? '' : a + '\\cdot '}${t}${bb ? sgn(bb) : ''}=${v}$.`, T`$\log$ bez podstawy to logarytm o podstawie $10$: $\log K=${v}$ oznacza $10^{${v}}=K$.`, T`$K=10^{${v}}=${big(10 ** v)}$.`] };
+  });
+  reg('odwrProp', ['2603-13'], null, () => {
+    const x1 = R.pick([6, 8, 9, 12, 15, 18, 20]), y1 = R.pick([4, 6, 8, 9, 10, 12]), x2 = R.pick([3, 4, 5, 6, 8, 10, 12, 16, 24, 30, 36]); if (x2 === x1) return null;
+    const P = x1 * y1, a = Q(P, x2); if (![1, 2, 4].includes(a.d)) return null;
+    const val = dq(a), dir = Q(y1 * x2, x1);
+    return { q: T`Wielkości $x$ oraz $y$ są odwrotnie proporcjonalne. W tabeli: dla $x=${x1}$ jest $y=${y1}$, a dla $x=${x2}$ jest $y=a$. Liczba $a$ jest równa`,
+      opts: opts(val, [[dq(dir), 'To proporcjonalność <b>prosta</b> ($\\frac{y}{x}$ stałe). Przy odwrotnej stały jest iloczyn $x\\cdot y$.'], [String(P), 'To iloczyn $x\\cdot y$ — trzeba go jeszcze podzielić przez $' + x2 + '$.'], [String(y1 + x1 - x2), 'Różnice nie są stałe — stały jest iloczyn.']]),
+      steps: [T`Odwrotna proporcjonalność: iloczyn $x\cdot y$ jest zawsze taki sam.`, T`Z pierwszej kolumny: $${x1}\cdot ${y1}=${P}$.`, T`Więc $${x2}\cdot a=${P}$, czyli $a=${P}:${x2}=${val}$.`] };
+  });
+  reg('wykladModel', ['2312-12', 'inf-33.1'], ['f02-3', 'f02-4'], () => {
+    const A = R.pick([40, 48, 64, 78, 80, 96]), B = R.pick([18, 20, 22, 25]), k = R.pick([10, 20]), m = R.int(1, 3), x = m * k;
+    if (A % (2 ** m)) return null;
+    const v = A / 2 ** m + B;
+    return { q: T`Temperaturę naparu (w °C) po $x$ minutach opisuje funkcja $T(x)=${A}\cdot 2^{-\frac{x}{${k}}}+${B}$. Po ${x} minutach temperatura naparu była równa`,
+      opts: opts(T`${v}^\circ\text{C}`, [[T`${A / 2 + B}^\circ\text{C}`, 'Wykładnik to $-\\frac{' + x + '}{' + k + '}=-' + m + '$, a nie $-1$.'], [T`${A + B}^\circ\text{C}`, 'To temperatura na początku ($x=0$).'], [T`${A * 2 ** m + B}^\circ\text{C}`, 'Minus w wykładniku: $2^{-' + m + '}=\\frac{1}{' + 2 ** m + '}$ — dzielimy, nie mnożymy.']]),
+      steps: [T`Podstawiamy $x=${x}$: wykładnik $-\frac{${x}}{${k}}=-${m}$.`, T`$2^{-${m}}=\frac{1}{2^{${m}}}=\frac{1}{${2 ** m}}$ (minus w wykładniku to odwrotność).`, T`$T(${x})=${A}\cdot\frac{1}{${2 ** m}}+${B}=${A}:${2 ** m}+${B}=${A / 2 ** m}+${B}=${v}$.`] };
+  });
+  reg('srodekCiezk', ['inf-42'], null, () => {
+    const k = R.int(2, 9), t = sv('t', 2);
+    return t ? { q: T`Punkt $S$ jest środkiem ciężkości trójkąta $ABC$. Długość odcinka $SA$ jest równa $${2 * k}$. Długość środkowej poprowadzonej z wierzchołka $A$ jest równa`,
+        opts: opts(String(3 * k), [[String(4 * k), 'Środek ciężkości dzieli środkową w stosunku $2:1$, a nie $1:1$.'], [String(k), 'To odcinek od $S$ do boku — dodaj go do $|SA|$.'], [String(2 * k * 2 + k), 'Stosunek $2:1$ liczymy od wierzchołka.']]),
+        steps: [T`Część środkowej przy wierzchołku jest dwa razy dłuższa niż część przy boku.`, T`$|SA|=${2 * k}$ to dwie części, więc jedna część to $${2 * k}:2=${k}$.`, T`Środkowa ma trzy takie części: $3\cdot ${k}=${3 * k}$.`] }
+      : { q: T`Środkowa $AD$ trójkąta $ABC$ ma długość $${3 * k}$. Punkt $S$ jest środkiem ciężkości tego trójkąta. Długość odcinka $AS$ jest równa`,
+        opts: opts(String(2 * k), [[String(k), 'To odcinek $SD$ (krótsza część).'], [qo(Q(3 * k, 2)), 'Środek ciężkości nie jest środkiem środkowej — dzieli ją $2:1$.'], [String(3 * k), 'To cała środkowa.']]),
+        steps: [T`Środek ciężkości dzieli środkową w stosunku $2:1$, licząc od wierzchołka.`, T`Środkową dzielimy na $3$ równe części: $${3 * k}:3=${k}$.`, T`$|AS|$ to dwie części: $2\cdot ${k}=${2 * k}$.`] };
+  });
+  reg('szesciokatKolo', ['2603-22'], ['f10-11', 'f10-6'], () => {
+    const r = R.int(1, 4), r2 = r * r, H = Q(3 * r2, 2), co = x => (x === 1 ? '' : String(x));
+    const hx = H.d === 1 ? T`${co(H.n)}\sqrt3` : T`\frac{${H.n}\sqrt3}{${H.d}}`;
+    return { q: T`Sześciokąt foremny wpisano w koło o promieniu $${r}$. Pole części koła leżącej poza sześciokątem jest równe`,
+      opts: opts(T`${co(r2)}\pi-${hx}`, [[T`${co(r2)}\pi-${co(r2 * 6)}\sqrt3`, 'Pole trójkąta równobocznego to $\\frac{a^2\\sqrt3}{4}$ — nie zapominaj o mianowniku.'], [T`${co(2 * r)}\pi-${hx}`, '$2\\pi r$ to obwód koła, pole to $\\pi r^2$.'], [T`${co(r2)}\pi-\frac{${r2}\sqrt3}{4}`, 'Sześciokąt to <b>sześć</b> trójkątów równobocznych.']]),
+      steps: [T`Szukane pole = pole koła − pole sześciokąta.`, T`Pole koła: $\pi r^2=\pi\cdot ${r}^2=${co(r2)}\pi$.`, T`Bok sześciokąta wpisanego w okrąg jest równy promieniowi: $a=${r}$. Sześciokąt to $6$ trójkątów równobocznych o boku $${r}$.`, T`Jeden trójkąt: $\frac{a^2\sqrt3}{4}=\frac{${r2}\sqrt3}{4}$; sześć: $6\cdot\frac{${r2}\sqrt3}{4}=\frac{${6 * r2}\sqrt3}{4}=${hx}$.`, T`Pole: $${co(r2)}\pi-${hx}$.`] };
+  });
+  reg('regulaMnozenia', ['inf-63.1', '2603-28'], ['f13-3'], () => {
+    const a = R.int(2, 6), b = R.int(2, 5), c = R.int(2, 4);
+    return { q: T`Andrzej ma $${a}$ koszule, $${b}$ pary spodni i $${c}$ pary butów. Zestaw to jedna koszula, jedne spodnie i jedna para butów. Liczba wszystkich różnych zestawów jest równa`,
+      opts: opts(String(a * b * c), [[String(a + b + c), 'Wybory są niezależne — mnożymy liczby możliwości, a nie dodajemy.'], [String(a * b), 'Nie zapominaj o butach.'], [String(a * b * c * 2), 'Każdy zestaw liczymy raz.']]),
+      steps: [T`Reguła mnożenia: jeśli wybieramy po kolei kilka rzeczy niezależnie, liczby możliwości mnożymy.`, T`Koszula: $${a}$ możliwości, spodnie: $${b}$, buty: $${c}$.`, T`$${a}\cdot ${b}\cdot ${c}=${a * b}\cdot ${c}=${a * b * c}$.`] };
+  });
+  reg('losLiczby', ['2603-29', '2312-29.1'], ['f14-2'], () => {
+    const k = R.pick([3, 4, 5, 6, 7, 8, 9, 11, 12, 15]), n = Math.floor(99 / k) - Math.floor(9 / k), p = Q(n, 90);
+    const first = k * (Math.floor(9 / k) + 1), last = k * Math.floor(99 / k);
+    return { q: T`Ze zbioru wszystkich liczb naturalnych dwucyfrowych losujemy jedną liczbę. Prawdopodobieństwo wylosowania liczby podzielnej przez $${k}$ jest równe`,
+      opts: opts(qo(p), [[qo(Q(n, 99)), 'Liczb dwucyfrowych jest $90$ (od $10$ do $99$), a nie $99$.'], [qo(Q(1, k)), 'Tak byłoby tylko, gdyby $90$ dzieliło się przez $' + k + '$ bez reszty.'], [qo(Q(n + 1, 90)), 'Policz dokładnie wielokrotności od $' + first + '$ do $' + last + '$.']]),
+      steps: [T`Wszystkich liczb dwucyfrowych: od $10$ do $99$ jest $99-10+1=90$.`, T`Wielokrotności $${k}$ wśród nich: najmniejsza $${first}$, największa $${last}$. Ich liczba: $\frac{${last}-${first}}{${k}}+1=${(last - first) / k}+1=${n}$.`, T`$P=\frac{${n}}{90}${redS(n, 90)}$.`] };
+  });
+  reg('dominanta', ['2312-29.2', 'inf-65.1'], ['f15-1', 'f15-6'], () => {
+    const vals = R.shuffle([3, 4, 5, 6, 7, 8]).slice(0, 4).sort((a, b) => a - b), ns = vals.map(() => R.int(1, 6)), mx = Math.max(...ns);
+    if (ns.filter(x => x === mx).length > 1) return null;
+    const mode = vals[ns.indexOf(mx)], N = ns.reduce((a, b) => a + b), mean = Q(vals.reduce((s, v, i) => s + v * ns[i], 0), N);
+    const tb = vals.map((v, i) => T`${v}\ (${ns[i]}\text{ razy})`).join(',\\ ');
+    return { q: T`W grupie uczniów zebrano liczby przeczytanych książek: $${tb}$. Dominanta tych danych jest równa`,
+      opts: opts(String(mode), [[String(mx), 'To liczba wystąpień, a dominanta to <b>wartość</b>, która występuje najczęściej.'], [dq(mean), 'To średnia arytmetyczna.'], [String(vals[3] === mode ? vals[0] : vals[3]), 'Dominanta to wartość najczęstsza, nie skrajna.']]),
+      steps: [T`Dominanta to wartość, która występuje najczęściej.`, T`Liczby wystąpień: ${vals.map((v, i) => T`$${v}$ — ${ns[i]}`).join(', ')}. Najwięcej razy (${mx}) występuje $${mode}$.`] };
+  });
+  how({
+    dzielReszta: 'Pomysł: dzielna = iloraz · dzielnik + reszta.',
+    ulamkiLiczby: 'Pomysł: liczymy osobno każdy nawias, a dzielenie przez ułamek zamieniamy na mnożenie przez odwrotność.',
+    logWykres: 'Pomysł: $\\log K=v$ oznacza $K=10^{v}$ — logarytm dziesiętny „cofa” potęgę dziesiątki.',
+    odwrProp: 'Pomysł: przy odwrotnej proporcjonalności iloczyn $x\\cdot y$ jest stały.',
+    wykladModel: 'Pomysł: podstawiamy czas do wzoru; ujemny wykładnik oznacza odwrotność.',
+    srodekCiezk: 'Pomysł: środek ciężkości dzieli każdą środkową w stosunku $2:1$, licząc od wierzchołka.',
+    szesciokatKolo: 'Pomysł: pole koła minus pole sześciokąta; sześciokąt foremny to sześć trójkątów równobocznych o boku równym promieniowi.',
+    regulaMnozenia: 'Pomysł: reguła mnożenia — liczby możliwości niezależnych wyborów mnożymy.',
+    losLiczby: 'Pomysł: prawdopodobieństwo klasyczne — liczymy liczby dwucyfrowe i wielokrotności, potem dzielimy.',
+    dominanta: 'Pomysł: dominanta to wartość występująca najczęściej.',
+  });
+  Object.assign(MAP, { '2603-9': 'ukladPunkt', '2312-11.2': 'parabolaWykres', 'inf-36': 'ciagPF', '2209-16.1': 'ciagPF', '2603-19': 'okrWpisOpis', 'inf-52': 'okragSym',
+    '2312-25': 'prostopad', 'inf-57.1': 'graniastNachyl', '2603-27': 'ostroslupPola', '2209-12.1': 'fModelLin', '2412-13': 'logPierw' });
+  // zadania z arkuszy diagnostycznych, próbnej i informatora — wzorce podobnych przykładów
+  Object.assign(MAP, { '2209-1': 'potUlamk', '2312-1': 'potJednaPodst', '2412-2': 'potJednaPodst', '2603-3': 'potJednaPodst', '2603-2': 'pierwSzesc', 'inf-6': 'pierwSzesc', '2312-3': 'procentOdsetki', '2412-5': 'procentOdsetki', 'inf-9': 'procentWzor', '2209-8': 'absOsNierown', '2312-4': 'absOsNierown', 'inf-17': 'nierLinOs', '2412-1': 'absRownIloczyn', 'inf-8': 'absPierw', '2312-2': 'logDzialania', 'inf-12': 'logDzialania', '2209-2': 'logDzialania', '2412-4': 'logDzialania', '2603-4': 'logPierw', 'inf-11': 'logPierw', '2312-7': 'wymierne', 'inf-16': 'wymierne', '2209-4': 'wymierne', '2412-6': 'wymierne', '2603-6': 'wymierne', 'inf-25': 'kwPodstaw', '2209-5': 'kwRoznKw', 'inf-15': 'kwRoznKwLiczby', 'inf-26': 'kwParam', '2312-8': 'wielomWspol', '2603-7': 'rownIloczyn', '2209-7': 'rownWymierne', '2312-6': 'ukladPunkt', '2412-7': 'ukladPunkt', 'inf-21': 'ukladIle', '2209-9': 'ukladTresc', 'inf-24': 'wykresLamana', '2603-11.1': 'wykresLamana', '2603-11.2': 'wykresLamana', '2603-11.3': 'wykresLamana', '2209-10.2': 'wykresLamana', '2209-10.3': 'wykresLamana', 'inf-27.2': 'wykresLamana', '2412-10': 'wykresLamana', 'inf-22': 'fTabela', '2209-13.2': 'kwZbiorWart', '2312-11.1': 'kwZbiorWart', '2412-12.1': 'parabolaWykres', 'inf-30': 'parabolaWykres', '2312-11.3': 'parabolaWykres', '2412-12.2': 'parabolaWykres', '2603-32.1': 'kwPF', '2603-32.2': 'kwPF', '2209-13.1': 'kwPF', 'inf-32.1': 'kwModel', '2312-10': 'linPF', '2603-10': 'linParam', 'inf-23': 'linParam', '2312-19': 'linParam', '2603-23': 'linParam', '2412-11': 'linWzor', '2312-11.4': 'wykresPrzeksz', '2412-12.3': 'wykresPrzeksz', '2209-14.1': 'ciagWzor', '2312-14': 'ciagSuma', '2412-14': 'ciagSuma', '2209-16.2': 'arytm', '2209-16.3': 'arytm', '2312-13': 'arytm', '2603-15': 'ciagRek', '2412-15': 'arytmTrzy', '2209-14.2': 'ciagPF', '2312-15': 'geomTrzy', '2412-16': 'geom', '2603-16': 'geom', '2312-17': 'trygJedynka', 'inf-39': 'trygJedynka', '2412-18': 'trygJedynka', '2412-17.1': 'trygTrojkat', '2412-17.2': 'trygTrojkat', '2603-18': 'trygTrojkat', '2312-16': 'trygKatWsp', '2209-18': 'trygTozsam', '2209-22': 'dwusieczna', '2312-23': 'rownoleglobok', 'inf-44': 'okrWpisOpis', '2209-20': 'katyOkrag', '2312-22': 'katyOkrag', '2603-20': 'katyOkrag', 'inf-43': 'katyOkrag', '2412-20': 'wycinek', '2209-17': 'prostePerp', '2312-18': 'prostePerp', '2209-15': 'prosteRown', '2412-22': 'prosteRown', 'inf-53': 'prosteRown', '2312-21': 'odcinekDl', '2412-21': 'odcinekDl', '2209-11': 'okragPF', 'inf-51': 'okragPF', '2312-20': 'okragRown', '2412-23': 'okragRown', '2412-24': 'ostroslupH', '2603-25': 'prostopad', '2412-25': 'prostopad', 'inf-58': 'ostroslupPola', 'inf-61': 'brylyObrot', '2209-3': 'liczbyCyfry', '2412-27': 'liczbyCyfry', '2209-19': 'kule', '2312-28': 'kostki', '2209-24.1': 'diagramStat', '2209-24.2': 'diagramStat', '2209-24.3': 'diagramStat', '2603-31': 'diagramStat', '2412-29': 'diagramStat', '2603-30': 'srednia' });
   // Uzupełnienie wzorów z tablic: także te potrzebne do drugiej popularnej metody; bez wzorów, które w zadaniu nic nie dają.
   const WZ_ADD = {
     potUlamk: ['f02-2'], potDzies: ['f02-2'], potIloraz: ['f02-2'], pierwIloczyn: ['f02-3'], pierwRoznica: ['f02-3'],

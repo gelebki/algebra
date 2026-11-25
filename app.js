@@ -597,11 +597,11 @@
         h('div', { class: 'mvbody' }, ...imgs.map(([o, alt]) => mImg(o, alt)))));
   }
   function maturaView() {
-    const M = MAT(), all = matProgress(), nS = new Set(M.items.map(it => it.id.split('-')[0])).size;
+    const M = MAT(), all = matProgress(), nS = new Set(M.items.filter(it => !it.kind).map(it => it.id.split('-')[0])).size, nX = new Set(M.items.filter(it => it.kind && it.kind !== 'inf').map(it => it.id.split('-')[0])).size;
     const page = h('section', { class: 'matura' });
     page.append(h('div', { class: 'mhead' },
       h('div', { class: 'mtitle' }, h('span', { class: 'mico', html: IC.sheet }),
-        h('div', {}, h('h1', {}, 'Matura'), h('p', {}, 'Matematyka · poziom podstawowy · formuła 2023. Zadania zamknięte z ' + nS + ' arkuszy CKE: maj, czerwiec i sierpień 2023–2026.'))),
+        h('div', {}, h('h1', {}, 'Matura'), h('p', {}, 'Matematyka · poziom podstawowy · formuła 2023. Zadania zamknięte z ' + nS + ' arkuszy maturalnych CKE (2023–2026), ' + nX + ' arkuszy próbnych i diagnostycznych oraz z informatora CKE.'))),
       h('div', { class: 'mhr' },
         h('button', { class: 'iconbtn mdark', 'aria-label': S.matDark ? 'Jasny motyw' : 'Ciemny motyw', title: S.matDark ? 'Jasny motyw' : 'Ciemny motyw', html: S.matDark ? IC.sun : IC.moon, onclick: () => { S.matDark = !S.matDark; save(); render(); } }),
         h('div', { class: 'mstat', html: ringSVG(all.done / Math.max(1, all.total), 54, 5, 'var(--accent)') + `<span><b>${all.done}</b><small>/${all.total}</small></span>` }))));
@@ -652,12 +652,12 @@
   function matTextBlocks(o, ia, it) {
     const TX = A.MATURA_TXT || {}, bl = TX[srcKey(o)]; if (!bl) return null;
     const L = 'ABCDEFGH', out = [];
-    const T = it && it.type, live = kind => ia && !ia.used && ((kind === 'opts' && T === 'abcd') || (kind === 'pf' && T === 'pf') || (kind === 'why' && T === 'why') || (kind === 'multi' && T === 'seq' && !it.ordered));
+    const T = it && it.type, live = kind => ia && (!ia.used || (ia.used === 'multi' && kind === 'multi')) && ((kind === 'opts' && T === 'abcd') || (kind === 'pf' && T === 'pf') || (kind === 'why' && T === 'why') || (kind === 'multi' && T === 'seq' && !it.ordered));
     for (const b of bl) {
       const k = Object.keys(b)[0], v = b[k];
       if (k === 't') out.push(mdEl('div', v, { class: 'mtp' + (/^\s*\$\$/.test(v) ? ' disp' : '') }));
       else if (k === 'fig') out.push(matFig(o, v));
-      else if ((k === 'opts' || k === 'multi') && live(k)) { ia.used = k; out.push(h('div', { class: 'mtlive' }, ...v.map((x, i) => iaBtn(ia, 0, (it.opts || [])[i] || L[i], L[i], mdEl('span', x, { class: 'txt' }))))); }
+      else if ((k === 'opts' || k === 'multi') && live(k)) { ia.used = k; const off = (ia.groups[0] || []).length; out.push(h('div', { class: 'mtlive' }, ...v.map((x, i) => iaBtn(ia, 0, (it.opts || [])[off + i] || L[off + i], L[off + i], mdEl('span', x, { class: 'txt' }))))); }
       else if (k === 'pf' && live(k)) { ia.used = k; out.push(h('div', { class: 'mtlive' }, ...v.map((x, i) => h('div', { class: 'mtpfrow' }, h('b', {}, (i + 1) + '.'), mdEl('span', x, { class: 'mpft' }), h('span', { class: 'mtpfb' }, ...['P', 'F'].map(pv => { const b = h('button', { class: 'mopt', 'data-v': pv, onclick: () => ia.pick && ia.pick(i, pv, b) }, pv); (ia.groups[i] = ia.groups[i] || []).push(b); return b; })))))); }
       else if (k === 'why' && live(k)) { ia.used = k; out.push(h('div', { class: 'mtwhy mtlive' },
         v.lead ? mdEl('div', v.lead, { class: 'mtwl' }) : '',
@@ -682,13 +682,14 @@
     parts.push(...b);
     return h('div', { class: 'mtext' }, ...parts);
   }
+  const matSes = it => (it.kind ? it.ses : 'Matura ' + it.ses);
   function matCard(it, n) {
     const st = matState(it.id), ia = { groups: [] };
     const card = h('article', { class: 'mtask' + (st ? (st.ok ? ' ok' : ' bad') : ''), id: 'm-' + it.id, 'data-n': String(n) });
     const imgs = (it.intro ? [[it.intro, 'Wstęp do zadania ' + it.nr.split('.')[0]]] : []).concat([[it.img, 'Zadanie ' + it.nr + ' — matura ' + it.ses]]);
-    card.append(h('div', { class: 'mmeta' }, h('span', { class: 'mn' }, String(n)), h('span', { class: 'mses' }, 'Matura ' + it.ses + ' · zad. ' + it.nr), h('span', { class: 'mpts' }, it.pts.split('-')[1] + ' pkt'),
+    card.append(h('div', { class: 'mmeta' }, h('span', { class: 'mn' }, String(n)), h('span', { class: 'mses' }, matSes(it) + ' · zad. ' + it.nr), h('span', { class: 'mpts' }, it.pts.split('-')[1] + ' pkt'),
       h('span', { class: 'mst' }, st ? (st.ok ? 'zrobione' : 'do powtórki') : '')),
-      ((txt) => txt ? h('div', {}, txt, h('button', { class: 'mshow', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, h('span', { html: IC.book }), 'Oryginał z arkusza CKE')) : h('button', { class: 'mpaper', 'aria-label': 'Powiększ zadanie', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, ...imgs.map(([o, alt]) => mImg(o, alt))))(matText(it, ia)),
+      ((txt) => txt ? h('div', {}, txt, h('button', { class: 'mshow', onclick: () => matZoom(matSes(it) + ' · zadanie ' + it.nr, imgs) }, h('span', { html: IC.book }), 'Oryginał z arkusza CKE')) : h('button', { class: 'mpaper', 'aria-label': 'Powiększ zadanie', onclick: () => matZoom(matSes(it) + ' · zadanie ' + it.nr, imgs) }, ...imgs.map(([o, alt]) => mImg(o, alt))))(matText(it, ia)),
       matAnswer(it, card, ia), matTools(it));
     return card;
   }
@@ -791,6 +792,7 @@
     };
     const keyBox = (ok, again) => h('div', { class: 'mres ' + (ok == null ? '' : ok ? 'ok' : 'bad') },
       ok == null ? '' : h('b', { class: 'mverdict' }, ok ? 'Dobrze!' : 'Niestety nie.'),
+      !it.key && it.ans && ok != null ? h('div', { class: 'mkey' }, h('small', {}, 'Poprawna odpowiedź (informator CKE)'), h('b', {}, it.type === 'pf' ? [...it.ans].map((a, k) => (k + 1) + '. ' + a).join(', ') : it.ans)) : '',
       it.key ? h('div', { class: 'mkey' }, h('small', {}, 'Odpowiedź z klucza CKE (zasady oceniania)'), Object.assign(mImg(it.key, 'Klucz CKE do zadania ' + it.nr), { style: 'width:' + Math.min(100, it.key.w / it.img.w * 100).toFixed(1) + '%' })) : '',
       again ? h('button', { class: 'btn small ghost', onclick: () => { const nc = matCard(it, +card.dataset.n || 1); card.replaceWith(nc); } }, 'Spróbuj jeszcze raz') : '');
     const finish = (ok, mark) => { box.querySelectorAll('button.mopt').forEach(b => { b.disabled = true; }); if (G) G.flat().forEach(b => { b.disabled = true; }); if (mark) mark(); box.append(keyBox(ok, true)); rec(ok); };
