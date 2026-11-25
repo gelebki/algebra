@@ -100,7 +100,7 @@
   });
   // (3^{-1}·4^{0,5})/(3^{-2}·2^{-1}) (2608-2)
   reg('potIloraz', ['2608-2'], ['f02-3', 'f02-4'], () => {
-    const a = R.pick([2, 3, 5]), s = R.pick([4, 9, 16, 25].filter(x => x !== a * a)), r = Math.sqrt(s), c = R.pick([2, 3].filter(x => x !== a));
+    const a = R.pick([2, 3, 5, 7]), c = R.pick([2, 3, 5].filter(x => x !== a)), s = c * c, r = c; // jak w arkuszu: s = c² (np. 4 i 2)
     const v = Q(r * a * a * c, a); // a^{-1}·r / (a^{-2}·c^{-1}) = r·a·c
     return { q: T`Liczba $\dfrac{${a}^{-1}\cdot ${s}^{0{,}5}}{${a}^{-2}\cdot ${c}^{-1}}$ jest równa`, opts: opts(qo(v), [[qo(Q(1, v.n)), 'Odwrotność wyniku — ujemne wykładniki w mianowniku „przechodzą” do licznika z plusem.'], [qo(Q(r * a, c)), T`Czynnik $${c}^{-1}$ w mianowniku daje mnożenie przez $${c}$, a nie dzielenie.`], [qo(Q(1, r * a)), 'Pomylone potęgi z ujemnym wykładnikiem.'], [qo(Q(s * a * c)), T`$${s}^{0{,}5}=\sqrt{${s}}=${r}$, a nie $${s}$.`]]),
       steps: [T`Liczymy każdą potęgę osobno. $${s}^{0{,}5}=${s}^{\frac12}=\sqrt{${s}}=${r}$.`, T`Minus w wykładniku oznacza odwrotność: $${a}^{-1}=\frac{1}{${a}}$, $\ ${a}^{-2}=\frac{1}{${a}^2}=\frac{1}{${a * a}}$, $\ ${c}^{-1}=\frac{1}{${c}}$.`, T`Licznik: $\frac{1}{${a}}\cdot ${r}=\frac{${r}}{${a}}$. Mianownik: $\frac{1}{${a * a}}\cdot\frac{1}{${c}}=\frac{1}{${a * a}\cdot ${c}}=\frac{1}{${a * a * c}}$.`, T`Dzielimy przez ułamek, czyli mnożymy przez jego odwrotność: $\frac{${r}}{${a}}:\frac{1}{${a * a * c}}=\frac{${r}}{${a}}\cdot ${a * a * c}$.`, T`$\frac{${r}\cdot ${a * a * c}}{${a}}=\frac{${r * a * a * c}}{${a}}=${qt(v)}$.`] };
@@ -161,7 +161,7 @@
   });
   // ∛x·⁶√x·√x  (2306-2)
   reg('pierwPotegi', ['2306-2'], ['f02-3', 'f02-4'], () => {
-    const ns = R.pick([[3, 6, 2], [4, 4, 2], [3, 3, 3], [2, 4, 4], [6, 6, 3], [2, 3, 6], [3, 6], [2, 4], [4, 4], [2, 6, 6], [5, 5, 5, 5, 5], [8, 8, 4], [3, 3, 6, 6], [4, 8, 8], [2, 8, 8, 4], [6, 3]]), e = ns.reduce((s, n) => qadd(s, Q(1, n)), Q(0));
+    const ns = sv('three', 2) ? R.pick([[2, 3, 6], [2, 4, 4], [3, 3, 3], [4, 4, 2], [3, 6, 2], [6, 6, 6], [3, 6, 6], [2, 6, 6], [4, 8, 8], [6, 3, 2]]) : R.pick([[3, 6, 2], [4, 4, 2], [3, 3, 3], [2, 4, 4], [6, 6, 3], [2, 3, 6], [3, 6], [2, 4], [4, 4], [2, 6, 6], [5, 5, 5, 5, 5], [8, 8, 4], [3, 3, 6, 6], [4, 8, 8], [2, 8, 8, 4], [6, 3]]), e = ns.reduce((s, n) => qadd(s, Q(1, n)), Q(0));
     const T1 = n => (n === 2 ? '\\sqrt{x}' : T`\sqrt[${n}]{x}`), ex = x => (x.d === 1 ? (x.n === 1 ? 'x' : T`x^{${x.n}}`) : x.d === 2 ? T`\sqrt{x${x.n === 1 ? '' : '^{' + x.n + '}'}}` : T`\sqrt[${x.d}]{x${x.n === 1 ? '' : '^{' + x.n + '}'}}`);
     const prod = Q(1, ns.reduce((s, n) => s * n, 1));
     return { q: T`Dla każdej dodatniej liczby rzeczywistej $x$ iloczyn $${ns.map(T1).join('\\cdot ')}$ jest równy`, opts: opts(ex(e), [[ex(prod), 'Przy mnożeniu potęg wykładniki się dodaje, a nie mnoży.'], [ex(Q(e.n + 1, e.d)), 'Policz jeszcze raz sumę wykładników.'], [T`x^{${ns.length}}`, 'Pierwiastek $n$-tego stopnia to wykładnik $\\frac1n$, a nie $1$.'], [ex(Q(3, ns.reduce((s, n) => s + n, 0))), 'Wykładniki to $\\frac1n$ — dodajemy ułamki, a nie mianowniki.']]),
@@ -215,12 +215,12 @@
   });
   // wartość bezwzględna: oś → nierówność (2305-1)
   reg('absOsNierown', ['2305-1'], ['f01-1', 'f01-3'], () => {
-    const a = R.int(-5, 2), b = a + 2 * R.int(2, 5) + R.pick([0, 1]); const c = (a + b) / 2, r = (b - a) / 2, out = R.int(0, 1) === 1;
-    const segs = out ? [[-Infinity, a, 0, 1], [b, Infinity, 1, 0]] : [[a, b, 1, 1]];
+    const a = R.int(-5, 2), b = a + 2 * R.int(2, 5) + sv('half', 2); const c = (a + b) / 2, r = (b - a) / 2, out = sv('out', 2) === 1, st = sv('strict', 2) === 1, cl = st ? 0 : 1; if (c === 0 || c === r) return null;
+    const segs = out ? [[-Infinity, a, 0, cl], [b, Infinity, cl, 0]] : [[a, b, cl, cl]];
     const N = (cc, s, rr) => T`|x${cc === 0 ? '' : (cc > 0 ? '-' : '+') + dec(Math.abs(cc))}|${s}${dec(rr)}`;
-    const sg = out ? '\\geq ' : '\\leq ';
+    const sg = out ? (st ? '> ' : '\\geq ') : (st ? '< ' : '\\leq '), sgo = out ? (st ? '< ' : '\\leq ') : (st ? '> ' : '\\geq ');
     return { q: 'Na osi liczbowej zaznaczono ' + (out ? 'sumę przedziałów' : 'przedział') + '.<br>' + axis(segs, [a, b]) + '<br>Zbiór zaznaczony na osi jest zbiorem wszystkich rozwiązań nierówności',
-      opts: opts(N(c, sg, r), [[N(c, out ? '\\leq ' : '\\geq ', r), 'Zły kierunek nierówności: „$\\geq$” daje dwie półproste, „$\\leq$” — odcinek.'], [N(r, sg, c), 'Zamienione: środek odcinka to $\\frac{a+b}2$, a promień to $\\frac{b-a}2$.'], [N(-c, sg, r), '$|x-c|$ to odległość od $c$ — zły znak środka.'], [N(r, out ? '\\leq ' : '\\geq ', c), 'Zamieniony środek z promieniem i zły kierunek.']]),
+      opts: opts(N(c, sg, r), [[N(c, sgo, r), 'Zły kierunek nierówności: „$\\geq$” daje dwie półproste, „$\\leq$” — odcinek.'], [N(r, sg, c), 'Zamienione: środek odcinka to $\\frac{a+b}2$, a promień to $\\frac{b-a}2$.'], [N(-c, sg, r), '$|x-c|$ to odległość od $c$ — zły znak środka.'], [N(r, sgo, c), 'Zamieniony środek z promieniem i zły kierunek.']]),
       steps: [T`Końce zaznaczonego przedziału: $${a}$ i $${b}$.`, T`Środek to średnia końców: $\frac{${a}+${pn(b)}}{2}=\frac{${a + b}}{2}=${dec(c)}$.`, T`Odległość środka od końca to połowa długości przedziału: długość $${b}-${pn(a)}=${b - a}$, połowa: $\frac{${b - a}}{2}=${dec(r)}$.`, T`$|x-c|$ to odległość od $c$. ${out ? 'Zaznaczono punkty odległe od środka o co najmniej' : 'Zaznaczono punkty odległe od środka o co najwyżej'} $${dec(r)}$: $${N(c, sg, r)}$.`] };
   });
   // nierówność → oś (2308-1, 2405-1)
@@ -1290,6 +1290,7 @@
   });
 
 
+  pinSub({ '2306-2': { three: 1 }, '2305-1': { out: 1, half: 1, strict: 0 }, '2312-4': { out: 0, half: 0, strict: 1 }, '2209-8': { out: 1, half: 0, strict: 0 } });
   pinSub({ '2406-3': { minus: 0 }, '2505-1': { minus: 1 }, '2608-1': { sum: 1 }, '2606-1': { sum: 0 },
     '2405-2': { t: 0 }, '2308-5': { t: 0 }, '2506-2': { t: 1 }, '2508-2': { t: 2 }, '2606-2': { t: 2 }, '2605-3': { t: 3 },
     '2306-1': { pos: 1 }, '2408-1': { pos: 0 },
@@ -1705,6 +1706,376 @@
     '2312-25': 'prostopad', 'inf-57.1': 'graniastNachyl', '2603-27': 'ostroslupPola', '2209-12.1': 'fModelLin', '2412-13': 'logPierw' });
   // zadania z arkuszy diagnostycznych, próbnej i informatora — wzorce podobnych przykładów
   Object.assign(MAP, { '2209-1': 'potUlamk', '2312-1': 'potJednaPodst', '2412-2': 'potJednaPodst', '2603-3': 'potJednaPodst', '2603-2': 'pierwSzesc', 'inf-6': 'pierwSzesc', '2312-3': 'procentOdsetki', '2412-5': 'procentOdsetki', 'inf-9': 'procentWzor', '2209-8': 'absOsNierown', '2312-4': 'absOsNierown', 'inf-17': 'nierLinOs', '2412-1': 'absRownIloczyn', 'inf-8': 'absPierw', '2312-2': 'logDzialania', 'inf-12': 'logDzialania', '2209-2': 'logDzialania', '2412-4': 'logDzialania', '2603-4': 'logPierw', 'inf-11': 'logPierw', '2312-7': 'wymierne', 'inf-16': 'wymierne', '2209-4': 'wymierne', '2412-6': 'wymierne', '2603-6': 'wymierne', 'inf-25': 'kwPodstaw', '2209-5': 'kwRoznKw', 'inf-15': 'kwRoznKwLiczby', 'inf-26': 'kwParam', '2312-8': 'wielomWspol', '2603-7': 'rownIloczyn', '2209-7': 'rownWymierne', '2312-6': 'ukladPunkt', '2412-7': 'ukladPunkt', 'inf-21': 'ukladIle', '2209-9': 'ukladTresc', 'inf-24': 'wykresLamana', '2603-11.1': 'wykresLamana', '2603-11.2': 'wykresLamana', '2603-11.3': 'wykresLamana', '2209-10.2': 'wykresLamana', '2209-10.3': 'wykresLamana', 'inf-27.2': 'wykresLamana', '2412-10': 'wykresLamana', 'inf-22': 'fTabela', '2209-13.2': 'kwZbiorWart', '2312-11.1': 'kwZbiorWart', '2412-12.1': 'parabolaWykres', 'inf-30': 'parabolaWykres', '2312-11.3': 'parabolaWykres', '2412-12.2': 'parabolaWykres', '2603-32.1': 'kwPF', '2603-32.2': 'kwPF', '2209-13.1': 'kwPF', 'inf-32.1': 'kwModel', '2312-10': 'linPF', '2603-10': 'linParam', 'inf-23': 'linParam', '2312-19': 'linParam', '2603-23': 'linParam', '2412-11': 'linWzor', '2312-11.4': 'wykresPrzeksz', '2412-12.3': 'wykresPrzeksz', '2209-14.1': 'ciagWzor', '2312-14': 'ciagSuma', '2412-14': 'ciagSuma', '2209-16.2': 'arytm', '2209-16.3': 'arytm', '2312-13': 'arytm', '2603-15': 'ciagRek', '2412-15': 'arytmTrzy', '2209-14.2': 'ciagPF', '2312-15': 'geomTrzy', '2412-16': 'geom', '2603-16': 'geom', '2312-17': 'trygJedynka', 'inf-39': 'trygJedynka', '2412-18': 'trygJedynka', '2412-17.1': 'trygTrojkat', '2412-17.2': 'trygTrojkat', '2603-18': 'trygTrojkat', '2312-16': 'trygKatWsp', '2209-18': 'trygTozsam', '2209-22': 'dwusieczna', '2312-23': 'rownoleglobok', 'inf-44': 'okrWpisOpis', '2209-20': 'katyOkrag', '2312-22': 'katyOkrag', '2603-20': 'katyOkrag', 'inf-43': 'katyOkrag', '2412-20': 'wycinek', '2209-17': 'prostePerp', '2312-18': 'prostePerp', '2209-15': 'prosteRown', '2412-22': 'prosteRown', 'inf-53': 'prosteRown', '2312-21': 'odcinekDl', '2412-21': 'odcinekDl', '2209-11': 'okragPF', 'inf-51': 'okragPF', '2312-20': 'okragRown', '2412-23': 'okragRown', '2412-24': 'ostroslupH', '2603-25': 'prostopad', '2412-25': 'prostopad', 'inf-58': 'ostroslupPola', 'inf-61': 'brylyObrot', '2209-3': 'liczbyCyfry', '2412-27': 'liczbyCyfry', '2209-19': 'kule', '2312-28': 'kostki', '2209-24.1': 'diagramStat', '2209-24.2': 'diagramStat', '2209-24.3': 'diagramStat', '2603-31': 'diagramStat', '2412-29': 'diagramStat', '2603-30': 'srednia' });
+  /* ===== dopasowanie 1:1 — dział 1: liczby, potęgi, pierwiastki ===== */
+  const fr2 = x => qo(x); // ułamek / liczba jako opcja
+  const bp = (b, e) => (e.d === 1 ? (e.n === 1 ? String(b) : T`${b}^{${e.n}}`) : T`${b}^{${qt(e)}}`); // b^e z wykładnikiem wymiernym
+  reg('potNawiasUjemny', ['2209-1'], ['f02-3', 'f02-4'], () => {
+    const b = R.pick([2, 3, 4, 5]), a = R.int(2, 7); if (a % b === 0) return null;
+    const s = a + b, ans = Q(b * b, s * s);
+    return { q: T`Wartość wyrażenia $\left(1+${a}\cdot ${b}^{-1}\right)^{-2}$ jest równa`,
+      opts: opts(fr2(ans), [[fr2(Q(s * s, b * b)), 'Minus w wykładniku $-2$ oznacza odwrotność — ułamek trzeba odwrócić.'], [fr2(Q(1, (1 + a * b) ** 2)), 'Potęga $' + b + '^{-1}$ to $\\frac{1}{' + b + '}$, a nie $' + b + '$.'], [fr2(Q(b, s)), 'Wykładnik to $-2$: po odwróceniu trzeba jeszcze podnieść do kwadratu.']]),
+      steps: [T`$${b}^{-1}=\frac{1}{${b}}$, więc $${a}\cdot ${b}^{-1}=${a}\cdot\frac{1}{${b}}=\frac{${a}}{${b}}$.`, T`W nawiasie: $1+\frac{${a}}{${b}}=\frac{${b}}{${b}}+\frac{${a}}{${b}}=\frac{${s}}{${b}}$.`, T`Wykładnik $-2$: odwracamy ułamek i podnosimy do kwadratu: $\left(\frac{${s}}{${b}}\right)^{-2}=\left(\frac{${b}}{${s}}\right)^{2}=\frac{${b * b}}{${s * s}}$.`] };
+  });
+  reg('dzielResztaIloraz', ['2603-1'], null, () => {
+    const q = R.int(5, 30), r = R.int(3, 40); if (q === r) return null;
+    return { q: T`Liczby $x$ oraz $y$ są całkowite i dodatnie. W wyniku dzielenia liczby $x$ przez liczbę $y$ otrzymano iloraz $${q}$ i resztę $${r}$. Liczba $\frac{x}{y}$ jest równa`,
+      opts: R.shuffle([{ t: T`${r}+\frac{${q}}{x}`, why: 'Pomylone iloraz i reszta, a dzielimy przez $y$, nie przez $x$.' }, { t: T`${r}+\frac{${q}}{y}`, why: 'Pomylone iloraz i reszta: $x=' + q + 'y+' + r + '$.' }, { t: T`${q}+\frac{${r}}{x}`, why: 'Dzielimy obie strony przez $y$, więc w mianowniku jest $y$.' }, { t: T`${q}+\frac{${r}}{y}`, ok: true }]),
+      steps: [T`Dzielenie z resztą: dzielna = iloraz $\cdot$ dzielnik + reszta, więc $x=${q}y+${r}$.`, T`Dzielimy obie strony przez $y$: $\frac{x}{y}=\frac{${q}y+${r}}{y}=\frac{${q}y}{y}+\frac{${r}}{y}=${q}+\frac{${r}}{y}$.`] };
+  });
+  reg('potDziesWykl', ['2312-1'], ['f02-3', 'f02-4'], () => {
+    const a = R.pick([2, 3, 5, 7]), [fd, fq] = R.pick([['0{,}4', Q(2, 5)], ['0{,}2', Q(1, 5)], ['0{,}6', Q(3, 5)], ['0{,}5', Q(1, 2)], ['0{,}25', Q(1, 4)], ['0{,}75', Q(3, 4)]]);
+    const D = qadd(Q(2), fq), dT = String(+(D.n / D.d).toFixed(2)).replace('.', '{,}');
+    return { q: T`Liczba $\left(${a}^{-${dT}}\cdot ${a}^{${qt(fq)}}\right)^{\frac{1}{2}}$ jest równa`,
+      opts: R.shuffle([{ t: T`\sqrt{${a}}`, why: 'Suma wykładników jest ujemna: $-' + dT + '+' + fd + '=-2$.' }, { t: T`\frac{\sqrt{${a}}}{${a}}`, why: 'Wykładnik $-2$ mnożymy przez $\\frac12$: wychodzi $-1$, nie $-\\frac12$.' }, { t: T`\frac{1}{${a}}`, ok: true }, { t: T`0{,}${a}`, why: '$\\frac{1}{' + a + '}$ to nie $0{,}' + a + '$.' }]),
+      steps: [T`Zamieniamy ułamek zwykły na dziesiętny: $${qt(fq)}=${fd}$.`, T`Mnożymy potęgi o tej samej podstawie — dodajemy wykładniki: $-${dT}+${fd}=-2$, więc w nawiasie jest $${a}^{-2}$.`, T`Potęga potęgi — mnożymy wykładniki: $\left(${a}^{-2}\right)^{\frac12}=${a}^{-2\cdot\frac12}=${a}^{-1}=\frac{1}{${a}}$.`] };
+  });
+  reg('potUjemnaPodst', ['2308-5'], ['f02-3', 'f02-4'], () => {
+    const b = R.pick([2, 3, 5]), k = R.int(3, 6), e = k - 5, b2 = b * b, bk = b ** k;
+    const val = e >= 0 ? Q(b ** e) : Q(1, b ** -e), neg = Q(-val.n, val.d), inv = Q(val.d, val.n), ninv = Q(-val.d, val.n);
+    if (qeq(val, inv)) return null;
+    return { q: T`Wartość wyrażenia $\frac{${b}^{-1}}{\left(-\frac{1}{${b2}}\right)^{-2}}\cdot ${bk}$ jest równa`,
+      opts: R.shuffle([{ t: fr2(val), ok: true }, { t: fr2(neg), why: 'Ujemna liczba podniesiona do potęgi parzystej daje wynik dodatni.' }, { t: fr2(inv), why: '$' + b + '^{-1}=\\frac{1}{' + b + '}$ — sprawdź, co jest w liczniku, a co w mianowniku.' }, { t: fr2(ninv), why: 'Sprawdź znak i odwrotność.' }]),
+      steps: [T`$${b}^{-1}=\frac{1}{${b}}$.`, T`$\left(-\frac{1}{${b2}}\right)^{-2}$: minus w wykładniku odwraca ułamek, $\left(-${b2}\right)^{2}=${b2}\cdot ${b2}=${b2 * b2}$ (kwadrat liczby ujemnej jest dodatni).`, T`$\frac{1}{${b}}:${b2 * b2}\cdot ${bk}=\frac{1}{${b}}\cdot\frac{${bk}}{${b2 * b2}}=\frac{${bk}}{${b * b2 * b2}}=${qt(val)}$.`] };
+  });
+  reg('potPierwOdwr', ['2412-2'], ['f02-3', 'f02-4'], () => {
+    const n = R.pick([3, 4, 5, 6]), b = R.pick([2, 3, 5, 7]), m = n - 1;
+    return { q: T`Liczba $\left(\sqrt[${n}]{${b}}\cdot\frac{1}{${b}}\right)^{-${n}}$ jest równa`,
+      opts: R.shuffle([{ t: T`${b}^{${m}}`, ok: true }, { t: T`${b}^{-${m}}`, why: 'Wykładnik $-' + n + '$ zmienia znak wykładnika w nawiasie.' }, { t: bp(b, Q(1, m)), why: 'Wykładniki mnożymy: $-\\frac{' + m + '}{' + n + '}\\cdot(-' + n + ')=' + m + '$.' }, { t: bp(b, Q(-1, m)), why: 'Potęga potęgi — wykładniki się mnoży, a nie dzieli.' }]),
+      steps: [T`Zamieniamy na potęgi o podstawie $${b}$: $\sqrt[${n}]{${b}}=${b}^{\frac1{${n}}}$, $\frac{1}{${b}}=${b}^{-1}$.`, T`W nawiasie dodajemy wykładniki: $\frac{1}{${n}}+(-1)=\frac{1}{${n}}-\frac{${n}}{${n}}=-\frac{${m}}{${n}}$.`, T`Potęga potęgi — mnożymy wykładniki: $-\frac{${m}}{${n}}\cdot(-${n})=${m}$, więc wynik to $${b}^{${m}}$.`] };
+  });
+  reg('potIlorazTrzy', ['2603-3'], ['f02-4'], () => {
+    const b = R.pick([2, 3, 5]), x = R.int(2, 12), y = R.int(3, 20), z = R.int(3, 16), e = x + 2 * y - 3 * z; if (e < 1 || e > 9) return null;
+    const b2 = b * b, b3 = b ** 3;
+    return { q: T`Liczba $\frac{${b}^{${x}}\cdot ${b2}^{${y}}}{${b3}^{${z}}}$ jest równa`,
+      opts: opts(bp(b, Q(e)), [[bp(b, Q(x + y - z)), 'Najpierw zamień $' + b2 + '$ i $' + b3 + '$ na potęgi liczby $' + b + '$.'], [bp(b, Q(3 * z)), 'To tylko mianownik.'], ['1', 'Wykładnik nie wychodzi zero — policz jeszcze raz.'], [bp(b, Q(x + 2 * y + 3 * z)), 'Przy dzieleniu wykładniki odejmujemy.']]),
+      steps: [T`$${b2}=${b}^2$ i $${b3}=${b}^3$, więc $${b2}^{${y}}=${b}^{2\cdot ${y}}=${b}^{${2 * y}}$ oraz $${b3}^{${z}}=${b}^{3\cdot ${z}}=${b}^{${3 * z}}$.`, T`Licznik: $${b}^{${x}}\cdot ${b}^{${2 * y}}=${b}^{${x}+${2 * y}}=${b}^{${x + 2 * y}}$.`, T`Dzielimy — odejmujemy wykładniki: $${b}^{${x + 2 * y}-${3 * z}}=${b}^{${e}}$.`] };
+  });
+  reg('potBaza9', ['2606-2'], ['f02-4', 'f02-3'], () => {
+    const a = R.int(2, 8), h = R.int(3, 12), c = 2 * h, e = a + h;
+    return { q: T`Liczba $\frac{9^{${a}}}{3^{-${c}}}$ jest równa`,
+      opts: opts(T`9^{${e}}`, [[T`9^{${a - h}}`, 'Dzielenie przez potęgę ujemną: odejmujemy wykładnik ujemny, czyli dodajemy.'], [T`9^{-${a + c}}`, 'Uważaj na znaki: $' + a + '-(-' + h + ')$.'], [T`9^{${a + c}}`, '$3^{' + c + '}=9^{' + h + '}$ — wykładnik się dzieli przez $2$.'], [T`9^{${a * c}}`, 'Przy dzieleniu wykładników nie mnożymy.']]),
+      steps: [T`Zamieniamy $3$ na potęgę $9$: $9=3^2$, więc $3^{-${c}}=\left(3^2\right)^{-${h}}=9^{-${h}}$.`, T`Dzielimy potęgi o tej samej podstawie — odejmujemy wykładniki: $\frac{9^{${a}}}{9^{-${h}}}=9^{${a}-(-${h})}=9^{${a}+${h}}=9^{${e}}$.`] };
+  });
+  reg('pierwSzescIloraz', ['2603-2'], ['f02-2'], () => {
+    const k = R.int(2, 5), [c, d] = R.pick([[2, 3], [3, 2], [2, 5], [5, 2], [3, 4], [4, 3], [2, 7]]), A = c * k * k, B = d * k;
+    const kr = T`\sqrt[3]{${k}}`;
+    return { q: T`Liczba $\frac{\sqrt[3]{${A}}\cdot\sqrt[3]{-${B}}}{\sqrt[3]{${c}}\cdot\sqrt[3]{${d}}}$ jest równa`,
+      opts: R.shuffle([{ t: String(k), why: 'Pierwiastek trzeciego stopnia z liczby ujemnej jest ujemny.' }, { t: T`\left(-${k}\right)`, ok: true }, { t: T`${k}${kr}`, why: 'Pod pierwiastkiem wychodzi $-' + k ** 3 + '=(-' + k + ')^3$ — pierwiastek jest liczbą całkowitą.' }, { t: T`\left(-${k}${kr}\right)`, why: 'Policz iloczyn pod pierwiastkiem: $' + k * k + '\\cdot(-' + k + ')$.' }]),
+      steps: [T`Łączymy w jeden pierwiastek: $\sqrt[3]{\frac{${A}\cdot(-${B})}{${c}\cdot ${d}}}$.`, T`Skracamy: $\frac{${A}}{${c}}=${k * k}$ i $\frac{-${B}}{${d}}=-${k}$, więc pod pierwiastkiem jest $${k * k}\cdot(-${k})=-${k ** 3}$.`, T`$\sqrt[3]{-${k ** 3}}=-${k}$, bo $(-${k})^3=-${k ** 3}$.`] };
+  });
+  reg('pierwSzescSumaIloraz', ['inf-6'], ['f02-2'], () => {
+    const [a, b] = R.pick([[5, 3], [4, 2], [6, 2], [6, 4], [7, 5], [6, 3], [8, 4], [9, 6]]), m = R.pick([2, 3]), A = a ** 3 * m, B = b ** 3 * m, v = Q(a + b, a - b);
+    return { q: T`Liczba $\frac{\sqrt[3]{${A}}+\sqrt[3]{${B}}}{\sqrt[3]{${A}}-\sqrt[3]{${B}}}$ jest równa`,
+      opts: opts(qo(v), [[T`\sqrt[3]{${qt(Q(A + B, A - B))}}`, 'Pierwiastka sumy nie liczymy jak sumy pierwiastków — najpierw wyłącz czynniki.'], ['\\left(-1\\right)', 'Licznik i mianownik się nie skracają do $-1$.'], [T`${qt(v)}\sqrt[3]{${m}}`, '$\\sqrt[3]{' + m + '}$ skraca się w ułamku.']]),
+      steps: [T`Wyłączamy sześciany: $\sqrt[3]{${A}}=\sqrt[3]{${a ** 3}\cdot ${m}}=${a}\sqrt[3]{${m}}$ oraz $\sqrt[3]{${B}}=\sqrt[3]{${b ** 3}\cdot ${m}}=${b === 1 ? '' : b}\sqrt[3]{${m}}$.`, T`Licznik: $${a}\sqrt[3]{${m}}+${b === 1 ? '' : b}\sqrt[3]{${m}}=${a + b}\sqrt[3]{${m}}$; mianownik: $${a - b === 1 ? '' : a - b}\sqrt[3]{${m}}$.`, T`$\frac{${a + b}\sqrt[3]{${m}}}{${a - b === 1 ? '' : a - b}\sqrt[3]{${m}}}=${qt(v)}$ ($\sqrt[3]{${m}}$ się skraca).`] };
+  });
+  reg('pierwZagniezdz', ['2605-3'], ['f02-3', 'f02-4'], () => {
+    const b = R.pick([2, 3, 5, 6, 7, 10]);
+    return { q: T`Liczba $\sqrt{${b}\sqrt{${b}}}$ jest równa`,
+      opts: R.shuffle([{ t: bp(b, Q(1, 4)), why: 'Pod zewnętrznym pierwiastkiem jest $' + b + '^{\\frac32}$, nie $' + b + '^{\\frac12}$.' }, { t: bp(b, Q(1, 2)), why: 'Wewnętrzny pierwiastek nie znika — wykładniki dodajemy.' }, { t: bp(b, Q(3, 4)), ok: true }, { t: String(b), why: 'Policz: $(' + b + '^{\\frac32})^{\\frac12}$.' }]),
+      steps: [T`Wewnątrz: $${b}\sqrt{${b}}=${b}^{1}\cdot ${b}^{\frac12}=${b}^{1+\frac12}=${b}^{\frac32}$.`, T`Zewnętrzny pierwiastek to potęga $\frac12$: $\left(${b}^{\frac32}\right)^{\frac12}=${b}^{\frac32\cdot\frac12}=${b}^{\frac34}$.`] };
+  });
+  reg('pierwKwadratWsp', ['2406-3'], ['f06-0', 'f02-2'], () => {
+    const a = R.int(2, 4), [m, n] = R.pick([[10, 2], [6, 2], [15, 3], [6, 3], [10, 5], [14, 2], [21, 3], [15, 5]]), P = m * n;
+    let f = 1, s = P; for (let i = 2; i * i <= s; i++) while (s % (i * i) === 0) { s /= i * i; f *= i; }
+    const S = a * a * m + n, M = 2 * a * f;
+    return { q: T`Liczba $\left(${a}\sqrt{${m}}+\sqrt{${n}}\right)^{2}$ jest równa`,
+      opts: R.shuffle([{ t: String(a * m + n), why: 'Kwadrat iloczynu: $(' + a + '\\sqrt{' + m + '})^2=' + a * a + '\\cdot' + m + '$, a nie $' + a + '\\cdot' + m + '$.' }, { t: String(S), why: 'Brakuje podwojonego iloczynu $2ab$.' }, { t: T`${S}+${M / 2}\sqrt{${s}}`, why: 'Podwojony iloczyn: $2ab$ — nie zapominaj o $2$.' }, { t: T`${S}+${M}\sqrt{${s}}`, ok: true }]),
+      steps: [T`Wzór: $(a+b)^2=a^2+2ab+b^2$, tutaj $a=${a}\sqrt{${m}}$, $b=\sqrt{${n}}$.`, T`$a^2=${a}^2\cdot(\sqrt{${m}})^2=${a * a}\cdot ${m}=${a * a * m}$; $b^2=${n}$.`, T`$2ab=2\cdot ${a}\sqrt{${m}}\cdot\sqrt{${n}}=${2 * a}\sqrt{${P}}=${2 * a}\cdot ${f}\sqrt{${s}}=${M}\sqrt{${s}}$.`, T`Razem: $${a * a * m}+${n}+${M}\sqrt{${s}}=${S}+${M}\sqrt{${s}}$.`] };
+  });
+  reg('pierwKwadratRozn', ['2505-1'], ['f06-0', 'f02-2'], () => {
+    const k = R.int(2, 6), m = R.pick([2, 3, 5, 6, 7]), X = k * k * m, v = (k - 1) ** 2 * m;
+    return { q: T`Liczba $\left(\sqrt{${X}}-\sqrt{${m}}\right)^{2}$ jest równa`,
+      opts: opts(String(v), [[String(X - m), 'Kwadrat różnicy to nie różnica kwadratów — brakuje $-2ab$.'], [String(X + m), 'Brakuje podwojonego iloczynu $-2ab$.'], [String((k - 1) * m), 'Kwadrat $(' + (k - 1) + '\\sqrt{' + m + '})^2=' + (k - 1) ** 2 + '\\cdot' + m + '$.'], [String(k * k), 'Policz $(\\sqrt{' + X + '}-\\sqrt{' + m + '})^2$ jeszcze raz.']]),
+      steps: [T`Wyłączamy czynnik spod pierwiastka: $\sqrt{${X}}=\sqrt{${k * k}\cdot ${m}}=${k}\sqrt{${m}}$.`, T`W nawiasie: $${k}\sqrt{${m}}-\sqrt{${m}}=${k - 1 === 1 ? '' : k - 1}\sqrt{${m}}$.`, T`Do kwadratu: $\left(${k - 1 === 1 ? '' : k - 1}\sqrt{${m}}\right)^2=${(k - 1) ** 2}\cdot ${m}=${v}$.`] };
+  });
+  how({
+    potNawiasUjemny: 'Pomysł: najpierw liczymy nawias ($b^{-1}=\\frac1b$), potem wykładnik $-2$: odwracamy ułamek i podnosimy do kwadratu.',
+    dzielResztaIloraz: 'Pomysł: dzielna = iloraz · dzielnik + reszta, a potem dzielimy obie strony przez dzielnik.',
+    potDziesWykl: 'Pomysł: wykładniki dodajemy przy mnożeniu, a mnożymy przy potędze potęgi.',
+    potUjemnaPodst: 'Pomysł: ujemny wykładnik odwraca ułamek; potęga parzysta liczby ujemnej jest dodatnia.',
+    potPierwOdwr: 'Pomysł: wszystko zapisujemy jako potęgi tej samej liczby, potem dodajemy i mnożymy wykładniki.',
+    potIlorazTrzy: 'Pomysł: zamieniamy podstawy na potęgi tej samej liczby, potem dodajemy (mnożenie) i odejmujemy (dzielenie) wykładniki.',
+    potBaza9: 'Pomysł: zapisujemy $3^{-2k}$ jako potęgę dziewiątki i odejmujemy wykładniki.',
+    pierwSzescIloraz: 'Pomysł: łączymy w jeden pierwiastek trzeciego stopnia i skracamy ułamek pod nim.',
+    pierwSzescSumaIloraz: 'Pomysł: wyłączamy sześciany spod pierwiastków — w liczniku i mianowniku zostaje ten sam pierwiastek, który się skraca.',
+    pierwZagniezdz: 'Pomysł: zamieniamy pierwiastki na potęgi: najpierw wewnętrzny, potem zewnętrzny.',
+    pierwKwadratWsp: 'Pomysł: wzór $(a+b)^2=a^2+2ab+b^2$; liczba przed pierwiastkiem też idzie do kwadratu.',
+    pierwKwadratRozn: 'Pomysł: najpierw upraszczamy większy pierwiastek (wyłączamy kwadrat liczby), potem odejmujemy i podnosimy do kwadratu.',
+  });
+  /* ===== koniec bloku ===== */
+  /* ===== dopasowanie 1:1 — dział 2–3: procenty i wyrażenia ===== */
+  const zl = n => T`${big(n)}\text{ zł}`;
+  reg('procentOdwrotny', ['2312-3'], ['f08-10'], () => {
+    const p = R.pick([2, 4, 5, 10, 20]), K = 100 * R.int(20, 90), q = (100 + p) / 100, F = Math.round(K * q * q * 100) / 100; if (!Number.isInteger(F)) return null;
+    const qs = dec(q), q2 = dec(+(q * q).toFixed(4));
+    return { q: T`Pan Grzegorz wpłacił do banku pewną kwotę na lokatę dwuletnią. Po każdym rocznym okresie oszczędzania bank doliczał odsetki w wysokości $${p}\%$ od kwoty bieżącego kapitału znajdującego się na lokacie. Po dwóch latach pan Grzegorz odebrał z banku wraz z odsetkami kwotę $${big(F)}$ zł (bez podatków). Kwota wpłacona na lokatę była równa`,
+      opts: R.shuffle([{ t: zl(K), ok: true }, { t: zl(K - 100), why: 'Sprawdź: $' + big(K - 100) + '\\cdot ' + q2 + '\\neq ' + big(F) + '$.' }, { t: zl(K + 100), why: 'Sprawdź mnożąc przez $' + q2 + '$.' }, { t: zl(K + 200), why: 'Odsetki doliczane są dwa razy (procent składany).' }]),
+      steps: [T`Po każdym roku kwota rośnie o $${p}\%$, czyli mnoży się przez $${qs}$. Po dwóch latach: $K\cdot ${qs}\cdot ${qs}=K\cdot ${q2}$.`, T`$K\cdot ${q2}=${big(F)}$, więc $K=${big(F)}:${q2}=${big(K)}$ zł.`, T`Sprawdzenie: $${big(K)}\cdot ${q2}=${big(F)}$.`] };
+  });
+  reg('procentStopa', ['2412-5'], ['f08-10'], () => {
+    const K = R.pick([10000, 20000, 40000, 50000, 60000]), p = R.pick([2, 3, 4, 5, 6, 6.4, 6.5, 7, 8]), q = 1 + p / 100, F = +(K * q * q).toFixed(2);
+    const ps = [p, p + 0.5, p - 0.5, p + 1].filter(x => x > 0); if (ps.length < 4) return null;
+    return { q: T`Pani Aniela wpłaciła do banku kwotę $${big(K)}$ zł na lokatę dwuletnią. Po każdym rocznym okresie bank doliczał odsetki w wysokości $p\%$ w skali roku od bieżącego kapitału — zgodnie z procentem składanym. Na koniec okresu oszczędzania kwota na lokacie była równa $${big(dec(F))}$ zł (bez podatków). Oprocentowanie lokaty w skali roku było równe`,
+      opts: opts(T`${dec(p)}\%`, [[T`${dec(p + 0.5)}\%`, 'Sprawdź: podstaw do $K\\cdot(1+\\frac{p}{100})^2$.'], [T`${dec(p - 0.5)}\%`, 'Sprawdź mnożąc dwa razy przez $1+\\frac{p}{100}$.'], [T`${dec(+((F / K - 1) * 50).toFixed(1))}\%`, 'To połowa całkowitego wzrostu — ale odsetki się kapitalizują.'], [T`${dec(p + 1)}\%`, 'Policz $(1+\\frac{p}{100})^2=\\frac{' + big(dec(F)) + '}{' + big(K) + '}$.']]),
+      steps: [T`Wzór na procent składany: $${big(K)}\cdot\left(1+\frac{p}{100}\right)^2=${big(dec(F))}$.`, T`Dzielimy przez $${big(K)}$: $\left(1+\frac{p}{100}\right)^2=${dec(+(q * q).toFixed(6))}$.`, T`Pierwiastkujemy: $1+\frac{p}{100}=\sqrt{${dec(+(q * q).toFixed(6))}}=${dec(q)}$, więc $\frac{p}{100}=${dec(+(q - 1).toFixed(4))}$ i $p=${dec(p)}$.`] };
+  });
+  reg('procentWzrostN', ['inf-9'], ['f08-10'], () => {
+    const p = R.pick([2, 3, 4, 5]), n = R.pick([5, 8, 10]), g = Math.pow(1 + p / 100, n), pct = Math.round((g - 1) * 100), lin = p * n;
+    if (pct === lin) return null;
+    return { q: T`Oprocentowanie na długoterminowej lokacie wynosi $${p}\%$ w skali roku (już po uwzględnieniu podatków). Po każdym roku doliczane są odsetki od aktualnego kapitału — zgodnie z procentem składanym. Po $${n}$ latach oszczędzania kwota na lokacie będzie większa od kwoty wpłaconej o (w zaokrągleniu do $1\%$)`,
+      opts: opts(T`${pct}\%`, [[T`${lin}\%`, 'To byłoby przy odsetkach prostych — tutaj odsetki są doliczane do kapitału.'], [T`${pct + 2}\%`, 'Policz $' + dec(1 + p / 100) + '^{' + n + '}$ dokładniej.'], [T`${Math.round(g * 100)}\%`, 'To cała kwota w procentach wpłaty, a pytamy o wzrost.']]),
+      steps: [T`Po każdym roku kwota mnoży się przez $1+\frac{${p}}{100}=${dec(1 + p / 100)}$. Po $${n}$ latach: $K\cdot ${dec(1 + p / 100)}^{${n}}$.`, T`$${dec(1 + p / 100)}^{${n}}\approx ${dec(+g.toFixed(4))}$ (kalkulator), czyli kwota to około $${dec(+(g * 100).toFixed(2))}\%$ wpłaty.`, T`Wzrost: $${dec(+(g * 100).toFixed(2))}\%-100\%\approx ${pct}\%$.`] };
+  });
+  reg('roznKwadratowWybierz', ['2209-5'], ['f06-0'], () => {
+    const c = R.int(2, 6), c2 = c * c, plus = R.int(0, 1), m = plus ? '+' : '-', o = plus ? '-' : '+', inner = T`x${m}y`;
+    const all = [[T`[${c}-(x${m}2y)]^2`, false], [T`[${c}+(x${m}2y)]^2`, false], [T`[${c}-(x${o}2y)]^2`, false], [T`[${c}-(${inner})]\cdot[${c}+(${inner})]`, true], [T`[${c}-(x${o}2y)]\cdot[${c}+(x${o}2y)]`, false], [T`-[(${inner})-${c}]\cdot[(${inner})+${c}]`, true]];
+    return { multi: all.map(([t, ok]) => ({ t, ok, why: ok ? '' : 'Najpierw zwiń nawias do kwadratu różnicy/sumy: $x^2' + m + '2xy+y^2=(' + inner + ')^2$.' })),
+      q: T`Dla każdej liczby rzeczywistej $x$ i dla każdej liczby rzeczywistej $y$ wyrażenie $${c2}-(x^2${m}2xy+y^2)$ jest równe. Wybierz <b>dwie</b> właściwe odpowiedzi.`,
+      steps: [T`W nawiasie jest kwadrat ${plus ? 'sumy' : 'różnicy'}: $x^2${m}2xy+y^2=(${inner})^2$, a $${c2}=${c}^2$.`, T`Różnica kwadratów: $${c}^2-(${inner})^2=[${c}-(${inner})]\cdot[${c}+(${inner})]$.`, T`To samo z minusem przed: $[${c}-(${inner})]=-[(${inner})-${c}]$, więc też $-[(${inner})-${c}]\cdot[(${inner})+${c}]$.`] };
+  });
+  reg('wymiernoscWybierz', ['inf-15'], ['f06-0'], () => {
+    const [p, q] = R.pick([[2, 3], [2, 5], [3, 5], [2, 7], [3, 7]]), s = p + q, P = p * q, r = R.pick(['0{,}3', '0{,}5', '1{,}2', '2{,}5']), wv = R.pick([12.5, 7.5, 10, 11.5]), w = dec(wv);
+    const sq = T`\left(\sqrt{${p}}-\sqrt{${q}}\right)^2`;
+    const all = [[T`a=${s}`, false], [T`a=${sq}+${r}`, true], [T`a=${s + 1}`, false], [T`a=-2\sqrt{${P}}+${w}`, true], [T`a=${sq}-2\sqrt{${P}}`, false], [T`a=-\sqrt{${P}}`, false]];
+    return { multi: all.map(([t, ok]) => ({ t, ok, why: ok ? '' : 'Podstaw: $x=a-' + s + '+2\\sqrt{' + P + '}$ — część niewymierna musi się zredukować.' })),
+      q: T`Dana jest liczba $x=a-\left(\sqrt{${q}}-\sqrt{${p}}\right)^2$, gdzie $a$ należy do zbioru liczb rzeczywistych. Liczby $\sqrt{${p}}$, $\sqrt{${q}}$ oraz $\sqrt{${P}}$ są niewymierne. Liczba $x$ jest wymierna dla — wybierz <b>dwie</b> odpowiedzi.`,
+      steps: [T`$\left(\sqrt{${q}}-\sqrt{${p}}\right)^2=${q}-2\sqrt{${q}}\sqrt{${p}}+${p}=${s}-2\sqrt{${P}}$.`, T`Więc $x=a-(${s}-2\sqrt{${P}})=a-${s}+2\sqrt{${P}}$. Liczba $x$ jest wymierna, gdy $a$ „zjada” $2\sqrt{${P}}$, czyli zawiera $-2\sqrt{${P}}$.`, T`$${sq}=${s}-2\sqrt{${P}}$ (to samo co wyżej), więc $a=${sq}+${r}$ daje $x=${r}$; a $a=-2\sqrt{${P}}+${w}$ daje $x=${w}-${s}=${dec(wv - s)}$ — obie wymierne.`] };
+  });
+  reg('kwMiejsceZerowe', ['inf-25'], ['f06-0'], () => {
+    const m = R.pick([2, 3, 5, 6, 7]), k = R.int(1, 3), b = m + k * k, kk = k === 1 ? '' : k, tk = 2 * k;
+    return { q: T`Dana jest funkcja $f$ określona wzorem $f(x)=x^2-b-${tk}\sqrt{${m}}$ dla każdej liczby rzeczywistej $x$. Miejscem zerowym funkcji $f$ jest $x=\sqrt{${m}}+${k}$. Współczynnik $b$ jest równy`,
+      opts: opts(String(b), [[T`\left(-${b}\right)`, 'Uważaj na znak: $b$ przenosimy na drugą stronę.'], [T`${b}-\sqrt{${m}}`, 'Część z pierwiastkiem się redukuje.'], [T`${b}-${tk}\sqrt{${m}}`, 'Wyraz $' + tk + '\\sqrt{' + m + '}$ skraca się z wyrazem we wzorze funkcji.']]),
+      steps: [T`Miejsce zerowe: $f(\sqrt{${m}}+${k})=0$, czyli $(\sqrt{${m}}+${k})^2-b-${tk}\sqrt{${m}}=0$.`, T`$(\sqrt{${m}}+${k})^2=${m}+2\cdot ${k}\sqrt{${m}}+${k * k}=${m + k * k}+${tk}\sqrt{${m}}$.`, T`$${m + k * k}+${tk}\sqrt{${m}}-b-${tk}\sqrt{${m}}=0$ — pierwiastki się redukują: $${m + k * k}-b=0$, więc $b=${b}$.`] };
+  });
+  reg('wielomDzielnikK', ['2312-8'], null, () => {
+    const a = -R.int(1, 4), bb = -R.int(1, 3), d = R.int(1, 4), r = -1;
+    const k = a * r ** 3 + bb * r * r + d; // W(-1)=0: -a+b-k+d=0 → k = -a+b+d ... liczymy wprost
+    const K = -(a * (-1) + bb * 1 + d) * -1; // W(-1)=a(-1)^3+b(1)+k(-1)+d=0 → k = -a+b+d
+    const kv = -a + bb + d; if (kv === 0) return null;
+    const W = T`${a === -1 ? '-' : a}x^3${bb === -1 ? '-' : bb}x^2+kx+${d}`;
+    return { q: T`Dany jest wielomian $W(x)=${W}$, gdzie $k$ jest pewną liczbą rzeczywistą. Wiadomo, że wielomian $W$ można zapisać w postaci $W(x)=(x+1)\cdot Q(x)$ dla pewnego wielomianu $Q$. Liczba $k$ jest równa`,
+      opts: opts(no(kv), [[no(-kv), 'Podstaw $x=-1$ i uważaj na znaki potęg.'], ['0', 'Sprawdź $W(-1)$ dla $k=0$ — nie wychodzi zero.'], [no(a + bb + d), 'Pierwiastkiem jest $x=-1$ (bo czynnik $x+1$), a nie $x=1$.']]),
+      steps: [T`Skoro $W(x)=(x+1)\cdot Q(x)$, to $W(-1)=0$ (czynnik $x+1$ się zeruje).`, T`$W(-1)=${a}\cdot(-1)^3+${pn(bb)}\cdot(-1)^2+k\cdot(-1)+${d}=${-a}${sgn(bb)}-k+${d}=${-a + bb + d}-k$.`, T`$${-a + bb + d}-k=0$, więc $k=${kv}$.`] };
+  });
+  reg('wymierneIloczynDwa', ['2312-7'], ['f06-0'], () => {
+    const a = R.int(1, 5), c = R.int(1, 5), m = R.int(2, 4); if (a === c) return null;
+    // (x+c)/(x+a)^2 · (x^2+ax)/(m x + m c) = x/(m(x+a))
+    return { q: T`Dla każdej liczby rzeczywistej $x$ różnej od $(-${c})$ i $(-${a})$ wartość wyrażenia $\frac{x+${c}}{x^2+${2 * a}x+${a * a}}\cdot\frac{x^2+${a}x}{${m}x+${m * c}}$ jest równa wartości wyrażenia`,
+      opts: opts(T`\frac{x}{${m}x+${m * a}}`, [[T`\frac{x}{${m}}`, 'Po skróceniu zostaje jeszcze czynnik $x+' + a + '$ w mianowniku.'], [T`\frac{x}{${2 * m}}`, 'Nie wszystko się skraca — rozłóż mianownik na $(x+' + a + ')^2$.'], [T`\frac{x^3+${a + c}x^2+${a * c}x}{${m}x^3+${m * (2 * a + c)}x^2+${m * (a * a + 2 * a * c)}x+${m * a * a * c}}`, 'Najpierw rozłóż na czynniki i skróć, zamiast wymnażać.']]),
+      steps: [T`Rozkładamy na czynniki: $x^2+${2 * a}x+${a * a}=(x+${a})^2$, $x^2+${a}x=x(x+${a})$, $${m}x+${m * c}=${m}(x+${c})$.`, T`$\frac{x+${c}}{(x+${a})^2}\cdot\frac{x(x+${a})}{${m}(x+${c})}$ — skracamy $x+${c}$ i jedno $x+${a}$.`, T`Zostaje $\frac{x}{${m}(x+${a})}=\frac{x}{${m}x+${m * a}}$.`] };
+  });
+  reg('wymierneRoznKw', ['2406-8'], ['f06-0'], () => {
+    const k = R.int(2, 5), a = R.int(1, 4), a2 = a * a;
+    return { q: T`Dla każdej liczby rzeczywistej $x$ różnej od: $(-${a})$, $0$ i $${a}$, wartość wyrażenia $\frac{${k}x^{2}}{x^{2}-${a2}}\cdot\frac{x+${a}}{x}$ jest równa wartości wyrażenia`,
+      opts: opts(T`\frac{${k}x}{x-${a}}`, [[T`${k}x+${k * a}`, 'Mianownik $x^2-' + a2 + '$ nie znika — rozłóż go na $(x-' + a + ')(x+' + a + ')$.'], [T`\frac{${k}x}{x^{2}-${a2}}`, 'Czynnik $x+' + a + '$ skraca się z mianownikiem.'], [T`\frac{${k}x^{3}+${a}}{x^{3}-${a2}}`, 'Ułamków nie mnożymy „po kawałku” — rozłóż i skróć.']]),
+      steps: [T`Różnica kwadratów: $x^2-${a2}=(x-${a})(x+${a})$.`, T`$\frac{${k}x^2}{(x-${a})(x+${a})}\cdot\frac{x+${a}}{x}$ — skracamy $x+${a}$ oraz jedno $x$.`, T`Zostaje $\frac{${k}x}{x-${a}}$.`] };
+  });
+  reg('wymiernePF', ['inf-16'], ['f06-0'], () => {
+    const k = R.int(2, 5), a = R.int(1, 4), a2 = a * a, s2 = R.int(0, 1);
+    return { q: T`Dane jest wyrażenie $W(x)=\frac{${k}x^2}{x^2-${a2}}\cdot\frac{x-${a}}{x}$. Oceń prawdziwość stwierdzeń.`,
+      pf: [[T`Wartość wyrażenia $W(x)$ jest określona dla każdej liczby rzeczywistej $x$.`, false, T`Mianowniki nie mogą być zerem: $x\neq 0$, $x\neq ${a}$, $x\neq -${a}$.`],
+        [s2 ? T`Jeżeli wartość wyrażenia $W(x)$ jest określona, to $W(x)=\frac{${k}x}{x+${a}}$.` : T`Jeżeli wartość wyrażenia $W(x)$ jest określona, to $W(x)=\frac{${k}x}{x-${a}}$.`, !!s2, T`$\frac{${k}x^2}{(x-${a})(x+${a})}\cdot\frac{x-${a}}{x}=\frac{${k}x}{x+${a}}$ (skraca się $x-${a}$ i jedno $x$).`]],
+      steps: [T`Dziedzina: $x^2-${a2}\neq 0$ i $x\neq 0$, czyli $x\notin\{-${a}, 0, ${a}\}$.`, T`Rozkładamy: $x^2-${a2}=(x-${a})(x+${a})$; skracamy $x-${a}$ i jedno $x$: $W(x)=\frac{${k}x}{x+${a}}$.`] };
+  });
+  reg('wymierneMinusLiczba', ['2209-4'], null, () => {
+    const p = R.int(1, 7), q = R.int(2, 7), a = R.int(1, 4);
+    return { q: T`Dla każdej liczby rzeczywistej $x\neq ${a}$ wyrażenie $\frac{${p}}{x-${a}}-${q}$ jest równe`,
+      opts: opts(T`\frac{-${q}x+${p + q * a}}{x-${a}}`, [[T`\frac{-${q}x+${p}}{x-${a}}`, 'Liczbę $' + q + '$ zapisujemy jako $\\frac{' + q + '(x-' + a + ')}{x-' + a + '}$ — mnożymy też $' + a + '$.'], [T`\frac{-${q}x+${Math.abs(p - q * a)}}{x-${a}}`, 'Minus przed nawiasem zmienia znak: $-' + q + '(x-' + a + ')=-' + q + 'x+' + q * a + '$.'], [T`\frac{-${q}x-${p + q * a}}{x-${a}}`, 'Sprawdź znak wyrazu wolnego.']]),
+      steps: [T`Sprowadzamy do wspólnego mianownika: $${q}=\frac{${q}(x-${a})}{x-${a}}$.`, T`$\frac{${p}}{x-${a}}-\frac{${q}(x-${a})}{x-${a}}=\frac{${p}-${q}(x-${a})}{x-${a}}$.`, T`Opuszczamy nawias (minus zmienia znaki): $${p}-${q}x+${q * a}=-${q}x+${p + q * a}$, więc wynik $\frac{-${q}x+${p + q * a}}{x-${a}}$.`] };
+  });
+  reg('wymierneDzielenie2', ['2412-6'], ['f06-0'], () => {
+    const k = R.int(2, 5), a = R.int(1, 3), a2 = a * a;
+    return { q: T`Dla każdej liczby rzeczywistej $x$ różnej od $(-${a})$, $0$ oraz $${a}$ wartość wyrażenia $\frac{x}{x^2-${a2}}:\frac{${k}x^2}{x+${a}}$ jest równa wartości wyrażenia`,
+      opts: opts(T`\frac{1}{${k}x^2-${k * a}x}`, [[T`\frac{x}{x-${a}}`, 'Dzielenie to mnożenie przez <b>odwrotność</b> drugiego ułamka.'], [T`-${k}x`, 'Policz jeszcze raz — skraca się $x+' + a + '$ i jedno $x$.'], [T`-\frac{1}{${k}x}`, 'W mianowniku zostaje też $x-' + a + '$.']]),
+      steps: [T`Dzielenie przez ułamek = mnożenie przez odwrotność: $\frac{x}{x^2-${a2}}\cdot\frac{x+${a}}{${k}x^2}$.`, T`$x^2-${a2}=(x-${a})(x+${a})$; skracamy $x+${a}$ oraz $x$: $\frac{1}{(x-${a})\cdot ${k}x}$.`, T`Wymnażamy mianownik: $${k}x(x-${a})=${k}x^2-${k * a}x$, więc $\frac{1}{${k}x^2-${k * a}x}$.`] };
+  });
+  reg('wymierneKwadratX', ['2603-6'], ['f06-0'], () => {
+    const a = R.pick([2, 3, 4, 5, 6, 8, 10]), a2 = a * a;
+    return { q: T`Dla każdej liczby rzeczywistej $x$ różnej od $(-${a})$ oraz różnej od $0$ wartość wyrażenia $\frac{x^2+${2 * a}x+${a2}}{x^3}\cdot\frac{x^2}{x+${a}}$ jest równa wartości wyrażenia`,
+      opts: opts(T`\frac{x+${a}}{x}`, [[T`${2 * a}x+${a}`, 'Najpierw zwiń licznik do $(x+' + a + ')^2$ i skróć.'], [T`\frac{1}{x}`, 'Z $(x+' + a + ')^2$ skraca się tylko jedno $x+' + a + '$.'], [T`\frac{x^2+${a2 + 2 * a}}{x}`, 'Licznik to kwadrat sumy — rozłóż go, nie dodawaj wyrazów.']]),
+      steps: [T`Licznik to kwadrat sumy: $x^2+${2 * a}x+${a2}=(x+${a})^2$.`, T`$\frac{(x+${a})^2}{x^3}\cdot\frac{x^2}{x+${a}}$ — skracamy jedno $x+${a}$ oraz $x^2$ z $x^3$.`, T`Zostaje $\frac{x+${a}}{x}$.`] };
+  });
+  how({
+    procentOdwrotny: 'Pomysł: procent składany — kwota po dwóch latach to $K\\cdot q^2$; dzielimy, żeby znaleźć $K$.',
+    procentStopa: 'Pomysł: z wzoru na procent składany wyznaczamy $(1+\\frac{p}{100})^2$ i pierwiastkujemy.',
+    procentWzrostN: 'Pomysł: po $n$ latach kwota mnoży się przez $(1+\\frac{p}{100})^n$ — liczymy to kalkulatorem.',
+    roznKwadratowWybierz: 'Pomysł: zwijamy nawias do kwadratu, a potem stosujemy wzór na różnicę kwadratów.',
+    wymiernoscWybierz: 'Pomysł: rozpisujemy kwadrat różnicy pierwiastków i patrzymy, przy jakim $a$ znika część niewymierna.',
+    kwMiejsceZerowe: 'Pomysł: podstawiamy miejsce zerowe do wzoru i przyrównujemy do zera.',
+    wielomDzielnikK: 'Pomysł: jeśli $W(x)=(x+1)Q(x)$, to $W(-1)=0$.',
+    wymierneIloczynDwa: 'Pomysł: rozkładamy liczniki i mianowniki na czynniki, potem skracamy.',
+    wymierneRoznKw: 'Pomysł: rozkładamy mianownik ze wzoru na różnicę kwadratów i skracamy.',
+    wymiernePF: 'Pomysł: dziedzina — mianowniki różne od zera; potem rozkład i skracanie.',
+    wymierneMinusLiczba: 'Pomysł: liczbę zapisujemy jako ułamek o tym samym mianowniku i odejmujemy liczniki.',
+    wymierneDzielenie2: 'Pomysł: dzielenie przez ułamek zamieniamy na mnożenie przez odwrotność, potem rozkład i skracanie.',
+    wymierneKwadratX: 'Pomysł: licznik zwijamy do kwadratu sumy i skracamy.',
+  });
+  /* ===== koniec bloku ===== */
+  /* ===== dopasowanie 1:1 — dział 4–6: równania, wartość bezwzględna, układy ===== */
+  const osOpts = (x0, strict, ge) => { // cztery rysunki na osi: kierunek × koniec
+    const pic = (dir, cl) => axis([dir > 0 ? [x0, Infinity, cl, 0] : [-Infinity, x0, 0, cl]], [x0, 0].filter((v, i, ar) => ar.indexOf(v) === i));
+    const d = ge ? 1 : -1;
+    return R.shuffle([[pic(d, !strict), true, ''], [pic(-d, !strict), false, 'Zły kierunek — sprawdź, podstawiając dużą liczbę.'], [pic(d, strict), false, strict ? 'Nierówność ostra — pusty koniec.' : 'Nierówność nieostra — pełny koniec.'], [pic(-d, strict), false, 'Zły kierunek i zły koniec.']]).map(([html, ok, why]) => ({ t: '', html, ok, why }));
+  };
+  reg('nierNawiasOs', ['2505-6'], ['f02-4'], () => {
+    const A = R.int(1, 9), B = R.int(2, 4), C = R.int(1, 3), Dd = R.int(1, 3), E = R.int(1, 4), k = B * Dd - E; if (k < 1) return null;
+    const x0 = R.int(-12, 6), F = B * C - A - k * x0;
+    return { q: T`Dana jest nierówność $${A}-${B}(${C}-${Dd === 1 ? '' : Dd}x)\geq ${E === 1 ? '' : E}x${F >= 0 ? '-' + F : '+' + -F}$. Na którym rysunku poprawnie zaznaczono na osi liczbowej zbiór wszystkich liczb rzeczywistych spełniających tę nierówność?`,
+      opts: osOpts(x0, false, true),
+      steps: [T`Opuszczamy nawias (mnożymy przez $-${B}$): $${A}-${B * C}+${B * Dd}x\geq ${E}x${F >= 0 ? '-' + F : '+' + -F}$, czyli $${A - B * C}+${B * Dd}x\geq ${E}x${F >= 0 ? '-' + F : '+' + -F}$.`, T`Wyrazy z $x$ na lewo, liczby na prawo: $${B * Dd}x-${E}x\geq ${-F}-${pn(A - B * C)}$, czyli $${k}x\geq ${k * x0}$.`, T`Dzielimy przez $${k}$ (dodatnia — zwrot zostaje): $x\geq ${x0}$. Na osi: od $${x0}$ w prawo, kółko zamalowane.`] };
+  });
+  reg('nierUlamkiOs', ['inf-17'], ['f02-4'], () => {
+    for (let t = 0; t < 40; t++) {
+      const a = R.int(1, 3), b = R.int(1, 5), c = R.int(1, 5), k = 3 * a - 2, rhs = 1 + 3 * b + 2 * c; if (k < 1 || rhs % k) continue;
+      const x0 = rhs / k;
+      return { q: T`Dana jest nierówność $\frac{${a === 1 ? '' : a}x-${b}}{2}-\frac{x+${c}}{3}\geq\frac{1}{6}$. Na którym rysunku poprawnie zaznaczono na osi liczbowej zbiór wszystkich liczb rzeczywistych spełniających tę nierówność?`,
+        opts: osOpts(x0, false, true),
+        steps: [T`Mnożymy obie strony przez $6$ (wspólny mianownik): $3(${a === 1 ? '' : a}x-${b})-2(x+${c})\geq 1$.`, T`Opuszczamy nawiasy: $${3 * a}x-${3 * b}-2x-${2 * c}\geq 1$, czyli $${k}x-${3 * b + 2 * c}\geq 1$.`, T`$${k}x\geq 1+${3 * b + 2 * c}=${rhs}$, więc $x\geq ${rhs}:${k}=${x0}$. Na osi: od $${x0}$ w prawo, kółko zamalowane.`] };
+    }
+    return null;
+  });
+  reg('nierLinUlamki', ['2405-6'], ['f02-4'], () => {
+    const m = R.pick([3, 5]), c = R.int(1, 3), dn = R.int(1, 8); if (dn % 3 === 0) return null;
+    const d = Q(dn, 3), rhs = qsub(d, Q(c)), co = Q(2 - m, 2), v = qdiv(rhs, co); // (1−m/2)x < d−c
+    const vt = qt(Q(Math.abs(v.n), v.d)), neg = v.n < 0, gt = co.n < 0; // dzielimy przez ujemną → zmiana zwrotu
+    const iv2 = (s, lo) => (lo ? T`\left(${s}, +\infty\right)` : T`\left(-\infty, ${s}\right)`), sv2 = neg ? '-' + vt : vt, ov = neg ? vt : '-' + vt;
+    return { q: T`Zbiorem wszystkich rozwiązań nierówności $${c}-\frac{${m}}{2}x<\frac{${dn}}{3}-x$ jest przedział`,
+      opts: opts(iv2(sv2, gt), [[iv2(ov, true), 'Uważaj na znak liczby po prawej stronie.'], [iv2(sv2, !gt), 'Dzieląc przez liczbę ujemną, zmieniamy zwrot nierówności.'], [iv2(ov, false), 'Zły znak i zły zwrot.']]),
+      steps: [T`Wyrazy z $x$ na lewo, liczby na prawo: $-\frac{${m}}{2}x+x<\frac{${dn}}{3}-${c}$.`, T`$-\frac{${m}}{2}x+\frac{2}{2}x=${qt(co)}x$, a $\frac{${dn}}{3}-${c}=\frac{${dn}}{3}-\frac{${3 * c}}{3}=${qt(rhs)}$. Więc $${qt(co)}x<${qt(rhs)}$.`, T`Dzielimy przez $${qt(co)}$ (liczba ujemna — zmieniamy zwrot): $x>${qt(rhs)}:\left(${qt(co)}\right)=${qt(v)}$.`] };
+  });
+  reg('nierLinJednUlamek', ['2408-5'], ['f02-4'], () => {
+    const a = R.int(2, 5), b = R.int(2, 9), c = R.pick([7, 11, 13, 17, 19]), v = b - c;
+    return { q: T`Zbiorem wszystkich rozwiązań nierówności $\frac{${a}(${b}-x)}{${c}}\le ${a}$ jest przedział`,
+      opts: opts(T`[${v}, +\infty)`, [[T`(-\infty, ${v})`, 'Dzieląc przez $-1$, zmieniamy zwrot.'], [T`(-\infty, ${v}]`, 'Zły zwrot: $-x\\le' + (c - b) + '$ daje $x\\ge' + v + '$.'], [T`(${v}, +\infty)`, 'Nierówność nieostra — koniec należy do zbioru.']]),
+      steps: [T`Mnożymy obie strony przez $${c}$: $${a}(${b}-x)\le ${a * c}$.`, T`Dzielimy przez $${a}$: $${b}-x\le ${c}$.`, T`$-x\le ${c}-${b}=${c - b}$; mnożymy przez $-1$ (zmiana zwrotu): $x\ge ${v}$, czyli $[${v}, +\infty)$.`] };
+  });
+  reg('nierLinPrawyUlamek', ['2508-7'], ['f02-4'], () => {
+    const b = R.int(3, 7), v = R.int(-3, 4), c = R.int(1, 5), A2 = (b + 2) * v - c; if (A2 % 2) return null;
+    const a = A2 / 2, wrong = Q(2 * a + c, b + 1);
+    return { q: T`Zbiorem wszystkich rozwiązań nierówności $${a}-x\ge\frac{${b}x-${c}}{2}$ jest przedział`,
+      opts: opts(T`(-\infty, ${v}]`, [[T`\left(-\infty, ${qt(wrong)}\right]`, 'Mnożąc przez $2$, pomnóż też $x$ po lewej stronie.'], [T`[${v}, +\infty)`, 'Zły zwrot nierówności.'], [T`\left[${qt(wrong)}, +\infty\right)`, 'Zły zwrot i błąd w mnożeniu.']]),
+      steps: [T`Mnożymy obie strony przez $2$: $${2 * a}-2x\ge ${b}x-${c}$.`, T`Wyrazy z $x$ na prawo, liczby na lewo: $${2 * a}+${c}\ge ${b}x+2x$, czyli $${2 * a + c}\ge ${b + 2}x$.`, T`Dzielimy przez $${b + 2}$: $x\le ${2 * a + c}:${b + 2}=${v}$, czyli $(-\infty, ${v}]$.`] };
+  });
+  reg('nierLinCalkMinus', ['2506-6'], ['f02-4'], () => {
+    const A = R.int(4, 12), p = R.int(1, 5), q = 2, r = R.int(2, 4), k = 2 * r - q, num = 2 * A - p; if (num % k === 0) return null;
+    const f = Math.floor(num / k);
+    return { q: T`Dana jest nierówność $${A}-\frac{${p}-2x}{2}\ge ${r}x$. Największą liczbą całkowitą, która spełnia tę nierówność, jest`,
+      opts: opts(String(f), [[String(f + 1), 'Sprawdź: $' + (f + 1) + '$ nie spełnia nierówności.'], [String(f - 1), 'To nie największa — $' + f + '$ też spełnia nierówność.'], [String(f - 2), 'Szukamy największej liczby całkowitej.']]),
+      steps: [T`Mnożymy przez $2$: $${2 * A}-(${p}-2x)\ge ${2 * r}x$, czyli $${2 * A}-${p}+2x\ge ${2 * r}x$.`, T`$${2 * A - p}\ge ${2 * r}x-2x=${k}x$, więc $x\le\frac{${num}}{${k}}=${dec(+(num / k).toFixed(3))}$.`, T`Największa liczba całkowita nie większa od $${dec(+(num / k).toFixed(3))}$ to $${f}$.`] };
+  });
+  reg('rownIloczynListy', ['2505-7'], null, () => {
+    const k = R.int(2, 5), a = R.int(1, 6), b = R.int(2, 6); if (a === b || k === a) return null;
+    return { q: T`Równanie $${k}x(x+${a})(x^2+${b * b})=0$ w zbiorze liczb rzeczywistych ma dokładnie`,
+      opts: R.shuffle([{ t: T`\text{dwa rozwiązania: }(-${a})\text{ oraz }0\text{.}`, ok: true }, { t: T`\text{dwa rozwiązania: }(-${a})\text{ oraz }${k}\text{.}`, why: 'Liczba $' + k + '$ przed $x$ nie jest rozwiązaniem — zeruje się $x$.' }, { t: T`\text{trzy rozwiązania: }(-${b}), (-${a})\text{ oraz }0\text{.}`, why: '$x^2+' + b * b + '>0$ zawsze — ten czynnik nie daje rozwiązań.' }, { t: T`\text{cztery rozwiązania: }(-${b}), (-${a}), 0\text{ oraz }${b}\text{.}`, why: '$x^2+' + b * b + '=0$ nie ma rozwiązań (suma, nie różnica kwadratów).' }]),
+      steps: [T`Iloczyn jest zerem, gdy któryś czynnik jest zerem: $${k}x=0\Rightarrow x=0$; $x+${a}=0\Rightarrow x=-${a}$.`, T`$x^2+${b * b}=0$ — kwadrat liczby plus liczba dodatnia nigdy nie jest zerem, brak rozwiązań.`, T`Rozwiązania: $-${a}$ i $0$ — dokładnie dwa.`] };
+  });
+  reg('rownIloczynKwadraty', ['2506-7'], null, () => {
+    const k = R.int(2, 5), a = R.int(1, 4), b = R.int(2, 7); if (a === b) return null;
+    return { q: T`Równanie $${k}(x-${a})^2(x^2-${b * b})=0$ w zbiorze liczb rzeczywistych ma dokładnie`,
+      opts: R.shuffle([{ t: '\\text{dwa rozwiązania.}', why: '$x^2-' + b * b + '=0$ daje dwa rozwiązania: $\\pm' + b + '$.' }, { t: '\\text{trzy rozwiązania.}', ok: true }, { t: '\\text{cztery rozwiązania.}', why: '$(x-' + a + ')^2=0$ daje jedno rozwiązanie (podwójne), nie dwa różne.' }, { t: '\\text{pięć rozwiązań.}', why: 'Równanie piątego stopnia nie musi mieć pięciu różnych rozwiązań.' }]),
+      steps: [T`$(x-${a})^2=0\Rightarrow x=${a}$ (jedno rozwiązanie).`, T`$x^2-${b * b}=0\Rightarrow x^2=${b * b}\Rightarrow x=${b}$ lub $x=-${b}$.`, T`Rozwiązania: $${a}$, $${b}$, $-${b}$ — trzy różne.`] };
+  });
+  reg('rownIloczynDelta', ['2603-7'], ['f07-1'], () => {
+    const k = R.int(2, 4), p = R.pick([2, 3, 5, 6, 7]), bq = R.int(1, 3), cq = bq * bq + R.int(1, 4), D = 4 * bq * bq - 4 * cq;
+    return { q: T`Równanie $${k}x(x^2-${p})(x^2+${2 * bq}x+${cq})=0$ w zbiorze liczb rzeczywistych ma dokładnie`,
+      opts: R.shuffle([{ t: '\\text{jedno rozwiązanie.}', why: '$x^2=' + p + '$ ma dwa rozwiązania: $\\pm\\sqrt{' + p + '}$.' }, { t: '\\text{dwa rozwiązania.}', why: 'Nie zapominaj o $x=0$.' }, { t: '\\text{trzy rozwiązania.}', ok: true }, { t: '\\text{pięć rozwiązań.}', why: 'Trójmian $x^2+' + 2 * bq + 'x+' + cq + '$ ma $\\Delta<0$ — brak rozwiązań.' }]),
+      steps: [T`$${k}x=0\Rightarrow x=0$; $x^2-${p}=0\Rightarrow x=\sqrt{${p}}$ lub $x=-\sqrt{${p}}$.`, T`$x^2+${2 * bq}x+${cq}=0$: $\Delta=${2 * bq}^2-4\cdot ${cq}=${4 * bq * bq}-${4 * cq}=${D}<0$ — brak rozwiązań.`, T`Razem trzy rozwiązania: $0$, $\sqrt{${p}}$, $-\sqrt{${p}}$.`] };
+  });
+  reg('rownIloczynSumaKw', ['2608-7'], null, () => {
+    const a = R.int(1, 5), b = R.int(2, 7); if (a === b) return null;
+    return { q: T`Suma wszystkich rozwiązań równania $(x^2-${a * a})(x^2-${b * b})=0$ jest równa`,
+      opts: opts('0', [[T`\left(-${a * a + b * b}\right)`, 'Rozwiązania to $\\pm' + a + '$ i $\\pm' + b + '$ — parami się znoszą.'], [String(a + b), 'Każde równanie $x^2=c$ ma dwa rozwiązania: dodatnie i ujemne.'], [String(a * a + b * b), 'Dodajemy rozwiązania, a nie liczby pod kwadratem.']]),
+      steps: [T`$x^2-${a * a}=0\Rightarrow x=${a}$ lub $x=-${a}$; $x^2-${b * b}=0\Rightarrow x=${b}$ lub $x=-${b}$.`, T`Suma: $${a}+(-${a})+${b}+(-${b})=0$.`] };
+  });
+  reg('rownWymLista1', ['2209-7'], null, () => {
+    const c = R.int(2, 6);
+    const L = (...xs) => xs.map(x => T`x=${x}`).join(', ');
+    return { q: T`Równanie $\frac{(x^2+x)(x+${c})(x-1)}{x^2-1}=0$ ma w zbiorze liczb rzeczywistych dokładnie`,
+      opts: R.shuffle([{ t: T`\text{jedno rozwiązanie: }${L(-c)}\text{.}`, why: 'Także $x=0$ zeruje licznik i należy do dziedziny.' }, { t: T`\text{dwa rozwiązania: }${L(-c, 0)}\text{.}`, ok: true }, { t: T`\text{trzy rozwiązania: }${L(-c, -1, 0)}\text{.}`, why: '$x=-1$ zeruje mianownik — nie należy do dziedziny.' }, { t: T`\text{cztery rozwiązania: }${L(-c, -1, 0, 1)}\text{.}`, why: 'Mianownik $x^2-1$ nie może być zerem: $x\\neq\\pm1$.' }]),
+      steps: [T`Dziedzina: $x^2-1\neq 0$, czyli $x\neq 1$ i $x\neq -1$.`, T`Licznik: $x^2+x=x(x+1)$, więc zeruje się dla $x=0$, $x=-1$, $x=-${c}$, $x=1$.`, T`Odrzucamy $\pm 1$ (poza dziedziną). Zostają $x=-${c}$ i $x=0$ — dwa rozwiązania.`] };
+  });
+  reg('rownWymLista2', ['2408-6'], null, () => {
+    const a = R.int(3, 7), b = R.int(1, 4), m = R.int(2, 3); if (a === b) return null;
+    const p = x => (x < 0 ? '(' + x + ')' : x);
+    return { q: T`Równanie $\frac{x(x+${a})(${b}-x)}{${m}x+${m * b}}=0$ w zbiorze liczb rzeczywistych ma dokładnie`,
+      opts: R.shuffle([{ t: T`\text{dwa rozwiązania: }${p(-a)}\text{ oraz }${b}\text{.}`, why: 'Także $x=0$ zeruje licznik.' }, { t: T`\text{dwa rozwiązania: }${p(-a)}\text{ oraz }0\text{.}`, why: '$x=' + b + '$ zeruje czynnik $' + b + '-x$ i należy do dziedziny.' }, { t: T`\text{trzy rozwiązania: }${p(-a)}, 0\text{ oraz }${b}\text{.}`, ok: true }, { t: T`\text{cztery rozwiązania: }${p(-a)}, ${p(-b)}, 0\text{ oraz }${b}\text{.}`, why: '$x=-' + b + '$ zeruje mianownik — nie jest rozwiązaniem.' }]),
+      steps: [T`Dziedzina: $${m}x+${m * b}\neq 0$, czyli $x\neq -${b}$.`, T`Licznik zeruje się dla $x=0$, $x=-${a}$ oraz $x=${b}$ (bo $${b}-x=0$).`, T`Żadna z tych liczb nie jest równa $-${b}$, więc są trzy rozwiązania: $-${a}$, $0$, $${b}$.`] };
+  });
+  reg('absRownSuma', ['2412-1'], ['f01-1'], () => {
+    const a = R.int(1, 8), b = R.int(2, 9); if (a === b) return null;
+    return { q: T`Liczby $x_1$ i $x_2$ są różnymi rozwiązaniami równania $|x+${a}|=${b}$. Suma $x_1+x_2$ jest równa`,
+      opts: opts(T`\left(-${2 * a}\right)`, [[T`\left(-${2 * b}\right)`, 'Rozwiązania to $-' + a + '\\pm' + b + '$ — dodajemy je.'], [no(b - a), 'To tylko jedno rozwiązanie.'], [String(2 * a), 'Uważaj na znak: $x+' + a + '=\\pm' + b + '$.']]),
+      steps: [T`$|x+${a}|=${b}$ oznacza $x+${a}=${b}$ lub $x+${a}=-${b}$.`, T`$x_1=${b}-${a}=${b - a}$, $x_2=-${b}-${a}=${-b - a}$.`, T`Suma: $${b - a}+(${-b - a})=${-2 * a}$.`] };
+  });
+  reg('absPierwRoznica', ['inf-8'], ['f01-1'], () => {
+    const p = R.pick([2, 3, 5, 6, 7, 10, 11]), m = Math.floor(Math.sqrt(p)) + 1, k = R.int(2, 3), c0 = k * m - 1, c1 = 1 - k;
+    const fmt = (c, s) => T`${c}${s >= 0 ? '+' : '-'}${Math.abs(s) === 1 ? '' : Math.abs(s)}\sqrt{${p}}`;
+    return { q: T`Liczba $\left|\sqrt{${p}}-1\right|-${k}\left|${m}-\sqrt{${p}}\right|$ jest równa`,
+      opts: opts(fmt(c0, c1), [[T`\left(-${k * m + 1}\right)`, 'Wartości bezwzględnej nie „zdejmujemy” zmieniając wszystkie znaki.'], [fmt(-(1 + k * m) + 0, 1 + k), 'Liczba $' + m + '-\\sqrt{' + p + '}$ jest dodatnia — zostaje bez zmian.'], [fmt(1 + k * m, -(1 + k)), '$\\sqrt{' + p + '}-1$ jest dodatnie — bez zmiany znaku.']]),
+      steps: [T`$\sqrt{${p}}>1$, więc $\left|\sqrt{${p}}-1\right|=\sqrt{${p}}-1$.`, T`$\sqrt{${p}}<${m}$ (bo $${m}^2=${m * m}>${p}$), więc $${m}-\sqrt{${p}}>0$ i $\left|${m}-\sqrt{${p}}\right|=${m}-\sqrt{${p}}$.`, T`$\sqrt{${p}}-1-${k}(${m}-\sqrt{${p}})=\sqrt{${p}}-1-${k * m}+${k}\sqrt{${p}}=${-1 - k * m}+${1 + k}\sqrt{${p}}$.`] };
+  });
+  reg('ukladRozw', ['2312-6'], null, () => {
+    const x0 = R.int(-4, 4), y0 = R.int(-4, 4), a1 = 1, b1 = -R.int(2, 4), a2 = R.int(2, 3), b2 = 1, c1 = -(a1 * x0 + b1 * y0), c2 = -(a2 * x0 + b2 * y0);
+    const ok = (x, y) => a1 * x + b1 * y + c1 === 0 && a2 * x + b2 * y + c2 === 0;
+    const cand = [[x0 + 1, y0 + 1], [y0, x0], [-x0, y0], [x0, -y0], [x0 + 2, y0 - 1]].filter(([x, y]) => !ok(x, y) && !(x === x0 && y === y0));
+    const P = (x, y) => T`x=${x}\text{ i }y=${y}`, eq = (a, b, c) => T`${a === 1 ? '' : a}x${b < 0 ? '-' + (b === -1 ? '' : -b) : '+' + (b === 1 ? '' : b)}y${c >= 0 ? '+' + c : c}=0`;
+    return { q: T`Dany jest układ równań $\begin{cases}${eq(a1, b1, c1)}\\${eq(a2, b2, c2)}\end{cases}$ Rozwiązaniem tego układu równań jest para liczb`,
+      opts: opts(P(x0, y0), cand.map(([x, y]) => [P(x, y), 'Podstaw do obu równań — co najmniej jedno nie jest spełnione.'])),
+      steps: [T`Najszybciej: podstawiamy każdą parę do obu równań. Para jest rozwiązaniem, gdy spełnia oba.`, T`Dla $x=${x0}$, $y=${y0}$: $${a1 === 1 ? '' : a1}\cdot ${pn(x0)}${b1 < 0 ? '-' : '+'}${Math.abs(b1)}\cdot ${pn(y0)}${c1 >= 0 ? '+' + c1 : c1}=0$ ✓ oraz $${a2}\cdot ${pn(x0)}+${pn(y0)}${c2 >= 0 ? '+' + c2 : c2}=0$ ✓.`] };
+  });
+  reg('ukladParametry', ['2412-7'], null, () => {
+    const x0 = R.pick([-2, -1, 1, 2]), y0 = R.int(2, 6), s = R.int(2, 4), A = R.int(2, 6) * x0 + s * y0; const a = Q(A - s * y0, x0), Bc = R.int(3, 8), b = Q(Bc - x0, y0);
+    if (a.n === 0 || b.n === 0) return null; const v = qmul(a, b); if (![1, 2, 4].includes(v.d)) return null;
+    return { q: T`Para liczb $x=${x0}$ i $y=${y0}$ jest rozwiązaniem układu równań $\begin{cases}ax+${s}y=${A}\\x+by=${Bc}\end{cases}$ gdzie $a$ oraz $b$ są liczbami rzeczywistymi. Wartość wyrażenia $a\cdot b$ jest równa`,
+      opts: opts(opt(dq(v)), [[opt(dq(Q(-v.n, v.d))), 'Sprawdź znaki przy podstawianiu.'], [opt(dq(Q(v.d, v.n))), 'To odwrotność iloczynu.'], [opt(dq(Q(-v.d, v.n))), 'Policz osobno $a$ i $b$.']]),
+      steps: [T`Podstawiamy do pierwszego równania: $a\cdot ${pn(x0)}+${s}\cdot ${y0}=${A}$, czyli $${x0 === 1 ? '' : x0 === -1 ? '-' : x0}a=${A}-${s * y0}=${A - s * y0}$, więc $a=${qt(a)}$.`, T`Do drugiego: $${x0}+b\cdot ${y0}=${Bc}$, czyli $${y0}b=${Bc - x0}$, więc $b=${qt(b)}$.`, T`$a\cdot b=${pq(a)}\cdot ${pq(b)}=${dq(v)}$.`] };
+  });
+  reg('ukladZnakiPF', ['2603-9'], null, () => {
+    const a = R.pick([10, 20, 25, 40, 50]) * R.pick([1, -1]), b = R.pick([13, 26, 30, 52]) * R.pick([1, -1]);
+    const s = Q(1, a), x = qdiv(qadd(Q(1, a), Q(1, b)), Q(2)), y = qdiv(qsub(Q(1, a), Q(1, b)), Q(2)), prod = qmul(x, y);
+    const A1 = Math.abs(a), sa = a > 0 ? '' : '-', sb = b > 0 ? '' : '-';
+    return { q: T`Rozwiązaniem układu równań $\begin{cases}${sa}${A1}x${sa === '-' ? '-' : '+'}${A1}y=1\\${sb}${Math.abs(b)}x${sb === '-' ? '+' : '-'}${Math.abs(b)}y=1\end{cases}$ jest para liczb: $x=x_0$, $y=y_0$. Oceń prawdziwość stwierdzeń.`,
+      pf: [[T`Suma $x_0+y_0$ jest liczbą dodatnią.`, s.n > 0, T`Z pierwszego równania: $${a}(x_0+y_0)=1$, więc $x_0+y_0=${qt(s)}$.`], [T`Iloczyn $x_0\cdot y_0$ jest liczbą dodatnią.`, prod.n > 0, T`$x_0=${qt(x)}$, $y_0=${qt(y)}$ — iloczyn ${prod.n > 0 ? 'dodatni' : 'ujemny'}.`]],
+      steps: [T`Wyłączamy wspólny czynnik: $${a}(x+y)=1$ i $${b}(x-y)=1$, więc $x+y=${qt(s)}$, $x-y=${qt(Q(1, b))}$.`, T`Dodajemy równania: $2x=${qt(qadd(Q(1, a), Q(1, b)))}$, $x=${qt(x)}$; odejmujemy: $2y=${qt(qsub(Q(1, a), Q(1, b)))}$, $y=${qt(y)}$.`] };
+  });
+  reg('ukladBanknoty', ['2209-9'], null, () => {
+    const k = R.int(2, 3), d = R.int(1, 4), x = R.int(3, 8), y = x - d, S = 20 * y + 50 * x + 100 * k * x, kk = k === 2 ? 'dwa' : 'trzy';
+    const E = (big1, rel) => T`\begin{cases}20y+50x+${big1}=${S}\\${rel}\end{cases}`;
+    return { q: T`Klient banku wypłacił z bankomatu kwotę $${S}$ zł w banknotach o nominałach $20$ zł, $50$ zł oraz $100$ zł. Banknotów $100$-złotowych było ${kk} razy więcej niż $50$-złotowych, a banknotów $20$-złotowych było o $${d}$ mniej niż $50$-złotowych. Niech $x$ oznacza liczbę banknotów $50$-złotowych, a $y$ — liczbę banknotów $20$-złotowych. Poprawny układ równań to`,
+      opts: R.shuffle([{ t: E(T`100\cdot ${k}x`, T`y=x-${d}`), ok: true }, { t: E(T`50x\cdot ${k}`, T`y=x-${d}`), why: 'Banknotów stuzłotowych jest $' + k + 'x$, a każdy ma wartość $100$ zł.' }, { t: E(T`100\cdot ${k}x`, T`x=y-${d}`), why: 'Dwudziestozłotowych jest o $' + d + '$ mniej: $y=x-' + d + '$.' }, { t: E(T`50x\cdot ${k}`, T`x=y-${d}`), why: 'Oba równania są źle zapisane.' }]),
+      steps: [T`Banknotów $100$-zł jest $${k}x$, więc są warte $100\cdot ${k}x$ zł; $50$-zł: $50x$ zł; $20$-zł: $20y$ zł. Razem: $20y+50x+100\cdot ${k}x=${S}$.`, T`„$20$-złotowych o $${d}$ mniej niż $50$-złotowych”: $y=x-${d}$.`] };
+  });
+  reg('ukladProstokatDwa', ['2305-11'], null, () => {
+    const d = R.int(2, 8), P = 2 * (2 * R.int(d + 1, 15) - d);
+    const C = (a, b) => T`\begin{cases}${a}\\${b}\end{cases}`;
+    const all = [[C(T`2ab=${P}`, T`a-b=${d}`), false], [C(T`2a+b=${P}`, T`a=${d}b`), false], [C(T`2(a+b)=${P}`, T`b=a-${d}`), true], [C(T`2a+2b=${P}`, T`b=${d}a`), false], [C(T`2a+2b=${P}`, T`a-b=${d}`), true], [C(T`a+b=${P}`, T`a=b+${d}`), false]];
+    return { multi: all.map(([t, ok]) => ({ t, ok, why: ok ? '' : 'Obwód prostokąta to $2a+2b$, a „o $' + d + '$ krótszy” to różnica, nie iloraz.' })),
+      q: T`Dany jest prostokąt o bokach długości $a$ i $b$, gdzie $a>b$. Obwód tego prostokąta jest równy $${P}$. Jeden z boków jest o $${d}$ krótszy od drugiego. Wybierz <b>dwa</b> układy równań opisujące tę sytuację.`,
+      steps: [T`Obwód: $2a+2b=${P}$ (to samo co $2(a+b)=${P}$).`, T`Krótszy bok $b$ jest o $${d}$ mniejszy: $b=a-${d}$, czyli $a-b=${d}$.`] };
+  });
+  how({
+    nierNawiasOs: 'Pomysł: opuszczamy nawias, przenosimy wyrazy z $x$ na jedną stronę i zaznaczamy wynik na osi.',
+    nierUlamkiOs: 'Pomysł: mnożymy przez wspólny mianownik $6$, rozwiązujemy i zaznaczamy na osi.',
+    nierLinUlamki: 'Pomysł: zbieramy $x$ po jednej stronie; dzieląc przez liczbę ujemną, zmieniamy zwrot.',
+    nierLinJednUlamek: 'Pomysł: pozbywamy się ułamka i liczby przed nawiasem, a na końcu mnożymy przez $-1$ ze zmianą zwrotu.',
+    nierLinPrawyUlamek: 'Pomysł: mnożymy obie strony przez $2$ i zbieramy $x$ po jednej stronie.',
+    nierLinCalkMinus: 'Pomysł: rozwiązujemy nierówność, a potem wybieramy największą liczbę całkowitą z przedziału.',
+    rownIloczynListy: 'Pomysł: iloczyn jest zerem, gdy któryś czynnik jest zerem; $x^2+c$ z $c>0$ nigdy nie jest zerem.',
+    rownIloczynKwadraty: 'Pomysł: każdy czynnik przyrównujemy do zera i liczymy <b>różne</b> rozwiązania.',
+    rownIloczynDelta: 'Pomysł: każdy czynnik osobno; dla trójmianu sprawdzamy $\\Delta$.',
+    rownIloczynSumaKw: 'Pomysł: $x^2=c$ daje rozwiązania $\\pm\\sqrt c$ — w sumie się znoszą.',
+    rownWymLista1: 'Pomysł: najpierw dziedzina (mianownik ≠ 0), potem zera licznika — odrzucamy te spoza dziedziny.',
+    rownWymLista2: 'Pomysł: najpierw dziedzina (mianownik ≠ 0), potem zera licznika — odrzucamy te spoza dziedziny.',
+    absRownSuma: 'Pomysł: $|x+a|=b$ oznacza $x+a=b$ lub $x+a=-b$.',
+    absPierwRoznica: 'Pomysł: sprawdzamy znak wyrażenia pod wartością bezwzględną — dodatnie zostaje, ujemne zmienia znak.',
+    ukladRozw: 'Pomysł: podstawiamy pary do obu równań — rozwiązanie spełnia oba.',
+    ukladParametry: 'Pomysł: podstawiamy znane $x$ i $y$ do równań i wyznaczamy $a$ oraz $b$.',
+    ukladZnakiPF: 'Pomysł: wyłączamy wspólny czynnik — dostajemy od razu $x+y$ oraz $x-y$.',
+    ukladBanknoty: 'Pomysł: wartość = liczba banknotów · nominał; drugie równanie z zależności „o ... mniej”.',
+    ukladProstokatDwa: 'Pomysł: obwód to $2a+2b$, a „o $d$ krótszy” to $a-b=d$.',
+  });
+  /* ===== koniec bloku ===== */
   // Uzupełnienie wzorów z tablic: także te potrzebne do drugiej popularnej metody; bez wzorów, które w zadaniu nic nie dają.
   const WZ_ADD = {
     potUlamk: ['f02-2'], potDzies: ['f02-2'], potIloraz: ['f02-2'], pierwIloczyn: ['f02-3'], pierwRoznica: ['f02-3'],
@@ -1721,5 +2092,21 @@
   for (const [k, v] of Object.entries(WZ_SET)) if (G[k]) G[k].wz = v;
   for (const [k, v] of Object.entries(WZ_ADD)) if (G[k]) G[k].wz = (G[k].wz || []).concat(v.filter(x => !(G[k].wz || []).includes(x)));
   const wzOf = id => (id in WZ_ID ? WZ_ID[id] : (G[MAP[id]] || {}).wz);
-  A.MGEN = { G, MAP, snipTitles: {}, gen: id => { const g = G[MAP[id]]; if (!g) return null; CUR = id; for (let k = 0; k < 60; k++) { let r = null; try { r = g.gen(); } catch (e) { r = null; } if (r && (r.opts || r.pf || r.multi)) { if (r.pf) { const st0 = r.steps || []; r.steps = st0.concat(r.pf.map(x => x[2]).filter(x => x && !st0.includes(x))); } { const name = MAP[id], ok = r.opts && r.opts.find(o => o.ok), st = mergeCont(r.steps || []); if (HOW[name]) st.unshift(HOW[name]); if (ok && ok.t && !st.some(x => /^Odpowiedź/.test(x))) st.push('Odpowiedź: $' + ok.t + '$' + (/\.\}$/.test(ok.t) ? '' : '.')); r = Object.assign({}, r, { steps: st }); } return cleanOnes(Object.assign({ pattern: MAP[id] }, r)); } } return null; }, wz: id => wzOf(id) || [], noWz: id => !!G[MAP[id]] && wzOf(id) === null };
+  // wyrażenia matematyczne z oryginalnej treści zadania (do odrzucania wariantów identycznych z oryginałem)
+  const nrm = m => m.replace(/\\left|\\right|\\dfrac|\\frac|\\,|\s|[{}()\[\]]/g, '').replace(/\\cdot/g, '*');
+  const ORIG = {};
+  function origMath(id) {
+    if (id in ORIG) return ORIG[id];
+    const it = (A.MATURA && A.MATURA.items || []).find(x => x.id === id), TX = A.MATURA_TXT || {};
+    const set = new Set();
+    if (it) for (const o of [it.intro, it.img]) { if (!o) continue; const bl = TX[o.src.split('/').pop().replace(/\.webp$/, '')] || [];
+      bl.forEach(b => { const v = b.t || ''; (v.match(/\$\$?[^$]+\$\$?/g) || []).forEach(m => { const k = nrm(m.replace(/\$/g, '')); if (k.length >= 3) set.add(k); }); }); }
+    return (ORIG[id] = set);
+  }
+  function sameAsOrig(id, r) {
+    const o = origMath(id); if (!o.size || !r.q) return false;
+    const g = (r.q.match(/\$[^$]+\$/g) || []).map(m => nrm(m.replace(/\$/g, ''))).filter(k => k.length >= 3);
+    return g.length > 0 && g.every(k => o.has(k));
+  }
+  A.MGEN = { G, MAP, snipTitles: {}, same: sameAsOrig, gen: (id, o) => { const g = G[MAP[id]]; if (!g) return null; CUR = id; const raw = o && o.raw; for (let k = 0; k < (raw ? 1 : 60); k++) { let r = null; try { r = g.gen(); } catch (e) { r = null; } if (r && !raw && k < 59 && sameAsOrig(id, r)) r = null; if (r && (r.opts || r.pf || r.multi)) { if (r.pf) { const st0 = r.steps || []; r.steps = st0.concat(r.pf.map(x => x[2]).filter(x => x && !st0.includes(x))); } { const name = MAP[id], ok = r.opts && r.opts.find(o => o.ok), st = mergeCont(r.steps || []); if (HOW[name]) st.unshift(HOW[name]); if (ok && ok.t && !st.some(x => /^Odpowiedź/.test(x))) st.push('Odpowiedź: $' + ok.t + '$' + (/\.\}$/.test(ok.t) ? '' : '.')); r = Object.assign({}, r, { steps: st }); } return cleanOnes(Object.assign({ pattern: MAP[id] }, r)); } } return null; }, wz: id => wzOf(id) || [], noWz: id => !!G[MAP[id]] && wzOf(id) === null };
 })();

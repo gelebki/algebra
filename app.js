@@ -717,6 +717,30 @@
       h('div', { class: 'mpaper' }, mImg(s.img, s.t)), ex);
   }
   // podobny przykład: tłumaczenie na innych liczbach — jak „Przykład” w części ze studiów (pomysł + kroki odsłaniane po kolei)
+  // wytłumaczenie zadania z arkusza na jego własnych liczbach (po odpowiedzi) — jak „Podobny przykład”: pomysł + kroki po kolei
+  function matSolution(it, open) {
+    const all = ((A.MATURA_SOL || {})[it.id] || []).slice();
+    const idea = /^Pomysł:/.test(all[0] || '') ? all.shift().replace(/^Pomysł:\s*/, '').replace(/^./, ch => ch.toUpperCase()) : '';
+    const ansRaw = all.length && /^Odpowiedź:/.test(all[all.length - 1]) ? all.pop() : '';
+    const box = h('div', { class: 'mex msol' });
+    const L = 'ABCDEFG', TX = A.MATURA_TXT || {}, bl = TX[it.img.src.split('/').pop().replace(/\.webp$/, '')] || [], ob = bl.find(b => b.opts || b.multi);
+    const ansTxt = it.type === 'pf' ? [...it.ans].map((a, k) => (k + 1) + '. ' + a).join(', ')
+      : it.type === 'abcd' && ob && ob.opts ? '<b>' + it.ans + '.</b> ' + ob.opts[L.indexOf(it.ans)]
+      : it.ans && /^[A-G1-3]+$/.test(it.ans) ? [...it.ans].join(' oraz ') : ansRaw.replace(/^Odpowiedź:\s*/, '');
+    const answerEl = () => mdEl('div', '<b>Odpowiedź:</b> ' + ansTxt, { class: 'exq' });
+    box.append(h('div', { class: 'glabel' }, 'Rozwiązanie krok po kroku'));
+    if (idea) box.append(h('div', { class: 'gidea' }, h('div', { class: 'glabel' }, 'Pomysł'), mdEl('div', idea)));
+    const stepsBox = h('div', { style: 'display:grid;gap:8px' }); let shown = 0;
+    const btn = h('button', { class: 'btn primary', onclick: () => {
+      if (shown < all.length) { stepsBox.append(h('div', { class: 'exstep' }, h('span', { class: 'n' }, String(shown + 1)), mdEl('div', all[shown]))); shown++; SFX.key(); }
+      if (shown >= all.length) { btn.replaceWith(answerEl()); SFX.star(); }
+      else btn.textContent = 'Następny krok (' + (shown + 1) + '/' + all.length + ')';
+    } }, all.length ? 'Pokaż pierwszy krok' : 'Pokaż odpowiedź');
+    box.append(stepsBox, btn);
+    if (open) return box;
+    const wrap = h('div', {}), show = h('button', { class: 'btn small ghost', onclick: () => { show.replaceWith(box); } }, 'Zobacz rozwiązanie krok po kroku');
+    wrap.append(show); return wrap;
+  }
   function matExample(it) {
     const r = A.MGEN.gen(it.id), box = h('div', { class: 'mex' });
     if (!r) return h('p', { class: 'mq' }, 'Nie udało się wylosować przykładu — spróbuj jeszcze raz.');
@@ -792,8 +816,8 @@
     };
     const keyBox = (ok, again) => h('div', { class: 'mres ' + (ok == null ? '' : ok ? 'ok' : 'bad') },
       ok == null ? '' : h('b', { class: 'mverdict' }, ok ? 'Dobrze!' : 'Niestety nie.'),
-      !it.key && it.ans && ok != null ? h('div', { class: 'mkey' }, h('small', {}, 'Poprawna odpowiedź (informator CKE)'), h('b', {}, it.type === 'pf' ? [...it.ans].map((a, k) => (k + 1) + '. ' + a).join(', ') : it.ans)) : '',
-      it.key ? h('div', { class: 'mkey' }, h('small', {}, 'Odpowiedź z klucza CKE (zasady oceniania)'), Object.assign(mImg(it.key, 'Klucz CKE do zadania ' + it.nr), { style: 'width:' + Math.min(100, it.key.w / it.img.w * 100).toFixed(1) + '%' })) : '',
+      (A.MATURA_SOL || {})[it.id] ? matSolution(it, ok === false) : !it.key && it.ans && ok != null ? h('div', { class: 'mkey' }, h('small', {}, 'Poprawna odpowiedź (informator CKE)'), h('b', {}, it.type === 'pf' ? [...it.ans].map((a, k) => (k + 1) + '. ' + a).join(', ') : it.ans)) : '',
+      !(A.MATURA_SOL || {})[it.id] && it.key ? h('div', { class: 'mkey' }, h('small', {}, 'Odpowiedź z klucza CKE (zasady oceniania)'), Object.assign(mImg(it.key, 'Klucz CKE do zadania ' + it.nr), { style: 'width:' + Math.min(100, it.key.w / it.img.w * 100).toFixed(1) + '%' })) : '',
       again ? h('button', { class: 'btn small ghost', onclick: () => { const nc = matCard(it, +card.dataset.n || 1); card.replaceWith(nc); } }, 'Spróbuj jeszcze raz') : '');
     const finish = (ok, mark) => { box.querySelectorAll('button.mopt').forEach(b => { b.disabled = true; }); if (G) G.flat().forEach(b => { b.disabled = true; }); if (mark) mark(); box.append(keyBox(ok, true)); rec(ok); };
     if (inlineOk) {
