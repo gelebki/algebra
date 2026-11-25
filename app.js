@@ -647,13 +647,23 @@
     const img = h('img', { src: 'matura/' + o.src, alt: 'Rysunek do zadania', loading: 'lazy', decoding: 'async', style: `position:absolute;width:${(100 * o.w / cw).toFixed(3)}%;left:${(-100 * x0 / cw).toFixed(3)}%;top:${(-100 * y0 / ch).toFixed(3)}%;max-width:none` });
     return h('div', { class: 'mtfig', style: `max-width:${cw}px` }, h('div', { class: 'mtfigi', style: `aspect-ratio:${cw}/${ch}` }, img));
   }
-  function matTextBlocks(o) {
+  // przycisk odpowiedzi jak w części ze studiów: litera + treść; grupa g, wartość v (litera/numer/P/F)
+  const iaBtn = (ia, g, v, letter, inner) => { const b = h('button', { class: 'opt mcopt mtans', 'data-v': v, onclick: () => ia.pick && ia.pick(g, v, b) }, h('span', { class: 'letter' }, letter), inner); (ia.groups[g] = ia.groups[g] || []).push(b); return b; };
+  function matTextBlocks(o, ia, it) {
     const TX = A.MATURA_TXT || {}, bl = TX[srcKey(o)]; if (!bl) return null;
     const L = 'ABCDEFGH', out = [];
+    const T = it && it.type, live = kind => ia && !ia.used && ((kind === 'opts' && T === 'abcd') || (kind === 'pf' && T === 'pf') || (kind === 'why' && T === 'why') || (kind === 'multi' && T === 'seq' && !it.ordered));
     for (const b of bl) {
       const k = Object.keys(b)[0], v = b[k];
       if (k === 't') out.push(mdEl('div', v, { class: 'mtp' + (/^\s*\$\$/.test(v) ? ' disp' : '') }));
       else if (k === 'fig') out.push(matFig(o, v));
+      else if ((k === 'opts' || k === 'multi') && live(k)) { ia.used = k; out.push(h('div', { class: 'mtlive' }, ...v.map((x, i) => iaBtn(ia, 0, (it.opts || [])[i] || L[i], L[i], mdEl('span', x, { class: 'txt' }))))); }
+      else if (k === 'pf' && live(k)) { ia.used = k; out.push(h('div', { class: 'mtlive' }, ...v.map((x, i) => h('div', { class: 'mtpfrow' }, h('b', {}, (i + 1) + '.'), mdEl('span', x, { class: 'mpft' }), h('span', { class: 'mtpfb' }, ...['P', 'F'].map(pv => { const b = h('button', { class: 'mopt', 'data-v': pv, onclick: () => ia.pick && ia.pick(i, pv, b) }, pv); (ia.groups[i] = ia.groups[i] || []).push(b); return b; })))))); }
+      else if (k === 'why' && live(k)) { ia.used = k; out.push(h('div', { class: 'mtwhy mtlive' },
+        v.lead ? mdEl('div', v.lead, { class: 'mtwl' }) : '',
+        ...(v.ab || []).map((x, i) => iaBtn(ia, 0, (it.opts || [])[i] || 'ABCD'[i], 'ABCD'[i], mdEl('span', x, { class: 'txt' }))),
+        v.mid ? mdEl('div', v.mid, { class: 'mtwl' }) : '',
+        ...(v.n || []).map((x, i) => iaBtn(ia, 1, (it.why || ['1', '2', '3'])[i] || String(i + 1), String(i + 1), mdEl('span', x, { class: 'txt' }))))); }
       else if (k === 'opts' || k === 'multi') out.push(h('ol', { class: 'mtopts' }, ...v.map((x, i) => h('li', {}, h('b', {}, L[i] + '.'), mdEl('span', x)))));
       else if (k === 'pf') out.push(h('ol', { class: 'mtpf' }, ...v.map((x, i) => h('li', {}, h('b', {}, (i + 1) + '.'), mdEl('span', x), h('span', { class: 'mtpfpf' }, 'P / F')))));
       else if (k === 'table') out.push(h('div', { class: 'mttab' }, h('table', { class: 'mtab2' }, ...v.map((row, ri) => h('tr', {}, ...row.map((c, ci) => mdEl(ci === 0 && /[a-ząęółśżźćń]/i.test(String(c)) ? 'th' : 'td', String(c))))))));
@@ -665,21 +675,21 @@
     }
     return out;
   }
-  function matText(it) {
+  function matText(it, ia) {
     const parts = [];
     if (it.intro) { const a = matTextBlocks(it.intro); if (!a) return null; parts.push(h('div', { class: 'mtintro' }, ...a)); }
-    const b = matTextBlocks(it.img); if (!b) return null;
+    const b = matTextBlocks(it.img, ia, it); if (!b) return null;
     parts.push(...b);
     return h('div', { class: 'mtext' }, ...parts);
   }
   function matCard(it, n) {
-    const st = matState(it.id);
-    const card = h('article', { class: 'mtask' + (st ? (st.ok ? ' ok' : ' bad') : ''), id: 'm-' + it.id });
+    const st = matState(it.id), ia = { groups: [] };
+    const card = h('article', { class: 'mtask' + (st ? (st.ok ? ' ok' : ' bad') : ''), id: 'm-' + it.id, 'data-n': String(n) });
     const imgs = (it.intro ? [[it.intro, 'Wstęp do zadania ' + it.nr.split('.')[0]]] : []).concat([[it.img, 'Zadanie ' + it.nr + ' — matura ' + it.ses]]);
     card.append(h('div', { class: 'mmeta' }, h('span', { class: 'mn' }, String(n)), h('span', { class: 'mses' }, 'Matura ' + it.ses + ' · zad. ' + it.nr), h('span', { class: 'mpts' }, it.pts.split('-')[1] + ' pkt'),
       h('span', { class: 'mst' }, st ? (st.ok ? 'zrobione' : 'do powtórki') : '')),
-      (txt => txt ? h('div', {}, txt, h('button', { class: 'mshow', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, h('span', { html: IC.book }), 'Oryginał z arkusza CKE')) : h('button', { class: 'mpaper', 'aria-label': 'Powiększ zadanie', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, ...imgs.map(([o, alt]) => mImg(o, alt))))(matText(it)),
-      matAnswer(it, card), matTools(it));
+      ((txt) => txt ? h('div', {}, txt, h('button', { class: 'mshow', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, h('span', { html: IC.book }), 'Oryginał z arkusza CKE')) : h('button', { class: 'mpaper', 'aria-label': 'Powiększ zadanie', onclick: () => matZoom('Matura ' + it.ses + ' · zadanie ' + it.nr, imgs) }, ...imgs.map(([o, alt]) => mImg(o, alt))))(matText(it, ia)),
+      matAnswer(it, card, ia), matTools(it));
     return card;
   }
   // wzory z tablic potrzebne do zadania + podobny przykład z generatora
@@ -763,8 +773,10 @@
     }
     return box;
   }
-  function matAnswer(it, card) {
+  function matAnswer(it, card, ia) {
     const box = h('div', { class: 'mans' });
+    const G = ia && ia.used ? ia.groups : null;
+    const inlineOk = G && (it.type === 'abcd' ? G[0] && G[0].length === it.opts.length : it.type === 'pf' ? G.length === it.ans.length && G.every(x => x && x.length === 2) : it.type === 'why' ? G[0] && G[1] : it.type === 'seq' ? G[0] && G[0].length === it.opts.length : false);
     const rec = ok => {
       S.mat = S.mat || {}; const prev = S.mat[it.id];
       // czy zaczął od matury (bez żadnych zadań ze studiów) — tylko wtedy matura liczy się do paska w rankingu
@@ -780,8 +792,31 @@
     const keyBox = (ok, again) => h('div', { class: 'mres ' + (ok == null ? '' : ok ? 'ok' : 'bad') },
       ok == null ? '' : h('b', { class: 'mverdict' }, ok ? 'Dobrze!' : 'Niestety nie.'),
       it.key ? h('div', { class: 'mkey' }, h('small', {}, 'Odpowiedź z klucza CKE (zasady oceniania)'), Object.assign(mImg(it.key, 'Klucz CKE do zadania ' + it.nr), { style: 'width:' + Math.min(100, it.key.w / it.img.w * 100).toFixed(1) + '%' })) : '',
-      again ? h('button', { class: 'btn small ghost', onclick: () => box.replaceWith(matAnswer(it, card)) }, 'Spróbuj jeszcze raz') : '');
-    const finish = (ok, mark) => { box.querySelectorAll('button.mopt').forEach(b => { b.disabled = true; }); if (mark) mark(); box.append(keyBox(ok, true)); rec(ok); };
+      again ? h('button', { class: 'btn small ghost', onclick: () => { const nc = matCard(it, +card.dataset.n || 1); card.replaceWith(nc); } }, 'Spróbuj jeszcze raz') : '');
+    const finish = (ok, mark) => { box.querySelectorAll('button.mopt').forEach(b => { b.disabled = true; }); if (G) G.flat().forEach(b => { b.disabled = true; }); if (mark) mark(); box.append(keyBox(ok, true)); rec(ok); };
+    if (inlineOk) {
+      // odpowiedzi klikamy bezpośrednio w treści zadania (jak w części ze studiów)
+      const mark = (btn, good) => btn.classList.add(btn.classList.contains('mopt') ? (good ? 'good' : 'wrong') : (good ? 'ok' : 'bad'));
+      const right = btn => btn.classList.add(btn.classList.contains('mopt') ? 'right' : 'ok');
+      const sel = (g, btn) => G[g].forEach(b => { b.classList.toggle(b.classList.contains('mopt') ? 'sel' : 'picked', b === btn); });
+      if (it.type === 'abcd') {
+        ia.pick = (g, v, btn) => finish(v === it.ans, () => { mark(btn, v === it.ans); if (v !== it.ans) G[0].forEach(b => { if (b.dataset.v === it.ans) right(b); }); });
+        return box;
+      }
+      const ch = [], need = it.type === 'seq' ? null : G.length;
+      const chk = h('button', { class: 'btn primary', disabled: true }, 'Sprawdź');
+      if (it.type === 'seq') {
+        const set = new Set();
+        ia.pick = (g, v, btn) => { if (set.has(v)) set.delete(v); else if (set.size < it.ans.length) set.add(v); G[0].forEach(b => b.classList.toggle('picked', set.has(b.dataset.v))); chk.disabled = set.size !== it.ans.length; };
+        chk.onclick = () => { chk.remove(); const ok = [...it.ans].every(a => set.has(a)); finish(ok, () => G[0].forEach(b => { const v = b.dataset.v; if (set.has(v)) mark(b, it.ans.includes(v)); else if (it.ans.includes(v)) right(b); })); };
+        box.append(h('p', { class: 'mq' }, 'Wybierz ' + (it.ans.length === 2 ? 'dwie odpowiedzi' : it.ans.length + ' odpowiedzi') + ' i sprawdź.'), chk);
+        return box;
+      }
+      ia.pick = (g, v, btn) => { ch[g] = v; sel(g, btn); chk.disabled = ch.filter(Boolean).length < need; };
+      chk.onclick = () => { chk.remove(); const ok = G.every((_, k) => ch[k] === it.ans[k]); finish(ok, () => G.forEach((grp, k) => grp.forEach(b => { if (b.dataset.v === ch[k]) mark(b, ch[k] === it.ans[k]); else if (b.dataset.v === it.ans[k] && ch[k] !== it.ans[k]) right(b); }))); };
+      box.append(chk);
+      return box;
+    }
     const row = (label, opts, cls, onpick) => h('div', { class: 'mrow' }, label ? h('span', { class: 'mlab' }, label) : '', ...opts.map(o => h('button', { class: 'mopt ' + (cls || ''), 'data-v': o, onclick: e => onpick(o, e.currentTarget) }, o)));
     const pickIn = (rw, btn) => { rw.querySelectorAll('.mopt').forEach(b => b.classList.toggle('sel', b === btn)); };
     if (it.type === 'abcd') {

@@ -860,6 +860,10 @@ body.s-mat.mat-dark .mpaper img, body.s-mat.mat-dark .mkey img { border-radius: 
 .mttab { overflow-x: auto; scrollbar-width: none; } .mttab::-webkit-scrollbar { display: none; }
 .mtfig { width: 100%; margin: 4px auto; background: #fff; border-radius: 8px; } .mtfigi { position: relative; width: 100%; overflow: hidden; }
 .mshow { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: .85rem; cursor: zoom-in; } .mshow span { display: inline-flex; width: 16px; height: 16px; }
+.mtlive { display: grid; gap: 8px; } .mtans { width: 100%; } .mtans .txt { min-width: 0; flex: 1; }
+.mtpfrow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 14px; } .mtpfrow .mpft { flex: 1; min-width: 0; } .mtpfb { display: flex; gap: 6px; flex: none; }
+body.s-mat:not(.mat-dark) .mtans { background: #fff; } body.s-mat:not(.mat-dark) .mtans:hover:not([disabled]) { border-color: #a874e0; background: #faf6fd; }
+.mtans.ok { border-color: var(--ok); background: var(--ok-bg) !important; } .mtans.bad { border-color: var(--bad); background: var(--bad-bg) !important; } .mtans:disabled { cursor: default; opacity: 1; }
 .mtab2 { border-collapse: collapse; margin: 8px 0; } .mtab2 th, .mtab2 td { border: 1px solid var(--line); padding: 5px 10px; text-align: center; }
 .mvsteps, .mvar, .mvar > *, .mvsteps > *, .mtools, .mtools > * { min-width: 0; max-width: 100%; } .mvsteps p { overflow-wrap: anywhere; } .mfigw svg { max-width: min(100%, 320px); height: auto; }
 .mstatrow { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; margin-bottom: 10px; } .mstatrow:hover { border-color: #c9a6e6; } .mstatrow .mbar { height: 8px; margin-top: 8px; }
