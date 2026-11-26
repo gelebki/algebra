@@ -169,7 +169,13 @@
   A.tidyTex = tidyTex;
   function md(markup) {
     const frag = document.createDocumentFragment();
-    for (const p of A.mdToTexParts(String(markup))) {
+    const parts = A.mdToTexParts(String(markup));
+    if (/<(div|table|ul|ol)\b/.test(String(markup))) { // HTML z blokami: parsujemy w całości, wzory wstawiamy w miejsca znaczników
+      const box = h('span', { html: parts.map((p, k) => (p.text !== undefined ? p.text : '<span data-tx="' + k + '"></span>')).join('') });
+      box.querySelectorAll('[data-tx]').forEach(el => { const p = parts[+el.dataset.tx]; el.replaceWith(texNode(wrapTex(tidyTex(p.tex)), p.display)); });
+      frag.append(...box.childNodes); return frag;
+    }
+    for (const p of parts) {
       if (p.text !== undefined) { const s = h('span', { html: p.text }); frag.append(s); }
       else frag.append(texNode(wrapTex(tidyTex(p.tex)), p.display));
     }
@@ -251,6 +257,7 @@
     { id: 'l1', name: 'Ciało ukończone', desc: 'Algebra: wszystkie zadania z Listy 1', ok: () => listDone('l1') },
     { id: 'l2', name: 'Zespolony umysł', desc: 'Algebra: wszystkie zadania z Listy 2', ok: () => listDone('l2') },
     { id: 'l3', name: 'Pan pierwiastków', desc: 'Algebra: wszystkie zadania z Listy 3', ok: () => listDone('l3') },
+    { id: 'l4', name: 'Geometra zespolony', desc: 'Algebra: wszystkie zadania z Listy 4', ok: () => listDone('l4') },
     { id: 'pl1', name: 'Mistrz przekształceń', desc: 'Proseminarium: wszystkie zadania z Listy 1', ok: () => listDone('p1') },
     { id: 'pl2', name: 'Wielomianowy wymiatacz', desc: 'Proseminarium: wszystkie zadania z Listy 2', ok: () => listDone('p2') },
     { id: 'pl3', name: 'Trygonometra', desc: 'Proseminarium: wszystkie zadania z Listy 3', ok: () => listDone('p3') },
@@ -268,7 +275,7 @@
     { id: 'h_day', hidden: true, name: 'Maraton', desc: '60 rozwiązanych przykładów jednego dnia', ok: () => Object.values(S.days || {}).some(d => (d.ok || 0) >= 60) },
     { id: 'h_clean', hidden: true, name: 'Czysta robota', desc: '100 podpunktów zaliczonych za pierwszym razem, bez Przykładu i Wzorów', ok: () => (S.clean || 0) >= 100 },
   ];
-  const COOL = { el4: 64, el3: 64, el2: 64, el1: 64, pl3: 63, pl2: 63, pl1: 63, h_all: 100, h_clean: 96, h_run: 92, h_day: 88, h_days5: 84, l3: 62, l2: 61, l1: 60, xp1k: 55, s25: 50, star3: 46, p3: 44, proof: 40, quick: 38, days3: 36, s10: 30, clean: 28, var: 26, s5: 20, first: 10 };
+  const COOL = { el4: 64, el3: 64, el2: 64, el1: 64, pl3: 63, pl2: 63, pl1: 63, h_all: 100, h_clean: 96, h_run: 92, h_day: 88, h_days5: 84, l4: 63, l3: 62, l2: 61, l1: 60, xp1k: 55, s25: 50, star3: 46, p3: 44, proof: 40, quick: 38, days3: 36, s10: 30, clean: 28, var: 26, s5: 20, first: 10 };
   function badgeModal(b) {
     if (b.hidden) { confetti(150, innerWidth / 2, innerHeight / 3, 1.3); } else confetti(90, innerWidth / 2, innerHeight / 3, 1.1);
     SFX.star();

@@ -16,7 +16,7 @@
       T`<b>Odpowiedź:</b> $-2^{12}\left(1351-780\sqrt3\right)$`],
     '3.2#2.6': [
       T`Licznik: $|-1+i|=\sqrt2$, punkt w II ćwiartce, więc $-1+i=\sqrt2\left(\cos\frac{3\pi}4+i\sin\frac{3\pi}4\right)$.`,
-      T`Mianownik: $|1+\sqrt3i|=\sqrt{1+3}=2$, więc $1+\sqrt3i=2\left(\cos\frac\pi3+i\sin\frac\pi3\right)$.`,
+      T`Mianownik: $|1+i\sqrt3|=\sqrt{1+3}=2$, więc $1+i\sqrt3=2\left(\cos\frac\pi3+i\sin\frac\pi3\right)$.`,
       T`Dzielenie — moduły dzielimy, argumenty odejmujemy: moduł $\frac{\sqrt2}2$, argument $\frac{3\pi}4-\frac\pi3=\frac{5\pi}{12}$.`,
       T`Wzór de Moivre’a: moduł $\left(\frac{\sqrt2}{2}\right)^{2013}=\left(2^{-\frac12}\right)^{2013}=2^{-\frac{2013}{2}}$, argument $2013\cdot\frac{5\pi}{12}=\frac{3355\pi}{4}=838\pi+\frac{3\pi}4$ — po odjęciu pełnych obrotów zostaje $\frac{3\pi}4$.`,
       T`Wynik: $2^{-\frac{2013}{2}}\left(\cos\frac{3\pi}4+i\sin\frac{3\pi}4\right)=2^{-\frac{2013}{2}}\cdot\frac{\sqrt2}{2}(-1+i)=2^{-1007}(-1+i)$, bo $\frac{\sqrt2}2=2^{-\frac12}$.`,

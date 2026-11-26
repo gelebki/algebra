@@ -269,7 +269,7 @@
     return '?';
   }
   const strip = n => (n.t === 'par' ? n.a : n);
-  AQ.parse = parse; AQ.evaluate = evaluate; AQ.toTex = n => toTex(strip(n));
+  AQ.parse = parse; AQ.evaluate = evaluate; AQ.toTex = n => toTex(strip(n)).replace(/(\d*)(\\sqrt\{\d+\})i(?![a-z])/g, '$1i$2'); // 1+i\sqrt{3} — zapis jak na listach
 
   /* dzieli tekst na wartości po średnikach (na najwyższym poziomie) */
   function splitTop(s) {
@@ -570,7 +570,8 @@
     // \frac{-1+\sqrt3}{2} z minusem przed — czytelniej jako + \frac{1-\sqrt3}{2}
     if (im < 0 && /^\\frac\{-/.test(it)) { const t2 = niceReal(im, tiny); if (!/^-/.test(t2)) return (re === 0 ? '' : niceReal(re, tiny) + ' + ') + t2 + 'i'; }
     const needPar = !it.startsWith('\\frac') && / [+-] /.test(it) && !it.startsWith('\\left(');
-    const imPart = (it === '1' ? '' : (needPar ? '\\left(' + it + '\\right)' : it)) + 'i';
+    const sq = /^(\d*)(\\sqrt\{\d+\})$/.exec(it); // zapis jak na listach: 1+i\sqrt{3}, 2i\sqrt{3}
+    const imPart = sq ? sq[1] + 'i' + sq[2] : (it === '1' ? '' : (needPar ? '\\left(' + it + '\\right)' : it)) + 'i';
     if (re === 0) return (im < 0 ? '-' : '') + imPart;
     return niceReal(re, tiny) + (im < 0 ? ' - ' : ' + ') + imPart;
   };
